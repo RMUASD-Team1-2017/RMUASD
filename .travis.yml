@@ -1,0 +1,12 @@
+sudo: required
+
+language: generic
+
+services:
+  - docker
+
+script:
+  #Build the docker image
+- docker build -t stefanrvo/rmuasd:latest .
+  #Run tests
+- docker run --rm stefanrvo/rmuasd test
