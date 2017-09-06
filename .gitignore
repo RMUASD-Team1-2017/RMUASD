@@ -177,7 +177,7 @@ ENV/
 
 
 ##ROS stuff
-
+devel/
 build/
 bin/
 lib/
