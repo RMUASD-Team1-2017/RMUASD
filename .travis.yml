@@ -22,11 +22,10 @@ script:
 - docker run --rm stefanrvo/rmuasdweb:latest test
 deploy:
   - provider: script
-    script: deploy_latest.sh
+    script: "./deploy_latest.sh"
     on:
       branch: master
   - provider: script
-    script: deploy.sh
+    script: "./deploy.sh"
     on:
-      tags: true
       all_branches: true
