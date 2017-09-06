@@ -27,3 +27,6 @@ deploy:
       branch: master
   - provider: script
     script: deploy.sh
+    on:
+      tags: true
+      all_branches: true
