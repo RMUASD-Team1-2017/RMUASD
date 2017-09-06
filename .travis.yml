@@ -20,5 +20,10 @@ script:
 - docker-compose build
   #Run tests (only webui for now)
 - docker run --rm stefanrvo/rmuasdweb:latest test
-- docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-- docker-compose push
+deploy:
+  - provider: script
+    script: deploy_latest.sh
+    on:
+      branch: master
+  - provider: script
+    script: deploy.sh
