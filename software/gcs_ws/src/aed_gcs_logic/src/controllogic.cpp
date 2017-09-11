@@ -11,6 +11,8 @@
 
 #include <sstream>
 
+// HEJ HEJ
+
 
 
 
@@ -28,7 +30,7 @@
 
 int main(int argc, char **argv)
 {
-  
+
 // %Tag(INIT)%
   ros::init(argc, argv, "controllogic");
 // %EndTag(INIT)%
@@ -41,27 +43,27 @@ int main(int argc, char **argv)
   ros::Publisher TakeOff = n.advertise<std_msgs::String>("Take_off", 1000);
   ros::Publisher GoWaypoint = n.advertise<mavros_msgs::Waypoint>("/mavros/mission/waypoints", 1000);
   ros::Publisher Land_Now = n.advertise<std_msgs::String>("Land", 1000);
- 
+
 
 
   ros::Subscriber AbortMission = n.subscribe("AbortCmd", 1000, Callback);
  // ros::Subscriber WaypointNavigation = n.subscribe("WaypointNav", 1000, intCallback); // gets an int
   ros::Subscriber Motor_check = n.subscribe("MotorCheck", 1000, Callback);
-  
 
-  
+
+
 
 // %Tag(LOOP_RATE)%
   ros::Rate loop_rate(10);
 // %EndTag(LOOP_RATE)%
 
- 
+
 // %Tag(ROS_OK)%
   int count = 0;
   while (ros::ok())
   {
 // %EndTag(ROS_OK)%
-    
+
 // %Tag(FILL_MESSAGE)%
     std_msgs::String msg;
     std_msgs::String msg1;
@@ -71,13 +73,13 @@ int main(int argc, char **argv)
     mavros_msgs::Waypoint way;
 
 
-  
+
     std::stringstream ss1;
     std::stringstream ss2;
     std::stringstream ss3;
     std::stringstream ss4;
 
-  
+
     ss1 << "Feedback " << count;
     ss2 << "Take Off " << count;
     ss3 << "Go to waypoint " << count;
@@ -90,13 +92,13 @@ int main(int argc, char **argv)
     msg4.data = ss4.str();
 
     way.frame = mavros_msgs::Waypoint::FRAME_GLOBAL;
-    way.command = mavros_msgs::CommandCode::NAV_TAKEOFF;  
+    way.command = mavros_msgs::CommandCode::NAV_TAKEOFF;
     way.is_current = true;
-    way.autocontinue = true; 
+    way.autocontinue = true;
     way.x_lat = 10;
     way.y_long = 10;
-    way.z_alt = 20; 
-    
+    way.z_alt = 20;
+
 
 // %EndTag(FILL_MESSAGE)%
 
@@ -104,14 +106,14 @@ int main(int argc, char **argv)
     ROS_INFO("%s", msg.data.c_str());
 // %EndTag(ROSCONSOLE)%
 
-   
+
 // %Tag(PUBLISH)%
-   
+
     Feed.publish(msg1);
     TakeOff.publish(msg2);
     GoWaypoint.publish(way);
     Land_Now.publish(msg4);
-    
+
 
 // %EndTag(PUBLISH)%
 
