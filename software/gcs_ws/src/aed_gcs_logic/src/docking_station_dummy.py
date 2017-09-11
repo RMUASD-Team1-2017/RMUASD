@@ -7,28 +7,28 @@ class docking_station_dummy:
     """Docking Station Dummy class"""
 
     def __init__(self):
-        self.mission_request_service = rospy.Service('/docking_station/opens', Trigger, self.mission_request_callback)
+        self.open_service = rospy.Service('/docking_station/opens', Trigger, self.open_callback)
+        self.restart_service = rospy.Service('/docking_station/restart', Trigger, self.restart_callback)
         self.isOpen = False
 
     def open_callback(self, data):
         print "Opening Docking Station"
-        Trigger response
         if self.isOpen:
-            reponse.message = "Already Open"
-            response.success = True
-            return response
+            return [True, "Docking Station Alreaedy Open"]
         else:
             rospy.sleep(5.)
             print "Docking Station Now Open"
-            response.success = True
-            response.message = "Opened Docking Station"
-            return response
+            return [True, "Opened Docking Station"]
+
+    def restart_callback(self, data):
+        self.isOpen = False
+
 
 if __name__ == "__main__":
 
-    print "Starting Path Planner Node"
+    print "Starting Docking Station Node"
 
-    rospy.init_node('mission_handler_node', anonymous=True)
+    rospy.init_node('docking_station_node', anonymous=True)
 
     docking_station = docking_station_dummy()
 
