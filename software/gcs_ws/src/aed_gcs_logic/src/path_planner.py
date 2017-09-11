@@ -8,7 +8,7 @@ class path_planner:
     """Path Planner class"""
 
     def __init__(self):
-        self.mission_request_service = rospy.Service('/path_planner/request_mission', mission_request, mission_request_callback)
+        self.mission_request_service = rospy.Service('/path_planner/request_mission', mission_request, self.mission_request_callback)
 
     def get_map_data(self):
         print "Getting map data"
@@ -23,15 +23,16 @@ class path_planner:
 
         return path
 
-    def mission_request_callback(self, data):
+    def mission_request_callback(self, req):
         print "Recieved mission"
 
-        path = find_path(data)
+        path = self.find_path(req)
 
         # Execute path
         # ...
 
         print "Mission completed"
+        return True
 
 if __name__ == "__main__":
 
