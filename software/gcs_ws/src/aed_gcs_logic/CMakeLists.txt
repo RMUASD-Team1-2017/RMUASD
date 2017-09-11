@@ -65,6 +65,14 @@ add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 catkin_install_python(PROGRAMS src/risk_assessment.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+add_executable(controllogic src/controllogic.cpp)
+target_link_libraries(controllogic ${catkin_LIBRARIES})
+add_dependencies(controllogic controllogic_generate_messages_cpp)
+
+add_executable(listener src/listener.cpp)
+target_link_libraries(listener ${catkin_LIBRARIES})
+add_dependencies(listener controllogic_generate_messages_cpp)
+
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
