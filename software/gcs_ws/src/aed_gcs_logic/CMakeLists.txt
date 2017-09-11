@@ -56,9 +56,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# add_executable(${PROJECT_NAME}_node src/aed_gcs_logic_node.cpp)
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(health_check_node src/health_check_node.cpp)
+target_link_libraries(health_check_node
+    ${catkin_LIBRARIES}
+)
+add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 
 catkin_install_python(PROGRAMS src/risk_assessment.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -91,4 +93,9 @@ catkin_install_python(PROGRAMS src/risk_assessment.py
 # install(FILES
 #   # myfile1
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
+
+## Mark cpp header files for installation
+# install(DIRECTORY launch
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 # )
