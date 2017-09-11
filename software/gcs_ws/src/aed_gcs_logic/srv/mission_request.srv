@@ -1,0 +1,4 @@
+geo_coord start
+geo_coord end
+---
+bool result
