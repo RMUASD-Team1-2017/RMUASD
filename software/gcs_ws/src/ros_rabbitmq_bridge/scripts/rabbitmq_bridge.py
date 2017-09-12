@@ -9,36 +9,32 @@ from std_msgs.msg import String
 from ros_rabbitmq_bridge.msg import userinfo
 from rospy_message_converter import json_message_converter
 
-message = String(data = 'Hello')
 
-json_str = json_message_converter.convert_ros_message_to_json(message)
+# datain is supposed to be input from rabbitmq consumer, for now, simple test case
+datain = '{"state": "flying", "dronepos" : {"longitude": 10000, "latitude": 20000, "position_covariance_type" : 1}, "eta" : 100}'
 
 
-pub = rospy.Publisher('/status', String, queue_size=1000)
+newmsgin = json_message_converter.convert_json_to_ros_message('ros_rabbitmq_bridge/userinfo', datain)
 
-def callback(data):
-    print "Message received"
+# dataout is supposed to be incoming ros messages that gets converted to json and the emitted using rabbitmq
+#dataout = userinfo(state = 'idle')
 
-def listener():
+#newmsgout = json_message_converter.convert_ros_message_to_json(dataout)
 
-    rospy.init_node('control', anonymous=True)
-    print "Recieving"
-    rospy.Subscriber('control_c', Empty, callback)
-
+def talker():
+    pub = rospy.Publisher('ros_rabbitmq_bridge/userinfo', userinfo, queue_size=100)
+    rospy.init_node('custom_talker', anonymous=True)
+    r = rospy.Rate(10) #10hz
+    msg = userinfo()
+    msg = newmsgin
 
     while not rospy.is_shutdown():
-    # do whatever you want here
 
-        print "sending"
-        pub.publish(String)
-        rospy.sleep(1)  # sleep for one second
-
-
-def rabbitmq(arg):
-    pass
-
-
+        pub.publish(msg)
+        r.sleep()
 
 if __name__ == '__main__':
-    print "Running"
-    listener()
+
+
+
+    talker()
