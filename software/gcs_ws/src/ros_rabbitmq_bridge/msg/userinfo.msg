@@ -1,4 +1,6 @@
-string state
-uint32 ID
-sensor_msgs/NavSatFix dronepos
+string current_time
 uint32 eta
+sensor_msgs/NavSatFix position
+sensor_msgs/NavSatFix destination
+sensor_msgs/NavSatFix waypoint
+string state
