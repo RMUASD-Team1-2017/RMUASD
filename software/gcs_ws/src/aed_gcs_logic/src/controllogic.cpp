@@ -124,12 +124,13 @@ mavros_msgs::SetMode land_set_mode;
 mavros_msgs::SetMode auto_set_mode;
 mavros_msgs::Waypoint wp;
 mavros_msgs::WaypointPush service2;
+
 mavros_msgs::WaypointList WPList;
 
 
     offb_set_mode.request.custom_mode = "OFFBOARD";
     land_set_mode.request.custom_mode = "AUTO.LAND";
-    auto_set_mode.request.custom_mode = "AUTO";   // should load waipoints automatically when flying
+    auto_set_mode.request.custom_mode = "AUTO";   // should load waypoints automatically when flying
 
 	wp.frame = mavros_msgs::Waypoint::FRAME_GLOBAL; 
 	wp.command = mavros_msgs::CommandCode::NAV_WAYPOINT;
@@ -139,7 +140,28 @@ mavros_msgs::WaypointList WPList;
 	wp.y_long = 2;
 	wp.z_alt = 1;
 
+	service2.request.waypoints.push_back(wp);
+	WPList.waypoints.push_back(wp);
+
+	wp.frame = mavros_msgs::Waypoint::FRAME_GLOBAL; 
+	wp.command = mavros_msgs::CommandCode::NAV_WAYPOINT;
+	wp.is_current = false ;
+	wp.autocontinue = false;
+	wp.x_lat = 2;
+	wp.y_long = 2;
+	wp.z_alt = 1;
+
+	service2.request.waypoints.push_back(wp);
+
+	wp.frame = mavros_msgs::Waypoint::FRAME_GLOBAL; 
+	wp.command = mavros_msgs::CommandCode::NAV_WAYPOINT;
+	wp.is_current = false ;
+	wp.autocontinue = false;
+	wp.x_lat = 2;
+	wp.y_long = 5;
+	wp.z_alt = 1;
     
+	service2.request.waypoints.push_back(wp);
 
 mavros_msgs::CommandBool arm_cmd;
     arm_cmd.request.value = true;
@@ -169,8 +191,8 @@ ros::Time last_request = ros::Time::now();
             }
         }
 	if(current_state.mode != "Auto"){
-	if( set_mode_client.call(auto_set_mode) && StateOfFlight == 2 ){//&& offb_set_mode.response.mode_sent){
-                ROS_INFO("AUTO enabled");
+	if( set_mode_client.call(auto_set_mode) && StateOfFlight == 2 && ros::Duration(2).sleep()){//&& offb_set_mode.response.mode_sent){
+        ROS_INFO("AUTO enabled");
 		StateOfFlight=3;
 		std::cout<<" AUTO "<<current_state<<std::endl;
             }
@@ -184,23 +206,24 @@ ros::Time last_request = ros::Time::now();
 	// on ground after landing 
 
 	//if(ros::Time::now() - last_request > ros::Duration(5.0)){
-        local_pos_pub.publish(pose);
+    local_pos_pub.publish(pose);
 	//}
-        ros::spinOnce();
-        rate.sleep();
+    ros::spinOnce();
+    rate.sleep();
 	//ros::Duration(5).sleep(); 
 	if(StateOfFlight == 3 && CounterTime > 3){
-        //set_mode_client.call(land_set_mode);   // See link : http://wiki.ros.org/mavros/CustomModes#PX4_native_flight_stack
- 	//ArrayListWaypoint
-	for(int i = 0; i<9;i+=3){
-	std::cout<<"position x "<<ArrayListWaypoint[i]<<" y "<<ArrayListWaypoint[i+1]<<" z "<<ArrayListWaypoint[i+2]<<std::endl;
-	pose.pose.position.x = ArrayListWaypoint[i];
- 	 pose.pose.position.y = ArrayListWaypoint[i+1];
- 	 pose.pose.position.z = ArrayListWaypoint[i+2];
-	GoTo.publish(pose);
-	local_pos_pub.publish(pose);
-	std::cout<<" number "<<i<<std::endl;
-        ros::Duration(2).sleep(); 
+        	//set_mode_client.call(land_set_mode);   // See link : http://wiki.ros.org/mavros/CustomModes#PX4_native_flight_stack
+ 			//ArrayListWaypoint
+		for(int i = 0; i<9;i+=3){
+			std::cout<<"position x "<<ArrayListWaypoint[i]<<" y "<<ArrayListWaypoint[i+1]<<" z "<<ArrayListWaypoint[i+2]<<std::endl;
+			pose.pose.position.x = ArrayListWaypoint[i];
+ 	 		pose.pose.position.y = ArrayListWaypoint[i+1];
+ 			 pose.pose.position.z = ArrayListWaypoint[i+2];
+			//GoTo.publish(pose);
+			//local_pos_pub.publish(pose);
+			client.call(service2);
+			std::cout<<" number "<<i<<std::endl;
+        	ros::Duration(2).sleep(); 
 	}
 	//std::cout<<" hej7 "<<std::endl;
 	StateOfFlight = 4; 
@@ -210,12 +233,12 @@ ros::Time last_request = ros::Time::now();
    	if(StateOfFlight == 4 && CounterTime > 6){
         set_mode_client.call(land_set_mode);   // See link : http://wiki.ros.org/mavros/CustomModes#PX4_native_flight_stack
  	
-	//pose.pose.position.x = 0;
- 	// pose.pose.position.y = 2;
- 	// pose.pose.position.z = 0;
-	//local_pos_pub.publish(pose);
-	//std::cout<<" hej7 "<<std::endl;
-	//StateOfFlight = 3; 
+		//pose.pose.position.x = 0;
+ 		// pose.pose.position.y = 2;
+		// pose.pose.position.z = 0;
+		//local_pos_pub.publish(pose);
+		//std::cout<<" hej7 "<<std::endl;
+		//StateOfFlight = 3; 
 	}
 
 	rate.sleep();
