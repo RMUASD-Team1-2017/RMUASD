@@ -24,7 +24,8 @@ class talker:
 
 
     def talk(self):
-        pub = rospy.Publisher('ros_rabbitmq_bridge/userinfo', userinfo, queue_size=10)
+        pub_stat = rospy.Publisher('ros_rabbitmq_bridge/status', userinfo, queue_size=10)
+        pub_req = rospy.Publisher('ros_rabbitmq_bridge/missionrequest', userinfo, queue_size=10)
         r = rospy.Rate(10) #10hz
         msg = userinfo()
         while not rospy.is_shutdown():
@@ -34,7 +35,7 @@ class talker:
                 status_message_body = status_message["body"]
                 status = json_message_converter.convert_json_to_ros_message('ros_rabbitmq_bridge/userinfo', status_message_body)
                 print status
-                pub.publish(status)
+                pub_stat.publish(status)
 
 
             if not self.missionreq_consume.t.empty():
@@ -42,7 +43,7 @@ class talker:
                 missionreq_message_body = missionreq_message["body"]
                 missionreq = json_message_converter.convert_json_to_ros_message('ros_rabbitmq_bridge/userinfo', missionreq_message_body)
                 print missionreq
-                pub.publish(missionreq)
+                pub_req.publish(missionreq)
 
             r.sleep()
 
@@ -158,7 +159,7 @@ class missionreq_consumer:
     def callback_rabbit(self,ch,method,properties,body):
         ID = body.split(".")[1]
         self.t.put({"body" :body, "id" : ID})
-        print body
+        #print body
     def consume(self):
         self.channel.basic_consume(self.callback_rabbit,queue=self.queue_name,no_ack=True)
         self.channel.start_consuming()
