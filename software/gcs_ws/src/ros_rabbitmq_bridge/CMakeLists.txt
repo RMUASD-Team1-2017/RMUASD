@@ -23,6 +23,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   userinfo.msg
+  mission_request.msg
 )
 
 generate_messages(

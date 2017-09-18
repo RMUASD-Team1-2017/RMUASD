@@ -5,15 +5,15 @@ import rospy
 import numpy as np
 import threading
 import json
-from rabbitmq_classes import status_consumer, status_emitter, missionreq_consumer, missionreq_emitter, listener, talker
+from rabbitmq_classes import ros_to_rabbitmq_bridge, rabbitmq_to_ros_bridge
 
 from Queue import Queue
 from std_msgs.msg import Int32
 from std_msgs.msg import Empty
 from std_msgs.msg import String
-from ros_rabbitmq_bridge.msg import userinfo
+from ros_rabbitmq_bridge.msg import userinfo, mission_request
 from rospy_message_converter import json_message_converter
-
+import threading
 
 
 # test case for json to ros conversion
@@ -23,42 +23,27 @@ from rospy_message_converter import json_message_converter
 
 if __name__ == '__main__':
 
+    RABBIT_BROKER = "amqp://guest:guest@localhost:5672/%2F?connection_attempts=3&heartbeat_interval=3600"
 
 
     rospy.init_node('rabbitmq_bridge', anonymous=True)
 
-    status = listener( "ROS: status listener", "status")
 
-    missionrequest = listener ("ROS: missionreq listener", "missionrequest")
+    ros_to_rabbit_settings = [
+    {"ros_topic" : "ros_rabbitmq_bridge/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}
+    ]
+    rabbit_to_ros_settings = [
+    {"ros_topic" : "ros_rabbitmq_bridge/missionrequest", "message_type_str" : "ros_rabbitmq_bridge/mission_request", "message_type" : mission_request, "routing_key" : "drone.mission_request", "exchange" : "drone"}
 
-    status_consume = status_consumer( "rabbitMQ: status_consumer" )
-    status_emit = status_emitter( "rabbitMQ: status_emitter", status_consume, status)
+    ]
 
-    missionreq_consume = missionreq_consumer( "rabbitMQ: missionreq_consumer" )
-    missionreq_emit = missionreq_emitter( "rabbitMQ: missionreq_emitter", missionreq_consume, listen)
-
-    talk = talker( "ROS: status_mission_req_talker", status_consume, missionreq_consume)
-
-
-
-
-    status_consume.run()
-    missionreq_consume.run()
-
-    status_emit.run()
-    missionreq_emit.run()
-
-    listen.run()
-    talk.run()
-
-    status_consume.consuming_thread.join()
-    status_emit.emitting_thread.join()
-    missionreq_consume.consuming_thread.join()
-    missionreq_emit.emitting_thread.join()
-
-    listen.listen_thread.join()
-    talk.talker_thread.join()
-
+    ros_to_rabbit = ros_to_rabbitmq_bridge(RABBIT_BROKER, ros_to_rabbit_settings)
+    rabbit_to_ros = rabbitmq_to_ros_bridge(RABBIT_BROKER, rabbit_to_ros_settings)
+    rabbit_to_ros_thread = threading.Thread(target = rabbit_to_ros.channel.start_consuming)
+    rabbit_to_ros_thread.daemon = True
+    rabbit_to_ros_thread.start()
+    rospy.spin()
 
 
     print "Exiting Main thread"
+    sys.exit()

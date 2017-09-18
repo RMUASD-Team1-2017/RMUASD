@@ -13,196 +13,60 @@ from std_msgs.msg import String
 from ros_rabbitmq_bridge.msg import userinfo
 from rospy_message_converter import json_message_converter
 from ros_rabbitmq_bridge import *
+import functools
 
+class ros_to_rabbitmq_bridge:
+    def __init__(self, rabbitmq_host, bridge_settings):
+        #Bridge settings is a list of dicts with the following content:
+        #You can add further variables for use in the callback if you want
+        #{"ros_topic" : .., "routing_key" : .., "message_type" : .., "callback" : .., "exchange" : .., }
+        self.settings = bridge_settings
+        self.host = rabbitmq_host
+        self.setup_rabbitmq()
+        self.setup_subscribe_publish()
 
+    def setup_subscribe_publish(self):
+        for setting in self.settings:
+            if not "callback" in setting.keys():
+                setting["callback"] = self.simple_callback
+            self.channel.exchange_declare(exchange=setting["exchange"], type='topic' )
+            rospy.Subscriber(setting["ros_topic"], setting["message_type"], setting["callback"], (setting, self.channel,), queue_size=10)
 
-class talker:
-    def __init__(self,name, status_consume, missionreq_consume):
-      self.name = name
-      self.status_consume = status_consume
-      self.missionreq_consume = missionreq_consume
+    def setup_rabbitmq(self):
+        self.connection = pika.BlockingConnection(pika.URLParameters(self.host))
+        self.channel = self.connection.channel()
 
-
-    def talk(self):
-        pub_stat = rospy.Publisher('ros_rabbitmq_bridge/status', userinfo, queue_size=10)
-        pub_req = rospy.Publisher('ros_rabbitmq_bridge/missionrequest', userinfo, queue_size=10)
-        r = rospy.Rate(10) #10hz
-        msg = userinfo()
-        while not rospy.is_shutdown():
-
-            if not self.status_consume.q.empty():
-                status_message = self.status_consume.q.get()
-                status_message_body = status_message["body"]
-                status = json_message_converter.convert_json_to_ros_message('ros_rabbitmq_bridge/userinfo', status_message_body)
-                print status
-                pub_stat.publish(status)
-
-
-            if not self.missionreq_consume.t.empty():
-                missionreq_message = self.missionreq_consume.t.get()
-                missionreq_message_body = missionreq_message["body"]
-                missionreq = json_message_converter.convert_json_to_ros_message('ros_rabbitmq_bridge/userinfo', missionreq_message_body)
-                print missionreq
-                pub_req.publish(missionreq)
-
-            r.sleep()
-
-
-    def run(self):
-        print "Starting " + self.name
-        self.talker_thread = threading.Thread(target=self.talk)
-        self.talker_thread.daemon = True
-        self.talker_thread.start()
-
-    def __del__(self):
-        print("talk_joining")
-        self.talker_thread.join()
-        print("talk_joined")
-
-class listener:
-    def __init__(self,name, topic):
-        self.name = name
-        self.dat = Queue()
-        self.topic = topic
-
-    def listen_callback(self,data):
+    def simple_callback(self, data, args):
+        #Demo callback. Simply publishes the converted json on the same topic as recieved on.
         print(data)
-        self.dat.put({"body" : data})
+        print(args)
+        settings = args[0]
+        channel = args[1]
+        json_str = json_message_converter.convert_ros_message_to_json(data)
+        self.channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json_str)
 
-    def listen(self):
-        rospy.Subscriber("ros_rabbitmq_bridge/" + topic, userinfo, self.listen_callback)
-        rospy.spin() True
+class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
+    #Mostly the same as before, but the settings are a bit different:
+    #{"ros_topic" : .., "message_type_str" : .., "message_type" : .., "callback" : .., "exchange" : .., "routing_key" : ..}
 
-    def run(self):
-        print "Starting " + self.name
-        self.listen_thread = threading.Thread(target=self.listen)
-        self.listen_thread.daemon = True
-        self.listen_thread.start()
+    def setup_subscribe_publish(self):
+        for setting in self.settings:
+            if not "callback" in setting.keys():
+                setting["callback"] = self.simple_callback
+            self.channel.exchange_declare(exchange=setting["exchange"], type='topic' )
+            setting["queue"]  = self.channel.queue_declare(exclusive=True).method.queue
+            rospy.Subscriber(setting["ros_topic"], setting["message_type"], setting["callback"], (setting, ), queue_size=10)
+            self.channel.queue_bind(exchange= setting["exchange"], queue= setting["queue"], routing_key = setting["routing_key"])
+            self.channel.basic_consume(functools.partial(setting["callback"], settings = setting) ,queue=setting["queue"], no_ack=False)
+            setting["publisher"] = rospy.Publisher(setting["ros_topic"], setting["message_type"], queue_size=10)
 
-    def __del__(self):
-        print("listen_joining")
-        self.listen_thread.join()
-        print("listen_joined")
-
-
-class status_consumer:
-    def __init__(self, name):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange='drone', type='topic')
-        self.result = self.channel.queue_declare(exclusive=True)
-        self.queue_name = self.result.method.queue
-        self.channel.queue_bind(exchange='drone', queue=self.queue_name, routing_key='drone.*.status')
-        self.name = name
-        self.q = Queue()
-
-    def callback_rabbit(self,ch,method,properties,body):
-        ID = body.split(".")[1]
-        self.q.put({"body" :body, "id" : ID})
-        #print body
-    def consume(self):
-        self.channel.basic_consume(self.callback_rabbit,queue=self.queue_name,no_ack=True)
-        self.channel.start_consuming()
-
-    def run(self):
-        print "Starting " + self.name + " thread"
-        self.consuming_thread = threading.Thread(target=self.consume)
-        self.consuming_thread.daemon = True
-        self.consuming_thread.start()
-
-    def __del__(self):
-        print("statusconsume joining")
-        self.consuming_thread.join()
-        print("statusconsume joined")
-
-class status_emitter:
-    def __init__(self,name,status_consume,listen):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange='drone', type='topic')
-        self.name = name
-        self.status_consume = status_consume
-        self.listen = listen
-
-    def emit(self):
-        #message = self.status_consume.q.get()
-        #message_id = message["id"]
-
-        while 1:
-            temp = self.listen.dat.get(block=True)["body"]
-            json_str = json_message_converter.convert_ros_message_to_json(temp)
-            self.channel.basic_publish(exchange='drone', routing_key='drone.40.status', body=json_str)
-
-    def run(self):
-        print "Starting " + self.name + " thread"
-        self.emitting_thread = threading.Thread(target=self.emit)
-        self.emitting_thread.daemon = True
-        self.emitting_thread.start()
-
-    def __del__(self):
-        print("status emitter joining")
-        self.emitting_thread.join()
-        self.connection.close()
-        print("status emitter joined")
-
-
-class missionreq_consumer:
-    def __init__(self, name):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange='drone', type='topic')
-        self.result = self.channel.queue_declare(exclusive=True)
-        self.queue_name = self.result.method.queue
-        self.channel.queue_bind(exchange='drone', queue=self.queue_name, routing_key='drone.*.mission_request')
-        self.name = name
-        self.t = Queue()
-
-    def callback_rabbit(self,ch,method,properties,body):
-        ID = body.split(".")[1]
-        self.t.put({"body" :body, "id" : ID})
-        #print body
-    def consume(self):
-        self.channel.basic_consume(self.callback_rabbit,queue=self.queue_name,no_ack=True)
-        self.channel.start_consuming()
-
-    def run(self):
-        print "Starting " + self.name + " thread"
-        self.consuming_thread = threading.Thread(target=self.consume)
-        self.consuming_thread.daemon = True
-        self.consuming_thread.start()
-
-    def __del__(self):
-        print("mission consumer joining")
-        self.consuming_thread.join()
-        print("mission consumer joined")
-
-
-class missionreq_emitter:
-    def __init__(self,name,missionreq_consume,listen):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange='drone', type='topic')
-        self.name = name
-        self.missionreq_consume = missionreq_consume
-        self.listen = listen
-
-    def emit(self):
-        #message = self.missionreq_consume.t.get()
-        #message_id = message["id"]
-        while 1:
-            temp = self.listen.dat.get(block=True)["body"]
-            json_str = json_message_converter.convert_ros_message_to_json(temp)
-            self.channel.basic_publish(exchange='drone', routing_key='drone.40.mission_request', body=json_str)
-
-
-    def run(self):
-        print "Starting " + self.name + " thread"
-        self.emitting_thread = threading.Thread(target=self.emit)
-        self.emitting_thread.daemon = True
-        self.emitting_thread.start()
-
-    def __del__(self):
-        print("mission emitter joining")
-        self.emitting_thread.join()
-        self.connection.close()
-        print("mission emitter joined")
+    def simple_callback(self, *args, **kwargs):
+        if len(args) != 4:
+            return
+        ch = args[0]
+        method = args[1]
+        body = args[3]
+        settings = kwargs["settings"]
+        message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], body)
+        settings["publisher"].publish(message)
+        ch.basic_ack(delivery_tag = method.delivery_tag)
