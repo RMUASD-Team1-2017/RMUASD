@@ -11,6 +11,10 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "path_planner_node");
     ros::NodeHandle nh;
 
-    
+    /*
+    Setup class object
+    ...
+    */
+
     ros::spin();
 }
