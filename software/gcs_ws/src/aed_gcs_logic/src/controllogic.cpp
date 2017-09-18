@@ -84,7 +84,7 @@ int main(int argc, char **argv)
   ros::ServiceClient arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
   ros::ServiceClient set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
   ros::ServiceClient land = n.serviceClient<mavros_msgs::SetMode>("/mavros/cmd/set_mode");
-  ros::ServiceClient client = n.erviceClient
+  ros::ServiceClient client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
   while(ros::ok() && current_state.connected){  // waiting for heartbeat
         ros::spinOnce();
         rate.sleep();
