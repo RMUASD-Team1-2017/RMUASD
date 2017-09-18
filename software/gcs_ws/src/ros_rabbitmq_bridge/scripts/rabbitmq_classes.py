@@ -60,17 +60,18 @@ class talker:
         print("talk_joined")
 
 class listener:
-    def __init__(self,name):
+    def __init__(self,name, topic):
         self.name = name
         self.dat = Queue()
+        self.topic = topic
 
     def listen_callback(self,data):
         print(data)
         self.dat.put({"body" : data})
 
     def listen(self):
-        rospy.Subscriber("ros_rabbitmq_bridge/userinfo", userinfo, self.listen_callback)
-        rospy.spin()
+        rospy.Subscriber("ros_rabbitmq_bridge/" + topic, userinfo, self.listen_callback)
+        rospy.spin() True
 
     def run(self):
         print "Starting " + self.name

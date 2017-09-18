@@ -27,10 +27,12 @@ if __name__ == '__main__':
 
     rospy.init_node('rabbitmq_bridge', anonymous=True)
 
-    listen = listener( "ROS: listener" )
+    status = listener( "ROS: status listener", "status")
+
+    missionrequest = listener ("ROS: missionreq listener", "missionrequest")
 
     status_consume = status_consumer( "rabbitMQ: status_consumer" )
-    status_emit = status_emitter( "rabbitMQ: status_emitter", status_consume, listen)
+    status_emit = status_emitter( "rabbitMQ: status_emitter", status_consume, status)
 
     missionreq_consume = missionreq_consumer( "rabbitMQ: missionreq_consumer" )
     missionreq_emit = missionreq_emitter( "rabbitMQ: missionreq_emitter", missionreq_consume, listen)
