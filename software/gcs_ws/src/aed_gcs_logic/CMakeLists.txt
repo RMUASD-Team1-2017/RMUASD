@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
   message_generation
 )
 
@@ -61,6 +62,12 @@ target_link_libraries(health_check_node
     ${catkin_LIBRARIES}
 )
 add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
+
+add_executable(path_planner_node src/path_planner_node.cpp)
+target_link_libraries(path_planner_node
+    ${catkin_LIBRARIES}
+)
+add_dependencies(path_planner_node ${PROJECT_NAME}_generate_messages_cpp)
 
 catkin_install_python(PROGRAMS src/risk_assessment.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
