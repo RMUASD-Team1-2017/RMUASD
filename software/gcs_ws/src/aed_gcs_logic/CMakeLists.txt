@@ -57,6 +57,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+include_directories(include ${catkin_INCLUDE_DIRS})
+
 add_executable(health_check_node src/health_check_node.cpp)
 target_link_libraries(health_check_node
     ${catkin_LIBRARIES}

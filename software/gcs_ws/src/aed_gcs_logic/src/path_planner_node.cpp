@@ -1,7 +1,4 @@
-#include "ros/ros.h"
-#include "geometry_msgs/PoseArray.h"
-#include "aed_gcs_logic/mission_request.h"
-
+#include "aed_gcs_logic/path_planner.h"
 #include <iostream>
 
 int main(int argc, char *argv[])
