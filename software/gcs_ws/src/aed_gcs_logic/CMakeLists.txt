@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
+  sensor_msgs
   message_generation
 )
 
@@ -21,6 +22,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   geo_coord.msg
+  waypoints.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -39,6 +41,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 catkin_package(
@@ -54,7 +57,12 @@ catkin_package(
 
 include_directories(
 # include
+    ~/Dropbox/Privat/library/include
   ${catkin_INCLUDE_DIRS}
+)
+
+add_definitions(
+    -DSDL
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -65,9 +73,10 @@ target_link_libraries(health_check_node
 )
 add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 
-add_executable(path_planner_node include/aed_gcs_logic/path_planner.cpp)
+add_executable(path_planner_node src/path_planner_node.cpp include/aed_gcs_logic/path_planner.cpp)
 target_link_libraries(path_planner_node
     ${catkin_LIBRARIES}
+    2D SDL2 SDL2_gfx
 )
 add_dependencies(path_planner_node ${PROJECT_NAME}_generate_messages_cpp)
 
