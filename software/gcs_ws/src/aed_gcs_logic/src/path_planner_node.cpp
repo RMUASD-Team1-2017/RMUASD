@@ -1,17 +1,18 @@
 #include "aed_gcs_logic/path_planner.h"
 
 #include "ros/ros.h"
+#include <ros/package.h>
 #include "geometry_msgs/PoseArray.h"
 #include "aed_gcs_logic/mission_request.h"
 #include "aed_gcs_logic/waypoints.h"
 #include "std_msgs/Int8.h"
-
+#include <unistd.h>
 #include <iostream>
 
 ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
-    path_planner planner("resources/geofence.csv", "resources/landingspots.csv");
+    path_planner planner(ros::package::getPath("aed_gcs_logic") + "/resources/geofence.csv", ros::package::getPath("aed_gcs_logic") + "/resources/landingspots.csv");
     std::cout << req.start.latitude << std::endl;
     Coord start(req.start.latitude, req.start.longitude, req.start.altitude);
     Coord goal(req.end.latitude, req.end.longitude, req.end.altitude);

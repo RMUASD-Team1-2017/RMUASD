@@ -14,7 +14,8 @@ class Mission:
         self.plan_path = rospy.ServiceProxy('plan_path', mission_request)
 
     def plan(self, start_pos):
-        return
+        print(start_pos)
+        print(self.destination)
         response = self.plan_path(start_pos, self.destination)
         print("Response was", response)
 
