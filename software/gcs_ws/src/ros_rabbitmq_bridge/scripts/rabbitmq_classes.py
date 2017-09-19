@@ -41,8 +41,6 @@ class ros_to_rabbitmq_bridge:
         settings = args[0]
         channel = args[1]
         json_str = json_message_converter.convert_ros_message_to_json(data)
-        print(json_str)
-        print(settings["routing_key"])
         self.channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json_str)
 
 class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
