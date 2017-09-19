@@ -1,9 +1,12 @@
 #pragma once
 
 // Includes
-#include "ros/ros.h"
-#include "geometry_msgs/PoseArray.h"
-#include "aed_gcs_logic/mission_request.h"
+#include <limits>
+#include <vector>
+
+#ifdef SDL
+#include <2D.hpp>
+#endif
 
 // Structs
 struct Coord{
@@ -25,15 +28,15 @@ struct Node{
         coord = _coord;
         id = _id;
         cameFrom = NULL;
-        gScore = ULONG_MAX;
-        fScore = ULONG_MAX;
+        gScore = std::numeric_limits<double>::max();
+        fScore = std::numeric_limits<double>::max();
     }
     Coord coord;
     int id;
     std::vector<Node*> link;
     Node *cameFrom;
-    unsigned long gScore;
-    unsigned long fScore;
+    double gScore;
+    double fScore;
 };
 
 class path_planner
@@ -45,25 +48,35 @@ class path_planner
         void loadMap(std::string fileName);
         void connectNodes();
         std::vector<Node*> aStar(Node *start, Node *goal);
+        Coord getNearestLandingSpot(Coord start);
+
+#ifdef SDL
+        void draw();
+#endif
 
         std::vector<std::pair<Coord, Coord>> geofence;
         std::vector<Node> nodes;
+        std::vector<Node*> path;
+#ifdef SDL
+        Window *window;
+#endif
 
     private:
 
         bool outOfBounds(Node *node1, Node *node2);
         int getIndex(Coord coord);
 
-        static void printNode(Node *node);
-        static void printList(std::vector<Node*> &list);
-        static bool intersection(std::pair<Coord, Coord> l1, std::pair<Coord, Coord> l2);
-        static double getAngle(Coord &c1, Coord &c2);
-        static void addLink(Node *node1, Node *node2);
-        static Node *getLowestFScore(std::vector<Node*> &list);
-        static void removeNode(std::vector<Node*> &list, Node *node);
-        static bool inList(std::vector<Node*> &list, Node *node);
-        static int dist(Node *start, Node *goal);
-        static std::vector<Node*> reconstruc_path(Node *current);
+        void printNode(Node *node);
+        void printList(std::vector<Node*> &list);
+        void printList(std::vector<Node> &list);
+        bool intersection(std::pair<Coord, Coord> l1, std::pair<Coord, Coord> l2);
+        double getAngle(Coord c1, Coord c2);
+        void addLink(Node *node1, Node *node2);
+        Node *getLowestFScore(std::vector<Node*> &list);
+        void removeNode(std::vector<Node*> &list, Node *node);
+        bool inList(std::vector<Node*> &list, Node *node);
+        int dist(Node *start, Node *goal);
+        std::vector<Node*> reconstruc_path(Node *current);
 /*
         std::vector<std::pair<Coord, Coord>> geofence = loadGeofence("geofence.csv");
 
