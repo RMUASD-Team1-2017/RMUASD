@@ -3,6 +3,7 @@
 // Includes
 #include <limits>
 #include <vector>
+#include <string>
 
 #ifdef SDL
 #include <2D.hpp>
@@ -30,7 +31,7 @@ struct Node{
     Node(Coord _coord, int _id){
         coord = _coord;
         id = _id;
-        cameFrom = NULL;
+        cameFrom = nullptr;
         gScore = std::numeric_limits<double>::max();
         fScore = std::numeric_limits<double>::max();
     }

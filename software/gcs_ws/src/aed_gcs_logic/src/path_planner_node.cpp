@@ -20,7 +20,9 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     res.result.longitude = landingPos.y;
     res.result.altitude = landingPos.z;
     std::vector<Node*> waypoints = planner.aStar(start, landingPos);
+#ifdef SDL
     planner.draw(500);
+#endif
     std::cout << waypoints.size() << std::endl;
     for (int i = 0; i < waypoints.size(); i++){
         std::cout << waypoints[i]->id << ": " << waypoints[i]->coord.x << ", " << waypoints[i]->coord.y << ", " << waypoints[i]->coord.z << std::endl;
