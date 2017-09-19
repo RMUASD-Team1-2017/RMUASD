@@ -11,19 +11,16 @@
 #include <2D.hpp>
 #endif
 
-path_planner::path_planner(std::string map, std::string landingspots){
+path_planner::path_planner(std::string map, std::string landingspotFile){
     loadMap(map);
     loadGeofence(map);
-    connectNodes();
-#ifdef SDL
-    window = new Window(Vector(1000, 0),Vector(1000, 1000), "Path Planner");
-#endif
+    loadLandingSpots(landingspotFile);
 }
 
 // Debugging function for printing all specs of a node
 void path_planner::printNode(Node *node){
     std::cout << "Id: " << node->id << "\t";
-    std::cout << "Coord: " << node->coord.x << ", " << node->coord.y << "\t";
+    std::cout << "Coord: " << node->coord.x << ", " << node->coord.y << ", " << node->coord.z << "\t";
     if (node->cameFrom == NULL) std::cout << "From: Unknown!" << "\t";
     else std::cout << "From: " << node->cameFrom->id << "\t";
     std::cout << "G Score: " << node->gScore << "\t";
@@ -32,6 +29,12 @@ void path_planner::printNode(Node *node){
     for (int i = 0; i < node->link.size(); i++){
         std::cout << "\t" << node->link[i]->id << "\t";
     }
+    std::cout << std::endl;
+}
+
+// Debugging function for printing all specs of a coord
+void path_planner::printCoord(Coord coord){
+    std::cout << "Coord: " << coord.x << ", " << coord.y << ", " << coord.z << std::endl;
     std::cout << std::endl;
 }
 
@@ -50,6 +53,7 @@ void path_planner::loadGeofence(std::string fileName){
     geofence = std::vector<std::pair<Coord, Coord>>();
 
     std::ifstream file(fileName);
+    if (!file) std::cout << "Can't find geofence file: " << fileName << std::endl;
 
     int index = 0;
     Coord prev;
@@ -58,14 +62,14 @@ void path_planner::loadGeofence(std::string fileName){
         std::string s;
         if (!getline(file, s)) break;
         std::istringstream ss(s);
-        std::vector<std::string> coord;
+        std::vector<double> coord;
         while (ss){
             std::string s;
             if (!getline(ss, s, ',')) break;
-            coord.push_back(s);
+            coord.push_back(std::stod(s));
         }
-        if (index) geofence.push_back(std::pair<Coord, Coord>(prev, Coord(std::stod(coord[0]), std::stod(coord[1]))));
-        prev = Coord(std::stod(coord[0]), std::stod(coord[1]));
+        if (index) geofence.push_back(std::pair<Coord, Coord>(prev, Coord(coord[0], coord[1], coord[2])));
+        prev = Coord(coord[0], coord[1], coord[2]);
         index++;
     }
 }
@@ -75,25 +79,46 @@ void path_planner::loadMap(std::string fileName){
     nodes = std::vector<Node>();
 
     std::ifstream file(fileName);
+    if (!file) std::cout << "Can't find map file: " << fileName << std::endl;
 
     int index = 0;
     while (file){
         std::string s;
         if (!getline(file, s)) break;
         std::istringstream ss(s);
-        std::vector<std::string> coord;
+        std::vector<double> coord;
         while (ss){
             std::string s;
             if (!getline(ss, s, ',')) break;
-            coord.push_back(s);
+            coord.push_back(std::stod(s));
         }
-        nodes.push_back(Node(Coord(std::stod(coord[0]), std::stod(coord[1])), index));
+        nodes.push_back(Node(Coord(coord[0], coord[1], coord[2]), index));
         index++;
     }
 
     for (int i = 1; i < nodes.size(); i++){
         nodes[i - 1].link.push_back(&nodes[i]);
         nodes[i].link.push_back(&nodes[i - 1]);
+    }
+}
+
+void path_planner::loadLandingSpots(std::string fileName){
+    std::ifstream file(fileName);
+    if (!file) std::cout << "Can't find landingspot file: " << fileName << std::endl;
+
+    int index = 0;
+    while (file){
+        std::string s;
+        if (!getline(file, s)) break;
+        std::istringstream ss(s);
+        std::vector<double> coord;
+        while (ss){
+            std::string s;
+            if (!getline(ss, s, ',')) break;
+            coord.push_back(std::stod(s));
+        }
+        landingspot.push_back(Coord(coord[0], coord[1], coord[2]));
+        index++;
     }
 }
 
@@ -123,7 +148,7 @@ double path_planner::getAngle(Coord c1, Coord c2){
 
 int path_planner::getIndex(Coord coord){
     for (int i = 0; i < geofence.size(); i++){
-        if (coord.x == geofence[i].first.x && coord.y == geofence[i].first.y) return i;
+        if (coord.x == geofence[i].first.x && coord.y == geofence[i].first.y && coord.z == geofence[i].first.z) return i;
     }
     return -1;
 }
@@ -170,7 +195,7 @@ void path_planner::connectNodes(){
 
 // Finds the node with the lowest F score
 Node *path_planner::getLowestFScore(std::vector<Node*> &list){
-    unsigned long score = std::numeric_limits<double>::max();
+    double score = std::numeric_limits<double>::max();
     unsigned long index = 0;
     for (int i = 0; i < list.size(); i++){
         if (score > list[i]->fScore){
@@ -201,8 +226,13 @@ bool path_planner::inList(std::vector<Node*> &list, Node *node){
 }
 
 // Return euclidean distance between two nodes
-int path_planner::dist(Node *start, Node *goal){
-    return sqrt(pow(start->coord.x - goal->coord.x, 2) + pow(start->coord.y - goal->coord.y, 2));
+double path_planner::dist(Node *start, Node *goal){
+    return sqrt(pow(start->coord.x - goal->coord.x, 2) + pow(start->coord.y - goal->coord.y, 2) + pow(start->coord.z - goal->coord.z, 2));
+}
+
+// Return euclidean distance between two nodes
+double path_planner::dist(Coord *start, Coord *goal){
+    return sqrt(pow(start->x - goal->x, 2) + pow(start->y - goal->y, 2) + pow(start->z - goal->z, 2));
 }
 
 // Recunstruct path after A*-algorithm
@@ -216,7 +246,16 @@ std::vector<Node*> path_planner::reconstruc_path(Node *current){
 }
 
 // The standard A* algorithm
-std::vector<Node*> path_planner::aStar(Node *start, Node *goal){
+std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
+
+    nodes.push_back(Node(startCoord, -1));
+    Node *start = &nodes.back();
+
+    nodes.push_back(Node(goalCoord, -2));
+    Node *goal = &nodes.back();
+
+    connectNodes();
+
     std::vector<Node*> closedSet;
     std::vector<Node*> openSet = {start};
     start->gScore = 0;
@@ -253,12 +292,26 @@ std::vector<Node*> path_planner::aStar(Node *start, Node *goal){
 }
 
 Coord path_planner::getNearestLandingSpot(Coord start){
-
-    return Coord(0, 0, 0);
+    Coord nearest;
+    std::cout << "Size: " << landingspot.size() << std::endl;
+    double distance = std::numeric_limits<double>::max();
+    for (int i = 0; i < landingspot.size(); i++){
+        std::cout << i << ": ";
+        printCoord(landingspot[i]);
+        if (dist(&start, &landingspot[i]) < distance){
+            nearest = landingspot[i];
+            distance = dist(&start, &landingspot[i]);
+        }
+    }
+    printCoord(nearest);
+    return nearest;
 }
 
 #ifdef SDL
-void path_planner::draw(){
+void path_planner::draw(int size){
+
+    static Window *window = new Window(Vector(1920 / 2, 0),Vector(size, size), "Path Planner");
+
     double minX = std::numeric_limits<double>::max();
     double maxX = std::numeric_limits<double>::min();
     double minY = std::numeric_limits<double>::max();
@@ -271,11 +324,11 @@ void path_planner::draw(){
         maxY = std::max(maxY, nodes[i].coord.y);
     }
 
-    double scale = 900 / std::max(maxX - minX, maxY - minY);
+    double scale = size * 0.9 / std::max(maxX - minX, maxY - minY);
     Vector scaleOffset(-minX, -minY);
 
     window->background(White);
-    Vector offset(50 ,50);
+    Vector offset(size / 20, size / 20);
 
     for (int i = 0; i < nodes.size(); i++){
         Vector v1 = Vector(nodes[i].coord.x, nodes[i].coord.y);
@@ -294,7 +347,6 @@ void path_planner::draw(){
     for (int i = 1; i < path.size(); i++){
         Vector v1 = Vector(path[i - 1]->coord.x, path[i - 1]->coord.y);
         Vector v2 = Vector(path[i]->coord.x, path[i]->coord.y);
-        std::cout << "pos" << (v1 + scaleOffset) * scale + offset << std::endl;
         window->line((v1 + scaleOffset) * scale + offset, (v2 + scaleOffset) * scale + offset, Blue);
     }
 

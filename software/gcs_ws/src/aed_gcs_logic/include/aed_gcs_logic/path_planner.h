@@ -13,13 +13,16 @@ struct Coord{
     Coord(){
         x = 0;
         y = 0;
+        z = 0;
     };
-    Coord(double _x, double _y){
+    Coord(double _x, double _y, double _z){
         x = _x;
         y = _y;
+        z = _z;
     }
     double x;
     double y;
+    double z;
 };
 
 // Node inside the graph
@@ -43,46 +46,40 @@ class path_planner
 {
     public:
 
-        path_planner(std::string geofence, std::string landingspots);
+        path_planner(std::string geofence, std::string landingspotFile);
         void loadGeofence(std::string fileName);
         void loadMap(std::string fileName);
         void connectNodes();
-        std::vector<Node*> aStar(Node *start, Node *goal);
+        std::vector<Node*> aStar(Coord start, Coord goal);
         Coord getNearestLandingSpot(Coord start);
 
+        static void printNode(Node *node);
+        static void printList(std::vector<Node*> &list);
+        static void printList(std::vector<Node> &list);
+        static void printCoord(Coord coord);
+
 #ifdef SDL
-        void draw();
+        void draw(int size);
 #endif
 
         std::vector<std::pair<Coord, Coord>> geofence;
         std::vector<Node> nodes;
+        std::vector<Coord> landingspot;
         std::vector<Node*> path;
-#ifdef SDL
-        Window *window;
-#endif
 
     private:
 
         bool outOfBounds(Node *node1, Node *node2);
         int getIndex(Coord coord);
 
-        void printNode(Node *node);
-        void printList(std::vector<Node*> &list);
-        void printList(std::vector<Node> &list);
+        void loadLandingSpots(std::string flieName);
         bool intersection(std::pair<Coord, Coord> l1, std::pair<Coord, Coord> l2);
         double getAngle(Coord c1, Coord c2);
         void addLink(Node *node1, Node *node2);
         Node *getLowestFScore(std::vector<Node*> &list);
         void removeNode(std::vector<Node*> &list, Node *node);
         bool inList(std::vector<Node*> &list, Node *node);
-        int dist(Node *start, Node *goal);
+        double dist(Node *start, Node *goal);
+        double dist(Coord *start, Coord *goal);
         std::vector<Node*> reconstruc_path(Node *current);
-/*
-        std::vector<std::pair<Coord, Coord>> geofence = loadGeofence("geofence.csv");
-
-        std::vector<Node> nodes = loadMap("geofence.csv");
-        connectNodes(nodes, geofence);
-
-        std::vector<Node*> path = aStar(&nodes[0], &nodes[9]);
-*/
 };
