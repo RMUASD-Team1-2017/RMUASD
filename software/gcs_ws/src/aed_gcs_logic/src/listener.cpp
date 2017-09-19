@@ -16,7 +16,7 @@ void Callback(const std_msgs::String::ConstPtr& msg)
 
 void MavrosCallback(const mavros_msgs::Waypoint::ConstPtr& msgs)
 {
-  ROS_INFO("I heard: [%s]", msgs->x_lat);
+  ROS_INFO("I heard: [%i]", msgs->x_lat);
 }
 // %EndTag(CALLBACK)%
 
