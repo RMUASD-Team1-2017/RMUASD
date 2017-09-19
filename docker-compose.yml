@@ -1,0 +1,31 @@
+version: '3.3'
+services:
+  webapp:
+    image: stefanrvo/rmuasdweb:latest
+    build:
+      context: ./software/WebUI
+      dockerfile: Dockerfile
+    container_name: rmuasd-webui
+    deploy:
+      replicas: 1
+    networks:
+      - rmuasd_network
+  groundcontrol:
+    image: stefanrvo/rmuasd_groundcontrol:latest
+    build:
+      context: ./software/gcs_ws
+      dockerfile: Dockerfile
+    container_name: rmuasd-gcs
+    deploy:
+      replicas: 1
+    networks:
+      - rmuasd_network
+
+
+
+networks:
+  rmuasd_network:
+    driver: overlay
+    ipam:
+        config:
+            - subnet: 10.0.0.1/24

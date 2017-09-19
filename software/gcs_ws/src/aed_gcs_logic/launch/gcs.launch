@@ -1,0 +1,16 @@
+ <launch>
+
+	<!-- rabbitMQ bridge node -->
+	<node pkg="ros_rabbitmq_bridge" type="rabbitmq_bridge.py" name="rabbitmq_bridge" output="screen">
+	</node>
+
+<!-- Start the mission handler -->
+  <node name="mission_handler" pkg="aed_gcs_logic" type="mission_handler.py" output="screen" />
+<!--  <node name="ball_traj_tester" pkg="rovi2_development" type="ball_traj_tester" output="screen" /> -->
+
+<!-- Start location faker -->
+<node name="location_faker" pkg="aed_gcs_logic" type="location_faker.py" output="screen" />
+
+
+
+</launch>
