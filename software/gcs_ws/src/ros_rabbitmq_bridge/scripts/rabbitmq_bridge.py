@@ -30,13 +30,13 @@ if __name__ == '__main__':
 
 
     ros_to_rabbit_settings = [
-    {"ros_topic" : "ros_rabbitmq_bridge/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}
+    {"ros_topic" : "drone/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}
     ]
     rabbit_to_ros_settings = [
-    {"ros_topic" : "ros_rabbitmq_bridge/missionrequest", "message_type_str" : "ros_rabbitmq_bridge/mission_request", "message_type" : mission_request, "routing_key" : "drone.mission_request", "exchange" : "drone"}
+    {"ros_topic" : "drone/missionrequest", "message_type_str" : "ros_rabbitmq_bridge/mission_request", "message_type" : mission_request, "routing_key" : "drone.mission_request", "exchange" : "drone"}
 
     ]
-
+    print("Starting rabbitmq bridge")
     ros_to_rabbit = ros_to_rabbitmq_bridge(RABBIT_BROKER, ros_to_rabbit_settings)
     rabbit_to_ros = rabbitmq_to_ros_bridge(RABBIT_BROKER, rabbit_to_ros_settings)
     rabbit_to_ros_thread = threading.Thread(target = rabbit_to_ros.channel.start_consuming)

@@ -1,4 +1,4 @@
-geo_coord start
-geo_coord end
+sensor_msgs/NavSatFix start
+sensor_msgs/NavSatFix end
 ---
 bool result
