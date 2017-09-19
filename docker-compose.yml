@@ -20,7 +20,6 @@ services:
       replicas: 1
     networks:
       - rmuasd_network
-      - rmuasd_network
   drone:
     image: stefanrvo/rmuasd_drone:latest
     build:
