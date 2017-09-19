@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(aed_gcs_logic)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
   message_generation
 )
 
@@ -56,11 +57,19 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+include_directories(include ${catkin_INCLUDE_DIRS})
+
 add_executable(health_check_node src/health_check_node.cpp)
 target_link_libraries(health_check_node
     ${catkin_LIBRARIES}
 )
 add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
+
+add_executable(path_planner_node include/aed_gcs_logic/path_planner.cpp)
+target_link_libraries(path_planner_node
+    ${catkin_LIBRARIES}
+)
+add_dependencies(path_planner_node ${PROJECT_NAME}_generate_messages_cpp)
 
 catkin_install_python(PROGRAMS src/risk_assessment.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
