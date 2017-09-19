@@ -72,19 +72,21 @@ int main(int argc, char **argv)
   ros::Publisher Feed = n.advertise<std_msgs::String>("Feedback", 1000);
   ros::Publisher TakeOff = n.advertise<std_msgs::String>("Take_off", 1000);
   ros::Publisher GoWaypoint = n.advertise<mavros_msgs::Waypoint>("/mavros/mission/waypoints", 1000);
-  ros::Publisher Land_Now = n.advertise<std_msgs::String>("Land", 1000);
-  ros::Publisher GoTo = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local",1000); 
+ 	ros::Publisher Land_Now = n.advertise<std_msgs::String>("Land", 1000);
+ 	//ros::Publisher GoTo = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local",1000); 
+	
 
 
 
+	ros::Subscriber state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 1000, state_cb);
+	ros::Publisher local_pos_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 1000);
+	//ros::Publisher global_pos_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint");
+	ros::ServiceClient arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+	ros::ServiceClient set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+	ros::ServiceClient land = n.serviceClient<mavros_msgs::SetMode>("/mavros/cmd/set_mode");
+	ros::ServiceClient client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
+	//ros::ServiceClient Wayli = n.serviceClient<mavros_msgs::WayPoint>("/mavros/mission/set_current");
 
-  //ros::Subscriber state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 1000, state_cb);
-  ros::Publisher local_pos_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 1000);
-  //ros::Publisher global_pos_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint");
-  ros::ServiceClient arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
-  ros::ServiceClient set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
-  ros::ServiceClient land = n.serviceClient<mavros_msgs::SetMode>("/mavros/cmd/set_mode");
-  ros::ServiceClient client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
   while(ros::ok() && current_state.connected){  // waiting for heartbeat
         ros::spinOnce();
         rate.sleep();
@@ -94,17 +96,20 @@ int main(int argc, char **argv)
   ros::Subscriber AbortMission = n.subscribe("AbortCmd", 1000, Callback);
   
   ros::Subscriber Motor_check = n.subscribe("MotorCheck", 1000, Callback);
-  //ros::Subscriber ListOfWaypoints = n.subscribe("mavros_msgs/Waypoint  ",1000,ListCallback);
-
+  //ros::Subscriber ListOfWaypoints = n.subscribe("mavros_msgs/WaypointList  ",1000,ListCallback);
+	int count = 1; 
   geometry_msgs::PoseStamped pose;
   geometry_msgs::PoseStamped position1;
   //position1.pose.position.x = ListOfWaypoints[1];
  // mavros_msgs::WaypointList Way;
-  int ArrayListWaypoint [9] = {0,0,1,2,5,1,0,0,1};
-
-  pose.pose.position.x = 0;
-  pose.pose.position.y = 0;
-  pose.pose.position.z = 1;
+	int ArrayListWaypoint [9] = {0.0,0.0,1.0,2.0,5.0,1.0,0.0,0.0,1.0};
+	pose.header.stamp = ros::Time::now();
+	pose.header.seq = count; 
+	pose.header.frame_id = 1;
+	
+	pose.pose.position.x = 0.0;
+	pose.pose.position.y = 0.0;
+	pose.pose.position.z = 1.0;
  // mavros_msgs.Way[pose];
 
 
@@ -113,63 +118,69 @@ int main(int argc, char **argv)
 // %EndTag(LOOP_RATE)%
 
 
-for(int i = 100; ros::ok() && i > 0; --i){
-        GoTo.publish(pose);
-        ros::spinOnce();
-        rate.sleep();
-    }
+//for(int i = 100; ros::ok() && i > 0; --i){
+       // GoTo.publish(pose);
+        //ros::spinOnce();
+        //rate.sleep();
+  //  }
 
 mavros_msgs::SetMode offb_set_mode;
 mavros_msgs::SetMode land_set_mode;
 mavros_msgs::SetMode auto_set_mode;
 mavros_msgs::Waypoint wp;
 mavros_msgs::WaypointPush service2;
+mavros_msgs::SetMode takeoff_set_mode;
 
 mavros_msgs::WaypointList WPList;
 
 
     offb_set_mode.request.custom_mode = "OFFBOARD";
+	takeoff_set_mode.request.custom_mode = "AUTO.TAKEOFF";
     land_set_mode.request.custom_mode = "AUTO.LAND";
-    auto_set_mode.request.custom_mode = "AUTO";   // should load waypoints automatically when flying
+    auto_set_mode.request.custom_mode = "AUTO.MISSION";   // should load waypoints automatically when flying
 
-	wp.frame = mavros_msgs::Waypoint::FRAME_GLOBAL; 
+	wp.frame = mavros_msgs::Waypoint::FRAME_MISSION; 
 	wp.command = mavros_msgs::CommandCode::NAV_WAYPOINT;
 	wp.is_current = false ;
-	wp.autocontinue = false;
-	wp.x_lat = 5;
+	wp.autocontinue = true;
+	wp.x_lat = 7;
 	wp.y_long = 2;
 	wp.z_alt = 1;
 
 	service2.request.waypoints.push_back(wp);
 	WPList.waypoints.push_back(wp);
-
-	wp.frame = mavros_msgs::Waypoint::FRAME_GLOBAL; 
+	std::cout<<" waypoint List1		"<<wp<<std::endl;
+	wp.frame = mavros_msgs::Waypoint::FRAME_MISSION; 
 	wp.command = mavros_msgs::CommandCode::NAV_WAYPOINT;
 	wp.is_current = false ;
-	wp.autocontinue = false;
-	wp.x_lat = 2;
-	wp.y_long = 2;
-	wp.z_alt = 1;
-
-	service2.request.waypoints.push_back(wp);
-
-	wp.frame = mavros_msgs::Waypoint::FRAME_GLOBAL; 
-	wp.command = mavros_msgs::CommandCode::NAV_WAYPOINT;
-	wp.is_current = false ;
-	wp.autocontinue = false;
+	wp.autocontinue = true;
 	wp.x_lat = 2;
 	wp.y_long = 5;
 	wp.z_alt = 1;
+
+	service2.request.waypoints.push_back(wp);
+	WPList.waypoints.push_back(wp);
+	std::cout<<" waypoint List2		"<<wp<<std::endl;
+	wp.frame = mavros_msgs::Waypoint::FRAME_MISSION; 
+	wp.command = mavros_msgs::CommandCode::NAV_WAYPOINT;
+	wp.is_current = false ;
+	wp.autocontinue = true;
+	wp.x_lat = 0;
+	wp.y_long = 0;
+	wp.z_alt = 1;
     
 	service2.request.waypoints.push_back(wp);
-
+	WPList.waypoints.push_back(wp);
+	std::cout<<" waypoint List3		"<<wp<<std::endl;
+	//std::cout<<" service "<<service2<<std::endl;
 mavros_msgs::CommandBool arm_cmd;
     arm_cmd.request.value = true;
 
 ros::Time last_request = ros::Time::now();
 
-
+	std::cout<<" Start While loop "<<current_state<<std::endl;
  while(ros::ok()){
+       // std::cout<<" While "<<current_state<<std::endl;
         if( current_state.mode != "OFFBOARD" && (ros::Time::now() - last_request > ros::Duration(5.0))){
 		std::cout<<" hej "<<std::endl;
             if( set_mode_client.call(offb_set_mode) && StateOfFlight == 0 ){//&& offb_set_mode.response.mode_sent){
@@ -190,49 +201,67 @@ ros::Time last_request = ros::Time::now();
                 last_request = ros::Time::now();
             }
         }
-	if(current_state.mode != "Auto"){
-	if( set_mode_client.call(auto_set_mode) && StateOfFlight == 2 && ros::Duration(2).sleep()){//&& offb_set_mode.response.mode_sent){
-        ROS_INFO("AUTO enabled");
+
+	if(current_state.mode != "TAKEOFF" && StateOfFlight == 2){
+	if( set_mode_client.call(takeoff_set_mode) && StateOfFlight == 2 && ros::Duration(2).sleep()){//&& offb_set_mode.response.mode_sent){
+        ROS_INFO("Takeoff"); // auto takeoff
 		StateOfFlight=3;
-		std::cout<<" AUTO "<<current_state<<std::endl;
+		std::cout<<" Takeoff2 "<<current_state<<std::endl;
+		ros::Duration(10).sleep();
             }
 	else if(StateOfFlight == 2) {
-		ROS_INFO("Failed to enable AUTO");
+		ROS_INFO("Failed to enable Takeoff");
 	}
 	}
-	// states
-	// :On ground   Offboard ,Arm, fly  
-	// in air   move, land
-	// on ground after landing 
+
+
+	
+	
 
 	//if(ros::Time::now() - last_request > ros::Duration(5.0)){
     local_pos_pub.publish(pose);
 	//}
     ros::spinOnce();
     rate.sleep();
-	//ros::Duration(5).sleep(); 
-	if(StateOfFlight == 3 && CounterTime > 3){
+	 
+	if(StateOfFlight == 3 ){//&& current_state.mode != "AUTO.LOITER"){
+			ros::Duration(10).sleep(); 
         	//set_mode_client.call(land_set_mode);   // See link : http://wiki.ros.org/mavros/CustomModes#PX4_native_flight_stack
  			//ArrayListWaypoint
-		for(int i = 0; i<9;i+=3){
-			std::cout<<"position x "<<ArrayListWaypoint[i]<<" y "<<ArrayListWaypoint[i+1]<<" z "<<ArrayListWaypoint[i+2]<<std::endl;
-			pose.pose.position.x = ArrayListWaypoint[i];
- 	 		pose.pose.position.y = ArrayListWaypoint[i+1];
- 			 pose.pose.position.z = ArrayListWaypoint[i+2];
+		//for(int i = 0; i<9;i+=3){
+			//std::cout<<"position x "<<ArrayListWaypoint[i]<<" y "<<ArrayListWaypoint[i+1]<<" z "<<ArrayListWaypoint[i+2]<<std::endl;
+			pose.pose.position.x = 2;// ArrayListWaypoint[i];
+ 	 		pose.pose.position.y = 5; //ArrayListWaypoint[i+1];
+ 			 pose.pose.position.z = 1; //ArrayListWaypoint[i+2];
 			//GoTo.publish(pose);
-			//local_pos_pub.publish(pose);
+			local_pos_pub.publish(pose);
 			client.call(service2);
-			std::cout<<" number "<<i<<std::endl;
-        	ros::Duration(2).sleep(); 
-	}
+			//Wayli.call(service2);
+			std::cout<<" all waypoints are sent "<<std::endl;
+			//std::cout<<" number "<<i<<std::endl;
+			std::cout<<" Num "<<current_state<<std::endl;
+        	ros::Duration(5).sleep(); 
+		//}
 	//std::cout<<" hej7 "<<std::endl;
 	StateOfFlight = 4; 
 	//ros::Duration(12).sleep();
 	}
 
-   	if(StateOfFlight == 4 && CounterTime > 6){
+if(current_state.mode != "AUTO.MISSION" && StateOfFlight == 4){
+	if( StateOfFlight == 4 && ros::Duration(2).sleep()){//&& offb_set_mode.response.mode_sent){
+        set_mode_client.call(auto_set_mode);
+		ROS_INFO("AUTO.MISSION enabled");
+		StateOfFlight=5;
+		std::cout<<" AUTO "<<current_state<<std::endl;
+            }
+	else if(StateOfFlight == 4) {
+		ROS_INFO("Failed to enable AUTO.MISSION");
+	}
+	}
+
+   	if(StateOfFlight == 5 && current_state.mode != "AUTO.LAND"  && current_state.mode != "AUTO.RTL" ){
         set_mode_client.call(land_set_mode);   // See link : http://wiki.ros.org/mavros/CustomModes#PX4_native_flight_stack
- 	
+ 		std::cout<<" AUTO.LAND "<<current_state<<std::endl;
 		//pose.pose.position.x = 0;
  		// pose.pose.position.y = 2;
 		// pose.pose.position.z = 0;
