@@ -74,7 +74,7 @@ add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 catkin_install_python(PROGRAMS src/risk_assessment.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-add_executable(control_logic_node src/control_logic_node.cpp)
+add_executable(control_logic_node src/control_logic_node.cpp src/drone_logic.cpp)
 target_link_libraries(control_logic_node ${catkin_LIBRARIES})
 add_dependencies(control_logic_node ${PROJECT_NAME}_generate_messages_cpp)
 
