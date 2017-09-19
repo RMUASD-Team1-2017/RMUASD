@@ -1,0 +1,34 @@
+<!-- Ublox SARA G3 Interface example launch file
+-->
+
+<launch>
+	<group ns="fmLib">
+	</group>
+
+	<group ns="fmSensors">
+	</group>
+
+	<group ns="fmProcessors">
+	</group>
+
+	<group ns="fmDecisionMakers">
+	</group>
+
+	<group ns="fmExecutors">
+	</group>
+
+	<group ns="fmControllers">
+	</group>
+
+	<group ns="fmLib">
+		<node pkg="ublox_sara_g3_interface" name="ublox_sara_g3_interface" type="ublox_sara_g3_node.py" output="screen" >
+			<param name="udp_rx_pub" value="/fmLib/udp_rx" />
+			<param name="udp_tx_sub" value="/fmLib/udp_tx" />
+			<param name="serial_device" value="/dev/ttyUSB0" />
+			<param name="serial_baudrate" value="38400" />
+			<param name="gsm_apn" value='internet' />
+			<param name="server_name" value='drone.stefanrvo.dk' />
+			<param name="server_port" value="1235" />
+		</node>
+	</group>
+</launch>
