@@ -61,10 +61,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_definitions(
-    -DSDL
-)
-
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(health_check_node src/health_check_node.cpp)
@@ -76,7 +72,6 @@ add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 add_executable(path_planner_node src/path_planner_node.cpp include/aed_gcs_logic/path_planner.cpp)
 target_link_libraries(path_planner_node
     ${catkin_LIBRARIES}
-    2D SDL2 SDL2_gfx
 )
 add_dependencies(path_planner_node ${PROJECT_NAME}_generate_messages_cpp)
 
