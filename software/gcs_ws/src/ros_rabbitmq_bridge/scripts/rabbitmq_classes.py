@@ -38,8 +38,8 @@ class ros_to_rabbitmq_bridge:
 
     def simple_callback(self, data, args):
         #Demo callback. Simply publishes the converted json on the same topic as recieved on.
-        print(data)
-        print(args)
+        #print(data)
+        #print(args)
         settings = args[0]
         channel = args[1]
         json_str = json_message_converter.convert_ros_message_to_json(data)
