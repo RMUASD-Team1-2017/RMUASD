@@ -65,22 +65,18 @@ target_link_libraries(health_check_node
 )
 add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 
-add_executable(path_planner_node include/aed_gcs_logic/path_planner.cpp)
-target_link_libraries(path_planner_node
-    ${catkin_LIBRARIES}
-)
-add_dependencies(path_planner_node ${PROJECT_NAME}_generate_messages_cpp)
+# add_executable(path_planner_node include/aed_gcs_logic/path_planner.cpp)
+# target_link_libraries(path_planner_node
+#     ${catkin_LIBRARIES}
+# )
+# add_dependencies(path_planner_node ${PROJECT_NAME}_generate_messages_cpp)
 
 catkin_install_python(PROGRAMS src/risk_assessment.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-add_executable(controllogic src/controllogic.cpp)
-target_link_libraries(controllogic ${catkin_LIBRARIES})
-add_dependencies(controllogic controllogic_generate_messages_cpp)
-
 add_executable(control_logic_node src/control_logic_node.cpp)
-target_link_libraries(controllogic ${catkin_LIBRARIES})
-add_dependencies(control_logic_node controllogic_generate_messages_cpp)
+target_link_libraries(control_logic_node ${catkin_LIBRARIES})
+add_dependencies(control_logic_node ${PROJECT_NAME}_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
