@@ -12,11 +12,10 @@ class Mission:
         self.mission_id = mission_id
         self.destination = destination
         self.plan_path = rospy.ServiceProxy('plan_path', mission_request)
+        self.goal = None
 
     def plan(self, start_pos):
-        print(start_pos)
-        print(self.destination)
-        response = self.plan_path(start_pos, self.destination)
+        self.goal = self.plan_path(start_pos, self.destination)
         print("Response was", response)
 
 class Drone:
