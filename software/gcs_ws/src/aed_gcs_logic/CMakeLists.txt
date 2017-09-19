@@ -57,8 +57,7 @@ catkin_package(
 
 include_directories(
 # include
-    ~/Dropbox/Privat/library/include
-  ${catkin_INCLUDE_DIRS}
+ ${catkin_INCLUDE_DIRS}
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
