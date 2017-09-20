@@ -25,7 +25,7 @@
 			<param name="udp_rx_pub" value="/fmLib/udp_rx" />
 			<param name="udp_tx_sub" value="/fmLib/udp_tx" />
 			<param name="serial_device" value="/dev/ttyUSB0" />
-			<param name="serial_baudrate" value="38400" />
+			<param name="serial_baudrate" value="115200" />
 			<param name="gsm_apn" value='internet' />
 			<param name="server_name" value='drone.stefanrvo.dk' />
 			<param name="server_port" value="1235" />

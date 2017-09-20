@@ -234,7 +234,7 @@ class modemDriver:
 			elif self.PSD_IP_CONFIGURED != True:
 				if DEBUG:
 					print ("Check PSD IP configured")
-				string_to_send = 'AT+UPSD=0,7,\"0.0.0.0\"\r'
+				string_to_send = 'AT+UPSD=0,7,\"0.0.0.0\"\r' # dynamich IP assignment
 				if string_to_send_old == string_to_send and self.OK_RESPONSE == True :
 					self.OK_RESPONSE == False
 					self.PSD_IP_CONFIGURED = True
@@ -245,7 +245,7 @@ class modemDriver:
 			elif self.PSA_PDP_ACTIVATED != True:
 				if DEBUG:
 					print ("Check PSD PDP activated")
-				string_to_send = 'AT+UPSDA=0,3\r'
+				string_to_send = 'AT+UPSDA=0,3\r' # activate GPRS signal
 				if string_to_send_old == string_to_send and self.OK_RESPONSE == True :
 					self.OK_RESPONSE == False
 					self.PSA_PDP_ACTIVATED = True
@@ -255,8 +255,8 @@ class modemDriver:
 
 			elif self.SOCKET_CREATED != True:
 				if DEBUG:
+					string_to_send = 'AT+USOCR=17\r' # use UDP protocol on port 5000
 					print ("Check if socket is created")
-				string_to_send = 'AT+USOCR=17\r'
 				timeout_ms = 1000
 				max_retry = 10
 
