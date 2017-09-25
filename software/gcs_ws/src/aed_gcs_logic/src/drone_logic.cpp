@@ -14,7 +14,7 @@ drone_handler::drone_handler()
     this->arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     this->set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
     this->state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 1, &drone_handler::current_state_callback, this);
-    this->mission_sub = n.subscribe<aed_gcs_logic::waypoints>("drone_logic/mission_path", 1, &drone_handler::mission_callback, this);
+    this->mission_sub = n.subscribe<aed_gcs_logic::waypoints>("path", 1, &drone_handler::mission_callback, this);
     this->velocity_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 1);
 }
 
