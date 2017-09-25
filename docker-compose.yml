@@ -23,7 +23,7 @@ services:
   drone:
     image: stefanrvo/rmuasd_drone:latest
     build:
-      context: ./software/drone_sw
+      context: ./software/drone_sw/Cpp/
       dockerfile: Dockerfile
 
 
