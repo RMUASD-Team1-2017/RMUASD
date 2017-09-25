@@ -8,10 +8,11 @@
   <node name="mission_handler" pkg="aed_gcs_logic" type="mission_handler.py" output="screen" />
 
 <!-- Start location faker -->
-<node name="location_faker" pkg="aed_gcs_logic" type="location_faker.py" output="screen" />
+<!-- <node name="location_faker" pkg="aed_gcs_logic" type="location_faker.py" output="screen" /> -->
 
 <!-- Start the path planner -->
   <node name="path_planner" pkg="aed_gcs_logic" type="path_planner_node" output="screen" />
 
+  <node name="control_logic" pkg="aed_gcs_logic" type="control_logic_node" output="screen" />
 
 </launch>

@@ -85,7 +85,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             temp_wp.is_current = true;
             temp_wp.autocontinue = true;
             temp_wp.x_lat = data->path[0].latitude;
-            temp_wp.y_long = data->path[0].latitude;
+            temp_wp.y_long = data->path[0].longitude;
             temp_wp.z_alt = 50;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);
@@ -126,7 +126,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
 
             temp_wp.x_lat = data->path[data->path.size() - 1].latitude;
             temp_wp.y_long = data->path[data->path.size() - 1].longitude;
-            temp_wp.z_alt = 0;
+            temp_wp.z_alt = 50;
             temp_wp.command = 21;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);

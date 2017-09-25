@@ -12,11 +12,10 @@ class Mission:
         self.mission_id = mission_id
         self.destination = destination
         self.plan_path = rospy.ServiceProxy('plan_path', mission_request)
+        self.goal = None
 
     def plan(self, start_pos):
-        print(start_pos)
-        print(self.destination)
-        response = self.plan_path(start_pos, self.destination)
+        self.goal = self.plan_path(start_pos, self.destination)
         print("Response was", response)
 
 class Drone:
@@ -25,7 +24,7 @@ class Drone:
         self.drone_id = drone_id
         self.state = "Idle"
         self.mission = None
-        self.position_sub = rospy.Subscriber("drone/position", NavSatFix, self.position_callback, queue_size=10)
+        self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
