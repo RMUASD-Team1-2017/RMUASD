@@ -20,6 +20,11 @@ services:
       replicas: 1
     networks:
       - rmuasd_network
+  drone:
+    image: stefanrvo/rmuasd_drone:latest
+    build:
+      context: ./software/drone_sw
+      dockerfile: Dockerfile
 
 
 

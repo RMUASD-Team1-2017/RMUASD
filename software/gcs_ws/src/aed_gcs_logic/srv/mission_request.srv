@@ -1,0 +1,4 @@
+sensor_msgs/NavSatFix start
+sensor_msgs/NavSatFix end
+---
+geo_coord result

@@ -1,0 +1,2 @@
+uint32 mission_id
+sensor_msgs/NavSatFix destination
