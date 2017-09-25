@@ -2,5 +2,5 @@
 export PX4_HOME_LAT=55.558366
 export PX4_HOME_LON=10.107662
 export PX4_HOME_ALT=0
-cd ~/px4/Firmware
+cd $(pwd)/../../px4/
 make posix_sitl_default gazebo

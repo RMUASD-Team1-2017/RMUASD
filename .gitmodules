@@ -10,3 +10,6 @@
 [submodule "software/gcs_ws/src/realtime_tools"]
 	path = software/gcs_ws/src/realtime_tools
 	url = https://github.com/ros-controls/realtime_tools
+[submodule "px4"]
+	path = px4
+	url = https://github.com/PX4/Firmware.git
