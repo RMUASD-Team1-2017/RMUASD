@@ -17,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+find_package (GeographicLib 1.34 REQUIRED)
+
 catkin_python_setup()
 ## Generate messages, services and actions. Remember to put them into msg, srv, or action folder.
 ## Generate messages in the 'msg' folder
@@ -62,6 +64,8 @@ include_directories(
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories (${GeographicLib_INCLUDE_DIRS})
+add_definitions (${GeographicLib_DEFINITIONS})
 
 add_executable(health_check_node src/health_check_node.cpp)
 target_link_libraries(health_check_node
@@ -79,12 +83,18 @@ catkin_install_python(PROGRAMS src/risk_assessment.py src/path_planner_dummy.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 add_executable(control_logic_node src/control_logic_node.cpp src/drone_logic.cpp)
-target_link_libraries(control_logic_node ${catkin_LIBRARIES})
+target_link_libraries(control_logic_node ${catkin_LIBRARIES} ${GeographicLib_LIBRARIES})
 add_dependencies(control_logic_node ${PROJECT_NAME}_generate_messages_cpp)
+
 
 add_executable(control_logic_node_test src/controllogic.cpp)
 target_link_libraries(control_logic_node_test ${catkin_LIBRARIES})
 add_dependencies(control_logic_node_test ${PROJECT_NAME}_generate_messages_cpp)
+
+
+
+   
+   
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node

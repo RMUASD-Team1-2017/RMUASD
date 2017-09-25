@@ -51,6 +51,22 @@ bool drone_handler::setup()
     return false;
 }
 
+double drone_handler::calc_dist_between_waypoints(double lat1, double lat2, double long1, double long2)
+
+{
+	
+	
+	const Geodesic& geod = Geodesic::WGS84();
+  
+  	geod.Inverse(lat1, long1, lat2, long2, dist_between_waypoints_m);
+ 
+	std::cout<<" distance "<<dist_between_waypoints_m<<std::endl;
+
+	return dist_between_waypoints_m;
+
+}
+
+
 void drone_handler::current_state_callback(const mavros_msgs::State::ConstPtr& data)
 {
     this->connected = data->connected;
@@ -80,6 +96,23 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             temp_wp.is_current = false;
 
             for(int i = 1; i < data->path.size() - 1; i++){
+
+				
+				if(calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude)>max_dist_between_waypoints){
+					iterator = (calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude)/max_dist_between_waypoints);
+					iterator_ceil = ceil( iterator );
+					std::cout<<" number "<<iterator_ceil<<std::endl;
+					for(int counter = 1 ; counter<iterator_ceil; counter++){
+							
+						temp_wp.x_lat =  data->path[i-1].latitude + (((data->path[i].latitude - data->path[i-1].latitude)/iterator_ceil)*counter);
+						std::cout<<" latx "<<temp_wp.x_lat<<std::endl;
+               		 	temp_wp.y_long = data->path[i-1].longitude + (((data->path[i].longitude - data->path[i-1].longitude)/iterator_ceil)*counter);
+						std::cout<<" longy "<<temp_wp.y_long<<std::endl;
+                		temp_wp.z_alt = 50;
+						mission_srv_temp.request.waypoints.push_back(temp_wp);
+					}
+				}
+				
                 temp_wp.x_lat = data->path[i].latitude;
                 temp_wp.y_long = data->path[i].longitude;
                 temp_wp.z_alt = 50;
@@ -87,6 +120,18 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
                 mission_srv_temp.request.waypoints.push_back(temp_wp);
                 std::cout << "Point " << i << ": " << temp_wp.x_lat << "," << temp_wp.y_long << std::endl;
             }
+			std::cout<<" lat1  "<<data->path[data->path.size()-2].latitude<<" lat2 "<<data->path[data->path.size()-1].latitude<<std::endl;
+			std::cout<<" long1 "<<data->path[data->path.size()-2].longitude<<" long2 "<<data->path[data->path.size()-1].longitude<<std::endl;
+
+			if(calc_dist_between_waypoints(data->path[data->path.size()-2].latitude,data->path[data->path.size()-1].latitude,data->path[data->path.size()-2].longitude,data->path[data->path.size()-1].longitude)>500){
+
+				
+						temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
+               		 	temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
+                		temp_wp.z_alt = 50;
+						mission_srv_temp.request.waypoints.push_back(temp_wp);
+			}
+			
 
             temp_wp.x_lat = data->path[data->path.size() - 1].latitude;
             temp_wp.y_long = data->path[data->path.size() - 1].longitude;
@@ -114,6 +159,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
 
 void drone_handler::run_state_machine()
 {
+//calc_dist_between_waypoints(5,6,6,5);
     switch(this->state){
         case IDLE:{
             /* IDLE STATE */

@@ -12,14 +12,17 @@
 #include "mavros_msgs/ParamGet.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/PoseStamped.h"
+#include <GeographicLib/Geodesic.hpp>
 
 #include "aed_gcs_logic/waypoints.h"
 
 #include <vector>
+
 #include <string>
 #include <mutex>
 #include <condition_variable>
-
+#include <math.h> 
+using namespace GeographicLib;
 // namespace drone_logic{
 // NAMESPACE START
 
@@ -67,6 +70,7 @@ class drone_handler
         // Callbacks
         void current_state_callback(const mavros_msgs::State::ConstPtr& data);
         void mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data);
+		double calc_dist_between_waypoints(double lat1, double lat2, double long1, double long2);
 
         droneState state;
         bool received_mission;
@@ -74,6 +78,15 @@ class drone_handler
         bool connected;
         bool armed;
         std::string mode;
+		double iterator = 0;
+		int iterator_ceil = 0;
+		double dist_between_waypoints_m;
+		int max_dist_between_waypoints = 500;
+		
+
+
+		
+
 
         mavros_msgs::WaypointPush mission_srv;
         std::mutex path_m;
