@@ -77,9 +77,10 @@ class drone_handler
         bool connected;
         bool armed;
         std::string mode;
-
-		//double Distance;
+		double iterator = 0;
+		int iterator_ceil = 0;
 		double dist_between_waypoints_m;
+		int max_dist_between_waypoints = 500;
 		
 
 
