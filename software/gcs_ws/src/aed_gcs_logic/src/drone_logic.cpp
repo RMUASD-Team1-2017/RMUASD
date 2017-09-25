@@ -13,6 +13,7 @@ drone_handler::drone_handler()
     this->arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     this->set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
     this->state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 1, &drone_handler::current_state_callback, this);
+	this->pos_now = n.subscribe("/mavros/global_position/global", 1000, &drone_handler::pose_callback,this);
 }
 
 drone_handler::~drone_handler(){
@@ -44,20 +45,29 @@ bool drone_handler::setup()
     return result;
 }
 
+void drone_handler::pose_callback(const sensor_msgs::NavSatFix::ConstPtr& msg)
+{
+  ROS_INFO("I heard: [%s]", msg->position_covariance());
+  //this->posit = msg->data.c_str();
+}
+
 void drone_handler::current_state_callback(const mavros_msgs::State::ConstPtr& data)
 {
     this->connected = data->connected;
     this->armed = data->armed;
-    this->mode = data->mode;
+    this->mode = data->mode;  // indicates that is a variable from this class 
 }
 
 void drone_handler::run_state_machine()
 {
+	//std::cout << " State Now1 " <<mode<<std::endl;
     switch(this->state){
         case IDLE:{
             /* IDLE STATE */
             mavros_msgs::SetMode offboard_msg;
+			
             offboard_msg.request.custom_mode = "OFFBOARD";
+			std::cout << " State Now2 " <<mode<<std::endl;
             this->set_mode_client.call(offboard_msg);
             if(offboard_msg.response.mode_sent){
                 this->state = OFF_BOARD_ENABLED;
@@ -67,17 +77,26 @@ void drone_handler::run_state_machine()
         case OFF_BOARD_ENABLED:{
             /* OFF BOARD ENABLED */
             if(!this->armed){
+				std::cout << " State Now3 " <<mode<<std::endl;
                 mavros_msgs::CommandBool arm_msg;
                 arm_msg.request.value = true;
                 this->arming_client.call(arm_msg);
                 if(arm_msg.response.success){
-                    this->state = ARMED;
+                    this->state = SEND_MISSION;
                 }
             }
             else{
-                this->state = ARMED;
+                this->state = SEND_MISSION;
             }
             break;}
+
+		case SEND_MISSION:{
+            /* SEND MISSION TO DRONE */
+			std::cout << " State Now4 " <<mode<<std::endl;
+            this->state = ARMED;
+            break;}
+
+
         case ARMED:{
             /* ARMED STATE */
             if(this->armed){
@@ -130,18 +149,31 @@ void drone_handler::run_state_machine()
             break;}
         case MISSION_READY:{
             /* MISSION READY */
+			
             mavros_msgs::SetMode mission_msg;
             mission_msg.request.custom_mode = "AUTO.MISSION";
             this->set_mode_client.call(mission_msg);
             if(mission_msg.response.mode_sent){
+				 std::cout << "Mission Ready!" << std::endl;
                 this->state = ON_MISSION;
             }
             break;}
         case ON_MISSION:
 
+			this->state = MISSION_DONE;
+
+
             break;
         case MISSION_DONE:
             /* IDLE STATE */
+			//mavros_msgs::SetMode mission_msg;
+			//mission_msg.request.custom_mode = "AUTO.LAND";
+			std::cout << " Position " <<posit<<std::endl;
+			mavros_msgs::CommandBool arm_msg;
+            arm_msg.request.value = false;
+            //this->arming_client.call(arm_msg);  // disarming
+			//this->state = IDLE;
+
             break;
     }
 }
