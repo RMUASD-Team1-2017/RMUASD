@@ -139,7 +139,7 @@ void drone_handler::run_state_machine()
                 std::cout << "Mission ";
                 if(mission_srv.response.success){
                     this->state = MISSION_READY;
-                    std::cout << "Success!" << std::endl;
+                    std::cout << "Sent!" << std::endl;
                 }
                 else{
                     std::cout << "Failed!" << std::endl;
