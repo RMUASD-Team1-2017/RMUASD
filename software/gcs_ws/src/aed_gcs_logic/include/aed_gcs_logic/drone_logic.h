@@ -31,11 +31,12 @@
 
 enum droneState {
     IDLE = 1,
-    OFF_BOARD_ENABLED = 2,
-    ARMED = 3,
-    MISSION_READY = 4,
-    ON_MISSION = 5,
-    MISSION_DONE = 6
+    FAILED = 2,
+	SEND_MISSION = 3,
+    ARM = 4,
+    START_MISSION = 5,
+    ON_MISSION = 6,
+    MISSION_DONE = 7
 };
 
 struct path{
@@ -65,7 +66,6 @@ class drone_handler
         // Callbacks
         void current_state_callback(const mavros_msgs::State::ConstPtr& data);
         void mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data);
-        // void path_received_callback(const aed_gcs_logic::waypoints::ConstPtr& data);
 
         droneState state;
         bool received_mission;
@@ -73,11 +73,10 @@ class drone_handler
         bool connected;
         bool armed;
         std::string mode;
-        mavros_msgs::WaypointPush mission_srv;
 
+        mavros_msgs::WaypointPush mission_srv;
         std::mutex path_m;
         std::condition_variable path_cv;
-
 };
 
 // NAMESPACE END

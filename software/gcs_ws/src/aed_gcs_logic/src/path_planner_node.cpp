@@ -12,7 +12,7 @@
 ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
-    path_planner planner(ros::package::getPath("aed_gcs_logic") + "/resources/geofence.csv", ros::package::getPath("aed_gcs_logic") + "/resources/landingspots.csv");
+    path_planner planner(ros::package::getPath("aed_gcs_logic") + "/resources/geofence2.csv", ros::package::getPath("aed_gcs_logic") + "/resources/landingspots.csv");
     std::cout << req.start.latitude << std::endl;
     Coord start(req.start.latitude, req.start.longitude, req.start.altitude);
     Coord goal(req.end.latitude, req.end.longitude, req.end.altitude);

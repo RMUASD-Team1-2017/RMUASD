@@ -51,7 +51,7 @@ void drone_handler::current_state_callback(const mavros_msgs::State::ConstPtr& d
 {
     this->connected = data->connected;
     this->armed = data->armed;
-    this->mode = data->mode;
+    this->mode = data->mode;  // indicates that is a variable from this class
 }
 
 void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data)
@@ -116,97 +116,73 @@ void drone_handler::run_state_machine()
             this->path_cv.wait(lock);
 
             mavros_msgs::SetMode offboard_msg;
+
             offboard_msg.request.custom_mode = "OFFBOARD";
             this->set_mode_client.call(offboard_msg);
             if(offboard_msg.response.mode_sent){
-                this->state = OFF_BOARD_ENABLED;
+                this->state = SEND_MISSION;
                 this->received_mission = true;
+            }
+            else{
+                this->state = FAILED;
             }
             break;}
 
-        case OFF_BOARD_ENABLED:{
-            /* OFF BOARD ENABLED */
+        case FAILED:{
+            std::cout << "Drone entered failed mode" << std::endl;
+            break;}
+
+		case SEND_MISSION:{
+            /* SEND MISSION TO DRONE */
+            this->mission_push_client.call(this->mission_srv);
+            std::cout << "Mission ";
+            if(this->mission_srv.response.success){
+                std::cout << "Sent!" << std::endl;
+                this->state = ARM;
+            }
+            else{
+                std::cout << "Failed!" << std::endl;
+                this->state = FAILED;
+            }
+            std::cout << "Mission wp sent: " << mission_srv.response.wp_transfered << std::endl;
+            break;}
+
+
+        case ARM:{
+            /* ARMED STATE */
             if(!this->armed){
                 mavros_msgs::CommandBool arm_msg;
                 arm_msg.request.value = true;
                 this->arming_client.call(arm_msg);
                 if(arm_msg.response.success){
-                    this->state = ARMED;
+                    std::cout << "Armed sent" << std::endl;
                 }
             }
             else{
-                this->state = ARMED;
+                this->state = START_MISSION;
             }
             break;}
-        case ARMED:{
-            /* ARMED STATE */
-            if(this->armed){
-                mavros_msgs::WaypointPush mission_srv;
-                mavros_msgs::Waypoint temp_wp;
-
-                temp_wp.frame = 3;
-                temp_wp.command = 22;
-                temp_wp.is_current = true;
-                temp_wp.autocontinue = true;
-                temp_wp.x_lat = 47.3977419;
-                temp_wp.y_long = 8.5455944;
-                temp_wp.z_alt = 5;
-
-                mission_srv.request.waypoints.push_back(temp_wp);
-
-                // 47.3977419, 8.5455944
-
-                temp_wp.command = 16;
-                temp_wp.is_current = false;
-                temp_wp.x_lat = 47.3980419;
-                temp_wp.y_long = 8.5450944;
-                temp_wp.z_alt = 10;
-
-                mission_srv.request.waypoints.push_back(temp_wp);
-
-                temp_wp.x_lat = 47.3975419;
-                temp_wp.y_long = 8.5452944;
-                temp_wp.z_alt = 10;
-
-                mission_srv.request.waypoints.push_back(temp_wp);
-
-                temp_wp.z_alt = 0;
-                temp_wp.command = 21;
-
-                mission_srv.request.waypoints.push_back(temp_wp);
-                mission_srv.request.start_index = 0;
-
-                this->mission_push_client.call(mission_srv);
-                std::cout << "Mission ";
-                if(mission_srv.response.success){
-                    this->state = MISSION_READY;
-                    std::cout << "Sent!" << std::endl;
-                }
-                else{
-                    std::cout << "Failed!" << std::endl;
-                }
-                std::cout << "Mission wp sent: " << mission_srv.response.wp_transfered << std::endl;
-            }
-            break;}
-        case MISSION_READY:{
-            /* MISSION READY */
+        case START_MISSION:{
+            /* START MISSION */
             mavros_msgs::SetMode mission_msg;
-            mission_msg.request.custom_mode = "AUTO.TAKEOFF";
+            mission_msg.request.custom_mode = "AUTO.MISSION";
             this->set_mode_client.call(mission_msg);
             if(mission_msg.response.mode_sent){
+				std::cout << "Mission Started!" << std::endl;
                 this->state = ON_MISSION;
+            }
+            else{
+                this->state = FAILED;
             }
             break;}
         case ON_MISSION:{
-            geometry_msgs::PoseStamped msg;
-            msg.pose.position.x = 2;
-            msg.pose.position.y = 5;
-            msg.pose.position.z = 10;
-
-            this->velocity_pub.publish(msg);
+            if(!this->armed){
+                std::cout << "Drone has finished mission" << std::endl;
+                this->state = MISSION_DONE;
+            }
             break;}
         case MISSION_DONE:
-            /* IDLE STATE */
+            /* DO NOTHING */
             break;
     }
 }
