@@ -13,18 +13,22 @@ int main(int argc, char **argv)
 
     if(drone_ready){
         std::cout << "Drone Ready!" << std::endl << "Starting control..." << std::endl;
+        ros::AsyncSpinner spinner(1);
+        spinner.start();
 
         while(ros::ok()){
             handler.run_state_machine();
-            ros::spinOnce();
             rate.sleep();
         }
+
+        ros::waitForShutdown();
+
     }
     else{
         std::cout << "Drone did not get connection or setup failed" << std::endl;
         std::cout << "Exiting..." << std::endl;
 
     }
-    
+
     return 0;
 }

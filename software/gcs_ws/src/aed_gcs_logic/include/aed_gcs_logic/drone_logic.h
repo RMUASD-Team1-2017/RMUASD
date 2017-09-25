@@ -9,11 +9,15 @@
 #include "mavros_msgs/SetMode.h"
 #include "mavros_msgs/State.h"
 #include "mavros_msgs/ParamSet.h"
-
+#include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/PoseStamped.h"
+
+#include "aed_gcs_logic/waypoints.h"
 
 #include <vector>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 
 // namespace drone_logic{
 // NAMESPACE START
@@ -34,6 +38,10 @@ enum droneState {
     MISSION_DONE = 6
 };
 
+struct path{
+
+};
+
 class drone_handler
 {
     public:
@@ -51,15 +59,24 @@ class drone_handler
         ros::ServiceClient arming_client; // n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
         ros::ServiceClient set_mode_client; // n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
         ros::Subscriber state_sub; // n.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
+        ros::Subscriber mission_sub; // n.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
+        ros::Publisher velocity_pub; // n.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
 
         // Callbacks
         void current_state_callback(const mavros_msgs::State::ConstPtr& data);
+        void mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data);
+        // void path_received_callback(const aed_gcs_logic::waypoints::ConstPtr& data);
 
         droneState state;
+        bool received_mission;
         bool off_board_requested;
         bool connected;
         bool armed;
         std::string mode;
+        mavros_msgs::WaypointPush mission_srv;
+
+        std::mutex path_m;
+        std::condition_variable path_cv;
 
 };
 

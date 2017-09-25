@@ -3,6 +3,8 @@ import rospy
 
 from std_msgs.msg import String
 from aed_gcs_logic.srv import *
+from aed_gcs_logic.msg import *
+from sensor_msgs.msg import NavSatFix
 
 class path_planner:
     """Path Planner class"""
@@ -40,8 +42,22 @@ if __name__ == "__main__":
 
     rospy.init_node('path_planner_node', anonymous=True)
 
-    planner_object = path_planner()
+    nav_sat_msg = NavSatFix()
+    nav_sat_msg.latitude = 10.40
+    nav_sat_msg.longitude = 10.50
 
-    planner_object.get_map_data()
+    waypoint_msg = waypoints()
+    waypoint_msg.path = [waypoint_msg, waypoint_msg, waypoint_msg]
+
+    pub = rospy.Publisher('drone_logic/mission_path', waypoints, queue_size=10)
+
+    rate = rospy.Rate(1) # 10hz
+    while not rospy.is_shutdown():
+        pub.publish(waypoint_msg)
+        rate.sleep()
+
+    # planner_object = path_planner()
+    #
+    # planner_object.get_map_data()
 
     rospy.spin()
