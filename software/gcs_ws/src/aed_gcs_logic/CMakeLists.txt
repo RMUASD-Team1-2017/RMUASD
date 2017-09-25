@@ -10,6 +10,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  roslib
   std_msgs
   geometry_msgs
   sensor_msgs
@@ -68,7 +69,7 @@ target_link_libraries(health_check_node
 )
 add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 
-add_executable(path_planner_node src/path_planner_node.cpp include/aed_gcs_logic/path_planner.cpp)
+add_executable(path_planner_node src/path_planner_node.cpp src/path_planner.cpp)
 target_link_libraries(path_planner_node
     ${catkin_LIBRARIES}
 )

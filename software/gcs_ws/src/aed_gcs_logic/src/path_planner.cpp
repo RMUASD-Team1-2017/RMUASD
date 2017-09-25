@@ -5,9 +5,7 @@
 #include <fstream>
 #include <string>
 
-#define SDL
-
-#include "path_planner.h"
+#include "aed_gcs_logic/path_planner.h"
 
 #ifdef SDL
 #include <2D.hpp>
