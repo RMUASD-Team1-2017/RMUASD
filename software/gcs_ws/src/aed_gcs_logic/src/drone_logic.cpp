@@ -10,6 +10,7 @@ drone_handler::drone_handler()
     this->mode = "None";
 
     this->param_set_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
+    this->param_get_client = n.serviceClient<mavros_msgs::ParamGet>("mavros/param/get");
     this->mission_push_client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
     this->arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     this->set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
@@ -23,28 +24,31 @@ drone_handler::~drone_handler(){
 
 bool drone_handler::wait_for_connection()
 {
-    bool result = false;
-    for(auto i = 0; i < 5; i++){
+    for(auto i = 0; i < 10; i++){
         if(this->connected){
-            result = true;
-            break;
+            std::cout << "Drone connected..." << std::endl;
+            return true;
         }
         ros::spinOnce();
         ros::Duration(1).sleep();
     }
-    return result;
+    return false;
 }
 
 bool drone_handler::setup()
 {
-    bool result = false;
-    mavros_msgs::ParamSet param_srv;
-    param_srv.request.param_id = "NAV_DLL_ACT";
-    this->param_set_client.call(param_srv);
-    if(param_srv.response.success){
-        result = true;
+    // Try to get the parameter NAV_DLL_ACT
+    for(auto i = 0; i < 10; i++){
+        mavros_msgs::ParamSet param_set_srv;
+        param_set_srv.request.param_id = "NAV_DLL_ACT";
+        this->param_set_client.call(param_set_srv);
+        if(param_set_srv.response.success){
+            return true;
+        }
+        ros::spinOnce();
+        ros::Duration(1).sleep();
     }
-    return result;
+    return false;
 }
 
 void drone_handler::current_state_callback(const mavros_msgs::State::ConstPtr& data)
@@ -104,6 +108,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
     }
     else{
         std::cout << "Drone already received mission..." << std::endl;
+        std::cout << "Ignoring..." << std::endl;
     }
 }
 

@@ -1,18 +1,33 @@
  <launch>
+    <!-- LAUNCH MAVROS -->
+    <!-- <include file="$(find mavros)/launch/node.launch">
+        <arg name="pluginlists_yaml" value="$(find mavros)/launch/px4_pluginlists.yaml" />
+        <arg name="config_yaml" value="$(find mavros)/launch/px4_config.yaml" />
+
+        <arg name="fcu_url" value="udp://:14540@192.168.1.36:14557" />
+        <arg name="gcs_url" value="" />
+        <arg name="tgt_system" value="1" />
+        <arg name="tgt_component" value="1" />
+        <arg name="log_output" value="screen" />
+    </include> -->
+
+    <!-- <include file="$(find mavros)/launch/px4.launch">
+        <arg name="fcu_url" value="udp://:14540@192.168.1.36:14557"/>
+    </include> -->
 
 	<!-- rabbitMQ bridge node -->
-	<node pkg="ros_rabbitmq_bridge" type="rabbitmq_bridge.py" name="rabbitmq_bridge" output="screen">
-	</node>
+	<!-- <node pkg="ros_rabbitmq_bridge" type="rabbitmq_bridge.py" name="rabbitmq_bridge" output="screen">
+	</node> -->
 
-<!-- Start the mission handler -->
-  <node name="mission_handler" pkg="aed_gcs_logic" type="mission_handler.py" output="screen" />
+    <!-- Start the mission handler -->
+    <node name="mission_handler" pkg="aed_gcs_logic" type="mission_handler.py" output="screen" />
 
-<!-- Start location faker -->
-<!-- <node name="location_faker" pkg="aed_gcs_logic" type="location_faker.py" output="screen" /> -->
+    <!-- Start location faker -->
+    <!-- <node name="location_faker" pkg="aed_gcs_logic" type="location_faker.py" output="screen" /> -->
 
-<!-- Start the path planner -->
-  <node name="path_planner" pkg="aed_gcs_logic" type="path_planner_node" output="screen" />
+    <!-- Start the path planner -->
+    <node name="path_planner" pkg="aed_gcs_logic" type="path_planner_node" output="screen" />
 
-  <node name="control_logic" pkg="aed_gcs_logic" type="control_logic_node" output="screen" />
+    <node name="control_logic" pkg="aed_gcs_logic" type="control_logic_node" output="screen" />
 
 </launch>

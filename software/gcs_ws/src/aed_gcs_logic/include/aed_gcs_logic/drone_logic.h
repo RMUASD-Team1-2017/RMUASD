@@ -9,6 +9,7 @@
 #include "mavros_msgs/SetMode.h"
 #include "mavros_msgs/State.h"
 #include "mavros_msgs/ParamSet.h"
+#include "mavros_msgs/ParamGet.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "geometry_msgs/PoseStamped.h"
 
