@@ -1,7 +1,5 @@
 #include "aed_gcs_logic/path_planner.h"
 
-#define SDL
-
 #include "ros/ros.h"
 #include <ros/package.h>
 #include "geometry_msgs/PoseArray.h"
@@ -26,7 +24,7 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     planner.draw(500);
 #endif
     aed_gcs_logic::waypoints path;
-    for (int i = 0; i < waypoints.size(); i++){
+    for (int i = waypoints.size() - 1; i >= 0; i--){
         path.path.push_back(waypoints[i]->coord);
     }
 
@@ -47,6 +45,7 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     std::cout << "\tAltitude:   " << res.result.altitude << std::endl;
     std::cout << std::endl;
     std::cout << "The path consists of " << waypoints.size() << " waypoints:" << std::endl;
+
     for (int i = 0; i < waypoints.size(); i++){
         std::cout << "Node id: " << waypoints[i]->id << std::endl;
         std::cout << "\tLatitude:   " << waypoints[i]->coord.latitude << std::endl;
