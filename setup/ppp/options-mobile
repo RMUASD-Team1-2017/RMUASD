@@ -1,6 +1,6 @@
-/dev/ttyUSB0
+/dev/ttyLP2
 115200
-lock
+#lock
 crtscts
 modem
 passive

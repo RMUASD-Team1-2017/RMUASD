@@ -17,5 +17,6 @@ TIMEOUT 3
 'OK' @/etc/ppp/chatscripts/mode.GPRS-only
 'OK-AT-OK' @/etc/ppp/chatscripts/apn.telenor
 'OK' 'ATDT*99***1#'
+
 TIMEOUT 30
 CONNECT ''
