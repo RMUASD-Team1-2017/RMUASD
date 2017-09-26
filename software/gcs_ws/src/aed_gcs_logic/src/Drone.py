@@ -24,7 +24,7 @@ class Drone:
         self.drone_id = drone_id
         self.state = "Idle"
         self.mission = None
-        self.position_sub = rospy.Subscriber("drone/position", NavSatFix, self.position_callback, queue_size=10)
+        self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
