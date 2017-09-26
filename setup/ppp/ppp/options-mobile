@@ -1,0 +1,18 @@
+/dev/ttyLP2
+115200
+lock
+crtscts
+modem
+passive
+novj
+defaultroute
+replacedefaultroute
+noipdefault
+usepeerdns
+noauth
+hide-password
+persist
+holdoff 10
+maxfail 0
+debug
+

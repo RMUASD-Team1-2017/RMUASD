@@ -4,7 +4,7 @@ import time
 class GPIO:
     def __init__(self, pin, direction):
         self.pin = str(pin)
-        self.direction = direction
+        self.direction = direction.lower()
         self.setup_pin()
 
     def setup_pin(self):
