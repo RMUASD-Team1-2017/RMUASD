@@ -1,3 +1,84 @@
 chat:  Sep 25 19:31:39 CONNECT
 chat:  Sep 26 16:23:19 CONNECT
 chat:  Sep 26 16:24:57 CONNECT
+chat:  Sep 26 16:29:48 CONNECT
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 21: export_pin: command not found
+/etc/ppp/peers/reset_modem.sh: line 15: echo: write error: Operation not permitted
+/etc/ppp/peers/reset_modem.sh: line 16: echo: write error: Operation not permitted
+/etc/ppp/peers/reset_modem.sh: line 24: export_pin: command not found
+/etc/ppp/peers/reset_modem.sh: line 15: /sys/class/gpio/gpio46/value: No such file or directory
+/etc/ppp/peers/reset_modem.sh: line 16: /sys/class/gpio/gpio46/value: No such file or directory
+/etc/ppp/peers/reset_modem.sh: line 21: export_pin: command not found
+/etc/ppp/peers/reset_modem.sh: line 15: echo: write error: Operation not permitted
+/etc/ppp/peers/reset_modem.sh: line 16: echo: write error: Operation not permitted
+/etc/ppp/peers/reset_modem.sh: line 24: export_pin: command not found
+/etc/ppp/peers/reset_modem.sh: line 15: /sys/class/gpio/gpio46/value: No such file or directory
+/etc/ppp/peers/reset_modem.sh: line 16: /sys/class/gpio/gpio46/value: No such file or directory
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+chat:  Sep 26 16:51:29 CONNECT
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+chat:  Sep 26 17:47:52 CONNECT
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+chat:  Sep 26 17:59:19 CONNECT
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+chat:  Sep 26 18:03:32 CONNECT
+chat:  Sep 26 19:09:22 CONNECT
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+/etc/ppp/peers/reset_modem.sh: line 8: echo: write error: Device or resource busy
+chat:  Sep 26 19:22:43 CONNECT
+chat:  Sep 26 19:24:35 CONNECT
