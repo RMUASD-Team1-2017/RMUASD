@@ -34,7 +34,7 @@ Easy command line to send test UDP messages: rostopic pub /fmLib/udp_tx std_msgs
 
 2017-06-10 MS First version
 """
-
+import sys
 import serial
 import rospy
 from std_msgs.msg import String
@@ -151,10 +151,18 @@ class modemDriver:
 			#todo make warning
 
 	def retrieve_data_from_modem(self):
-		self.ser.write('AT+USORF='+self.socket_no+',0\r')
+		print "Trying to recieve data\n"
+		self.ser.write('AT+USORF='+self.socket_no+',0\r') # should be socket, 0 (accordig to template)
 		self.update_par(100)
+		self.publish_server_string(str(self.recieve_bytes_pending))
+		#self.recieve_bytes_pending = '10'
+		#self.ser.write('AT+USORF='+self.socket_no+ ', '+ str(sys.getsizeof(self.recieve_bytes_pending))+'\r')
+
 
 		if self.recieve_bytes_pending != '0':
+
+			#print "Recieved data! : " + self.recieve_bytes_pending +', and no. of bytes: ' + str(sys.getsizeof(self.recieve_bytes_pending)) +"\r"
+
 			rospy.sleep(0.02)
 			self.ser.write('AT+USORF=' + self.socket_no + ',' + self.recieve_bytes_pending + '\r')
 			self.update_par(100)
@@ -221,7 +229,7 @@ class modemDriver:
 
 
 			elif self.PSD_APN_CONFIGURED != True:
-				string_to_send = 'AT+UPSD=0,1,\"'+self.apn+'\"\r'
+				string_to_send = 'AT+UPSD=0,1,\"'+self.apn+'\"\r' # Set up APN for the PSD profile #0.
 				if string_to_send_old == string_to_send and self.OK_RESPONSE == True :
 					self.OK_RESPONSE == False
 					self.PSD_APN_CONFIGURED = True
@@ -254,8 +262,9 @@ class modemDriver:
 				max_retry = 10
 
 			elif self.SOCKET_CREATED != True:
+				string_to_send = 'AT+USOCR=17,6655\rAT+USOLI=0,6655\rAT+USOCR=17,6600\r' # use UDP protocol on port 5000  changed from string_to_send='AT+USOCR=17\r'
+
 				if DEBUG:
-					string_to_send = 'AT+USOCR=17\r' # use UDP protocol on port 5000
 					print ("Check if socket is created")
 				timeout_ms = 1000
 				max_retry = 10
@@ -377,7 +386,8 @@ class modemDriver:
 					if first_line[len('+USORF: '+self.socket_no+',') : len('+USORF: '+self.socket_no+','+self.server_ip)] == self.server_ip:
 						if sec_line[:len('OK\r')] == 'OK\r':
 							self.publish_server_string(first_line[len('+USORF: '+self.socket_no+','+self.server_ip+',' + str(self.server_port) +','+ self.recieve_bytes_pending + ',')+1:])
-						self.recieve_bytes_pending = '0'
+
+						self.recieve_bytes_pending = '0' # test, should be '0'
 					else:
 						self.recieve_bytes_pending = first_line[len('+USORF:'+self.socket_no+',')+1:-1]
 					if sec_line[:len('OK\r')] == 'OK\r':
