@@ -11,7 +11,7 @@
 ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
-    path_planner planner("resources/geofence.csv", "resources/landingspots.csv");
+    path_planner planner(ros::package::getPath("aed_gcs_logic") + "/resources/geofence.csv", ros::package::getPath("aed_gcs_logic") + "/resources/landingspots.csv");
     sensor_msgs::NavSatFix start = req.start;
     sensor_msgs::NavSatFix goal = req.end;
     sensor_msgs::NavSatFix landingPos = planner.getNearestLandingSpot(goal);

@@ -25,7 +25,6 @@ if __name__ == '__main__':
 
     RABBIT_BROKER = "amqp://guest:guest@localhost:5672/%2F?connection_attempts=3&heartbeat_interval=3600"
 
-
     rospy.init_node('rabbitmq_bridge', anonymous=True)
 
 
