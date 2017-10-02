@@ -1,0 +1,17 @@
+[Unit]
+Description=Pingd service %I
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+WorkingDirectory=/tmp
+StartLimitInterval=0
+StartLimitBurst=99999999999999
+ExecStart=/bin/ping -q  %i
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
