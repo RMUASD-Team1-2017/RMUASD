@@ -1,8 +1,10 @@
 #!/bin/bash
+this_dir=$(pwd)
 export PX4_HOME_LAT=55.557882
 export PX4_HOME_LON=10.109294
 export PX4_HOME_ALT=0
 source $(pwd)/software/gcs_ws/devel/setup.bash
-roslaunch mavros px4.launch fcu_url:="udp://:14540@192.168.1.36:14557" &
 cd $(pwd)/Firmware/
-make posix_sitl_default gazebo
+make posix_sitl_default gazebo -j4
+cd "$this_dir"
+roslaunch mavros px4.launch fcu_url:="udp://:14540@192.168.1.36:14557" &
