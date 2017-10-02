@@ -7,4 +7,4 @@ source $(pwd)/software/gcs_ws/devel/setup.bash
 cd $(pwd)/Firmware/
 make posix_sitl_default gazebo -j4
 cd "$this_dir"
-roslaunch mavros px4.launch fcu_url:="udp://:14540@192.168.1.36:14557" &
+roslaunch mavros px4.launch fcu_url:="udp://:14540@localhost:14557" &
