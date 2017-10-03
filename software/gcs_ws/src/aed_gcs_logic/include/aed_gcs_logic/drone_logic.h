@@ -21,7 +21,7 @@
 #include <string>
 #include <mutex>
 #include <condition_variable>
-#include <math.h> 
+#include <math.h>
 using namespace GeographicLib;
 // namespace drone_logic{
 // NAMESPACE START
@@ -40,7 +40,11 @@ enum droneState {
     ARM = 4,
     START_MISSION = 5,
     ON_MISSION = 6,
-    MISSION_DONE = 7
+    MISSION_DONE = 7,
+    SOFT_ABORT_RTL = 8,
+    SOFT_ABORT_LAND = 9,
+    HARD_ABORT = 10,
+    WAIT_FOR_CONTINUE = 11
 };
 
 struct path{
@@ -82,11 +86,8 @@ class drone_handler
 		int iterator_ceil = 0;
 		double dist_between_waypoints_m;
 		int max_dist_between_waypoints = 500;
-		
-
-
-		
-
+		std::mutex abortM;
+        int abortType;
 
         mavros_msgs::WaypointPush mission_srv;
         std::mutex path_m;

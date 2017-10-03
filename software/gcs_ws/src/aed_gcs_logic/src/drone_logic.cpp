@@ -231,8 +231,24 @@ void drone_handler::run_state_machine()
                 this->state = MISSION_DONE;
             }
             break;}
-        case MISSION_DONE:
+        case MISSION_DONE:{
             /* DO NOTHING */
-            break;
+            break;}
+
+        case SOFT_ABORT_RTL:{
+
+            break;}
+
+        case SOFT_ABORT_LAND:{
+
+            break;}
+
+        case HARD_ABORT:{
+
+            break;}
+
+        case WAIT_FOR_CONTINUE:{
+
+            break;}
     }
 }
