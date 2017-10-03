@@ -1,16 +1,20 @@
 from dronekit import connect, Command, LocationGlobal, VehicleMode
 import logging
+import time
+import math
+MAV_MODE_AUTO   = 4
+from pymavlink import mavutil
 
 class DroneController:
     def __init__(self, port, baud):
         print(port, baud)
         self.vehicle = connect(port, baud = baud, wait_ready = True)
+        self.home_set = False
+        self.vehicle.drone_controller = self
 
         @self.vehicle.on_message('HOME_POSITION')
         def listener(self, name, home_position):
-            print("HOME POSITION")
-            global home_position_set
-            home_position_set = True
+            self.drone_controller.home_set = True
 
     def softabort(self):
         self.vehicle.mode = VehicleMode("RTL")
@@ -21,6 +25,23 @@ class DroneController:
     def land(self):
         self.vehicle.mode = VehicleMode("LAND")
 
+    def PX4setMode(self, mavMode):
+        self.vehicle._master.mav.command_long_send(vehicle._master.target_system, vehicle._master.target_component,
+                                                   mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
+                                                   mavMode,
+                                                   0, 0, 0, 0, 0, 0)
+    def takeoff(self, altitude):
+        self.vehicle.mode = VehicleMode("MISSION")
+        cmds = self.vehicle.commands
+        cmds.clear()
+
+        wp = get_location_offset_meters(self.vehicle.home_location, 0, 0, altitude);
+        cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
+        wp.lat, wp.lon, wp.alt)
+        cmds.add(cmd)
+        cmds.upload()
+        time.sleep(2)
+        self.vehicle.armed = True
 
 
 

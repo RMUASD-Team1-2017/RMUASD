@@ -5,6 +5,12 @@ export PX4_HOME_LAT=55.557882
 export PX4_HOME_LON=10.109294
 export PX4_HOME_ALT=0
 source $(pwd)/software/gcs_ws/devel/setup.bash
-roslaunch mavros px4.launch fcu_url:="udp://:14540@localhost:14557" 
+#roslaunch mavros px4.launch fcu_url:="udp://:14540@localhost:14557" &
 cd $(pwd)/Firmware/
-make posix_sitl_default gazebo  -j4 
+
+if [ $1 = "serial" ]
+then
+ make posix_sitl_ekf2_serial gazebo  -j4
+else
+  make posix_sitl_default gazebo  -j4 
+fi
