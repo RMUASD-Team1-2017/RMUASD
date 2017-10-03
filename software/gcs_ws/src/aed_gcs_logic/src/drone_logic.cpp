@@ -41,6 +41,7 @@ bool drone_handler::setup()
         mavros_msgs::ParamSet param_set_srv;
         param_set_srv.request.param_id = "NAV_DLL_ACT";
         this->param_set_client.call(param_set_srv);
+        std::cout << "Received: " << param_set_srv.response.success ? (std::cout << "True") : (std::cout << "False") << std::endl;
         if(param_set_srv.response.success){
             return true;
         }
@@ -86,7 +87,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             temp_wp.autocontinue = true;
             temp_wp.x_lat = data->path[0].latitude;
             temp_wp.y_long = data->path[0].longitude;
-            temp_wp.z_alt = 50;
+            temp_wp.z_alt = 20;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);
             std::cout << "Point 0: " << temp_wp.x_lat << "," << temp_wp.y_long << std::endl;
@@ -107,14 +108,14 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
 						std::cout<<" latx "<<temp_wp.x_lat<<std::endl;
                		 	temp_wp.y_long = data->path[i-1].longitude + (((data->path[i].longitude - data->path[i-1].longitude)/iterator_ceil)*counter);
 						std::cout<<" longy "<<temp_wp.y_long<<std::endl;
-                		temp_wp.z_alt = 50;
+                		temp_wp.z_alt = 20;
 						mission_srv_temp.request.waypoints.push_back(temp_wp);
 					}
 				}
 
                 temp_wp.x_lat = data->path[i].latitude;
                 temp_wp.y_long = data->path[i].longitude;
-                temp_wp.z_alt = 50;
+                temp_wp.z_alt = 20;
 
                 mission_srv_temp.request.waypoints.push_back(temp_wp);
                 std::cout << "Point " << i << ": " << temp_wp.x_lat << "," << temp_wp.y_long << std::endl;
@@ -127,14 +128,14 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
 
 						temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
                		 	temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
-                		temp_wp.z_alt = 50;
+                		temp_wp.z_alt = 20;
 						mission_srv_temp.request.waypoints.push_back(temp_wp);
 			}
 
 
             temp_wp.x_lat = data->path[data->path.size() - 1].latitude;
             temp_wp.y_long = data->path[data->path.size() - 1].longitude;
-            temp_wp.z_alt = 50;
+            temp_wp.z_alt = 20;
             temp_wp.command = 21;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);
