@@ -16,7 +16,6 @@ class Mission:
 
     def plan(self, start_pos):
         self.goal = self.plan_path(start_pos, self.destination)
-        #print("Response was", response)
 
 class Drone:
     def __init__(self, drone_id):
