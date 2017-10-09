@@ -1,0 +1,11 @@
+amqp==2.2.2
+dronekit==2.9.1
+future==0.15.2
+kombu==4.1.0
+lxml==4.0.0
+MAVProxy==1.6.1
+numpy==1.13.3
+pymavlink==2.2.5
+pynmea2==1.10.0
+pyproj==1.9.5.1
+pyserial==3.4
