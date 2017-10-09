@@ -9,6 +9,7 @@ drone_handler::drone_handler()
     this->armed = false;
     this->mode = "None";
 
+    this->abort_client = n.serviceClient<aed_gcs_logic::AbortRequest>("drone_logic/abort");
     this->param_set_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
     this->mission_push_client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
     this->arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
