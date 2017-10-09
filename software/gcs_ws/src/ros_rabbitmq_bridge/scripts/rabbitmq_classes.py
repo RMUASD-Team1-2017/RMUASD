@@ -14,7 +14,7 @@ from ros_rabbitmq_bridge.msg import userinfo
 from rospy_message_converter import json_message_converter
 from ros_rabbitmq_bridge import *
 import functools
-
+import datetime
 class ros_to_rabbitmq_bridge:
     def __init__(self, rabbitmq_host, bridge_settings):
         #Bridge settings is a list of dicts with the following content:
@@ -29,19 +29,30 @@ class ros_to_rabbitmq_bridge:
         for setting in self.settings:
             if not "callback" in setting.keys():
                 setting["callback"] = self.simple_callback
-            self.channel.exchange_declare(exchange=setting["exchange"], type='topic' )
+            self.channel.exchange_declare(exchange=setting["exchange"], type='topic', durable = False)
             rospy.Subscriber(setting["ros_topic"], setting["message_type"], setting["callback"], (setting, self.channel,), queue_size=10)
 
     def setup_rabbitmq(self):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.host))
         self.channel = self.connection.channel()
 
+    @classmethod
     def simple_callback(self, data, args):
         #Demo callback. Simply publishes the converted json on the same topic as recieved on.
         settings = args[0]
         channel = args[1]
         json_str = json_message_converter.convert_ros_message_to_json(data)
-        self.channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json_str)
+        channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json_str)
+
+    @classmethod
+    def time_callback(cls, data, args):
+        #Simple sends a json message containing the current time
+        settings = args[0]
+        channel = args[1]
+        time_str = datetime.datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
+        data = {"time" : time_str}
+        channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json.dumps(data))
+
 
 class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
     #Mostly the same as before, but the settings are a bit different:

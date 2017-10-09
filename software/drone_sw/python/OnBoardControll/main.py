@@ -1,7 +1,8 @@
 #Python service running on the drone can do soft (RTL) and hard (motor shutdown) abort,
 #And send requested telemetry
-import kombu
+from __future__ import print_function
 
+import kombu
 
 import logging
 import sys
@@ -11,6 +12,9 @@ import argparse
 from dronekit import connect, Command, LocationGlobal, VehicleMode
 from DroneControl.DroneControl import DroneController
 from RMQHandler.DroneConsumer import DroneAbortWorker
+from RMQHandler import DroneProducer
+from GPSHandler import GPSHandler
+
 def __main__():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rmquser', nargs='?', default="drone", type=str)
@@ -20,6 +24,10 @@ def __main__():
     parser.add_argument('--mavbaud', nargs='?', default=57600, type=int)
     parser.add_argument('--droneid', nargs='?', default=1, type=int)
     parser.add_argument('--loglevel', nargs='?', default="INFO", type=str)
+    parser.add_argument('--gpsport', nargs='?', default="/dev/ttyLP0", type=str)
+    parser.add_argument('--gpsbaud', nargs='?', default=115200, type=int)
+
+
 
     args = parser.parse_args()
 
@@ -32,10 +40,12 @@ def __main__():
     logging.info("Establishing mavlink connection")
     drone = DroneController(port = args.mavport, baud = args.mavbaud)
     logging.info("Established mavlink connection")
+    gps_handler = GPSHandler.GPSHandler(args.gpsport, args.gpsbaud)
+    gps_handler.start_handler()
 
     #Setting up kombu connection
-
     with kombu.Connection("amqp://{}:{}@{}:5672/".format(args.rmquser, args.rmqpass, args.rmqhost), failover_strategy='shuffle', heartbeat=4)  as connection:
+        DroneProducer.initialise(args.droneid, connection)
         worker = DroneAbortWorker(connection, args.droneid, drone)
         worker.run()
 

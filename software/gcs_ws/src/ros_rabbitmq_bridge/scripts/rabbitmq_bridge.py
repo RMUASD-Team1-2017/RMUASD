@@ -23,13 +23,16 @@ import threading
 
 if __name__ == '__main__':
 
-    RABBIT_BROKER = "amqp://guest:guest@localhost:5672/%2F?connection_attempts=3&heartbeat_interval=3600"
+    RABBIT_BROKER = "amqp://drone:drone@drone.stefanrvo.dk:5672/%2F?connection_attempts=3&heartbeat_interval=3600"
 
     rospy.init_node('rabbitmq_bridge', anonymous=True)
 
 
     ros_to_rabbit_settings = [
-    {"ros_topic" : "drone/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}
+    {"ros_topic" : "drone/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}, \
+    {"ros_topic" : "drone/softabort", "message_type" : Empty, "routing_key" : "drone.softabort.1", "exchange" : "droneabort", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
+    {"ros_topic" : "drone/hardabort", "message_type" : Empty, "routing_key" : "drone.hardabort.1", "exchange" : "droneabort", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
+
     ]
     rabbit_to_ros_settings = [
     {"ros_topic" : "drone/missionrequest", "message_type_str" : "ros_rabbitmq_bridge/mission_request", "message_type" : mission_request, "routing_key" : "drone.mission_request", "exchange" : "drone"}

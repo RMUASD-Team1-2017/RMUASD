@@ -1,9 +1,12 @@
+from __future__ import print_function
+
 from dronekit import connect, Command, LocationGlobal, VehicleMode
 import logging
 import time
 import math
 MAV_MODE_AUTO   = 4
 from pymavlink import mavutil
+import traceback
 
 class DroneController:
     def __init__(self, port, baud):
@@ -12,9 +15,26 @@ class DroneController:
         self.home_set = False
         self.vehicle.drone_controller = self
 
-        @self.vehicle.on_message('HOME_POSITION')
-        def listener(self, name, home_position):
-            self.drone_controller.home_set = True
+        # @self.vehicle.on_message('HOME_POSITION')
+        # def listener(self, name, home_position):
+        #     print(home_position)
+        #     self.drone_controller.home_set = True
+        #
+        # @self.vehicle.on_message('gps_0')
+        # def listener(self, name, gps):
+        #     print(gps)
+
+        # @self.vehicle.on_message('*')
+        # def listener(self, name, message):
+        #     print(name, message)
+        #     self.drone_controller.home_set = True
+
+        @self.vehicle.on_message('GPS_RAW_INT')
+        def listener(self, name, message):
+            #We import the publisher everytime, as it may have updated
+            from RMQHandler.DroneProducer import droneproducer
+            if droneproducer:
+                droneproducer.publish_onboard_gps(self.gps_0, self.location.global_relative_frame)
 
     def softabort(self):
         self.vehicle.mode = VehicleMode("RTL")

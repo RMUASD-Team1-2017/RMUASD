@@ -9,8 +9,8 @@ class DroneAbortWorker(ConsumerMixin):
         self.drone_id = drone_id
         self.drone = drone
         self.connection = connection
-        self.droneAbortExchange = kombu.Exchange(name="droneabort", type="topic")
-        self.droneActionExchange = kombu.Exchange(name="droneaction", type="topic")
+        self.droneAbortExchange = kombu.Exchange(name="droneabort", type="topic", durable = False)
+        self.droneActionExchange = kombu.Exchange(name="droneaction", type="topic", durable = False)
         self.droneSoftAbort = kombu.Queue("dronesoftabort{}".format(drone_id), exchange=self.droneAbortExchange, routing_key="drone.softabort.{}".format(drone_id))
         self.droneHardAbort = kombu.Queue("dronehardabort{}".format(drone_id), exchange=self.droneAbortExchange, routing_key="drone.hardabort.{}".format(drone_id))
         self.droneLand = kombu.Queue("droneland{}".format(drone_id), exchange=self.droneActionExchange, routing_key="drone.land.{}".format(drone_id))
