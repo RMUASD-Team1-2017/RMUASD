@@ -13,8 +13,8 @@ from dronekit import connect, Command, LocationGlobal, VehicleMode
 from DroneControl.DroneControl import DroneController
 from RMQHandler.DroneConsumer import DroneAbortWorker
 from RMQHandler import DroneProducer
-from GPSHandler import GPSHandler
-
+from GPSHandler.GPSHandler import GPSHandler
+from GPSHandler.GPSMonitor import GPSMonitor
 def __main__():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rmquser', nargs='?', default="drone", type=str)
@@ -26,7 +26,7 @@ def __main__():
     parser.add_argument('--loglevel', nargs='?', default="INFO", type=str)
     parser.add_argument('--gpsport', nargs='?', default="/dev/ttyLP0", type=str)
     parser.add_argument('--gpsbaud', nargs='?', default=115200, type=int)
-
+    parser.add_argument('--simufile', nargs='?', default=None, type=str)
 
 
     args = parser.parse_args()
@@ -40,9 +40,10 @@ def __main__():
     logging.info("Establishing mavlink connection")
     drone = DroneController(port = args.mavport, baud = args.mavbaud)
     logging.info("Established mavlink connection")
-    gps_handler = GPSHandler.GPSHandler(args.gpsport, args.gpsbaud)
+    gps_handler = GPSHandler(args.gpsport, args.gpsbaud, args.simufile)
     gps_handler.start_handler()
-
+    gps_monitor = GPSMonitor([drone.get_last_fix, gps_handler.get_last_fix], drone.hardabort)
+    gps_monitor.start_monitor()
     #Setting up kombu connection
     with kombu.Connection("amqp://{}:{}@{}:5672/".format(args.rmquser, args.rmqpass, args.rmqhost), failover_strategy='shuffle', heartbeat=4)  as connection:
         DroneProducer.initialise(args.droneid, connection)

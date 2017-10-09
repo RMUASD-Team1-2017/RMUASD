@@ -4,65 +4,81 @@ from dronekit import connect, Command, LocationGlobal, VehicleMode
 import logging
 import time
 import math
-MAV_MODE_AUTO   = 4
 from pymavlink import mavutil
 import traceback
+import threading
+import datetime
+
+MAV_MODE_AUTO   = 4
 
 class DroneController:
     def __init__(self, port, baud):
         print(port, baud)
-        self.vehicle = connect(port, baud = baud, wait_ready = True)
+        self.vehicle = connect(port, rate = 2, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
+        #If the used serial port actually disapears, there will be no way to recover, but this can only happen for non-usb serial ports, so it should not really matter
+
         self.home_set = False
-        self.vehicle.drone_controller = self
+        self.vehicle.drone_controller = self #Hack to access this class from the vehicle in the quite strange decorator functions
+        self.lock = threading.RLock()
+        self.location = None
+        self.last_fix = None
 
-        # @self.vehicle.on_message('HOME_POSITION')
-        # def listener(self, name, home_position):
-        #     print(home_position)
-        #     self.drone_controller.home_set = True
-        #
-        # @self.vehicle.on_message('gps_0')
-        # def listener(self, name, gps):
-        #     print(gps)
-
-        # @self.vehicle.on_message('*')
-        # def listener(self, name, message):
-        #     print(name, message)
-        #     self.drone_controller.home_set = True
+        @self.vehicle.on_message('HOME_POSITION')
+        def listener(self, name, home_position):
+             self.drone_controller.home_set = True
 
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
             #We import the publisher everytime, as it may have updated
+            with self.drone_controller.lock:
+                self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
+                self.drone_controller.last_fix = datetime.datetime.now()
+
+            info = {"eph" : self.gps_0.eph, "epv" : self.gps_0.epv, "fix_type" : self.gps_0.fix_type, "satellites_visible" : self.gps_0.satellites_visible}
+
+            logging.debug("Got onboard GPS: {}, {}".format(self.location.global_relative_frame, self.gps_0) )
+
             from RMQHandler.DroneProducer import droneproducer
             if droneproducer:
-                droneproducer.publish_onboard_gps(self.gps_0, self.location.global_relative_frame)
+                droneproducer.publish_onboard_gps(info, self.drone_controller.location)
 
     def softabort(self):
-        self.vehicle.mode = VehicleMode("RTL")
+        with self.lock:
+            self.vehicle.mode = VehicleMode("RTL")
 
     def hardabort(self):
-        self.vehicle.armed = False
+        with self.lock:
+            # In testing, we do not do this...
+            #self.vehicle.armed = False
+            logging.warning("Recieved a hard abort command, but this is not enabled ATM!!")
 
     def land(self):
-        self.vehicle.mode = VehicleMode("LAND")
+        with self.lock:
+            self.vehicle.mode = VehicleMode("LAND")
 
     def PX4setMode(self, mavMode):
-        self.vehicle._master.mav.command_long_send(vehicle._master.target_system, vehicle._master.target_component,
-                                                   mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
-                                                   mavMode,
-                                                   0, 0, 0, 0, 0, 0)
+        with self.lock:
+            self.vehicle._master.mav.command_long_send(vehicle._master.target_system, vehicle._master.target_component,
+                                                       mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
+                                                       mavMode,
+                                                       0, 0, 0, 0, 0, 0)
     def takeoff(self, altitude):
-        self.vehicle.mode = VehicleMode("MISSION")
-        cmds = self.vehicle.commands
-        cmds.clear()
+        with self.lock:
+            self.vehicle.mode = VehicleMode("MISSION")
+            cmds = self.vehicle.commands
+            cmds.clear()
 
-        wp = get_location_offset_meters(self.vehicle.home_location, 0, 0, altitude);
-        cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
-        wp.lat, wp.lon, wp.alt)
-        cmds.add(cmd)
-        cmds.upload()
-        time.sleep(2)
-        self.vehicle.armed = True
+            wp = get_location_offset_meters(self.vehicle.home_location, 0, 0, altitude);
+            cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
+            wp.lat, wp.lon, wp.alt)
+            cmds.add(cmd)
+            cmds.upload()
+            time.sleep(2)
+            self.vehicle.armed = True
 
+    def get_last_fix(self):
+        with self.lock:
+            return "FAIL", self.location, self.last_fix
 
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):
