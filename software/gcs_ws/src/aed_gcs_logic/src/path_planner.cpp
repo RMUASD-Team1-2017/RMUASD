@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <exception>
 
 #include "aed_gcs_logic/path_planner.h"
 
@@ -20,21 +21,21 @@ path_planner::path_planner(std::string map, std::string landingspotFile){
 // Debugging function for printing all specs of a node
 void path_planner::printNode(Node *node){
     std::cout << "Id: " << node->id << "\t";
-    std::cout << "Coord: " << node->coord << "\t";
+    std::cout << "Coord: " << node->coord.latitude << ", " << node->coord.longitude << "\t";
     if (node->cameFrom == NULL) std::cout << "From: Unknown!" << "\t";
     else std::cout << "From: " << node->cameFrom->id << "\t";
     std::cout << "G Score: " << node->gScore << "\t";
     std::cout << "F Score: " << node->fScore << "\t";
-    std::cout << "Link:" << "\t";
-    for (int i = 0; i < node->link.size(); i++){
-        std::cout << "\t" << node->link[i]->id << "\t";
-    }
+    // std::cout << "Link:" << "\t";
+    // for (int i = 0; i < node->link.size(); i++){
+    //     std::cout << "\t" << node->link[i]->id << "\t";
+    // }
     std::cout << std::endl;
 }
 
 // Debugging function for printing all specs of a coord
-void path_planner::printCoord(sensor_msgs::NavSatFix coord){
-    std::cout << "Coord: " << coord << std::endl;
+void path_planner::printCoord(Coord coord){
+    std::cout << "Coord: " << coord.latitude << ", " << coord.longitude << std::endl;
     std::cout << std::endl;
 }
 
@@ -50,13 +51,13 @@ void path_planner::printList(std::vector<Node> &list){
 
 // Load comma-seperated file into list of nodes for the geofence
 void path_planner::loadGeofence(std::string fileName){
-    geofence = std::vector<std::pair<sensor_msgs::NavSatFix, sensor_msgs::NavSatFix>>();
+    geofence = std::vector<std::pair<Coord, Coord>>();
 
     std::ifstream file(fileName);
     if (!file) std::cout << "Can't find geofence file: " << fileName << std::endl;
 
     int index = 0;
-    sensor_msgs::NavSatFix prev;
+    Coord prev;
 
     while (file){
         std::string s;
@@ -68,11 +69,11 @@ void path_planner::loadGeofence(std::string fileName){
             if (!getline(ss, s, ',')) break;
             coord.push_back(std::stod(s));
         }
-        sensor_msgs::NavSatFix tempCoord;
+        Coord tempCoord;
         tempCoord.latitude = coord[0];
         tempCoord.longitude = coord[1];
-        tempCoord.altitude = coord[2];
-        if (index) geofence.push_back(std::pair<sensor_msgs::NavSatFix, sensor_msgs::NavSatFix>(prev, tempCoord));
+        tempCoord.altitude = 0;
+        if (index) geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
         prev = tempCoord;
         index++;
     }
@@ -96,7 +97,7 @@ void path_planner::loadMap(std::string fileName){
             if (!getline(ss, s, ',')) break;
             coord.push_back(std::stod(s));
         }
-        sensor_msgs::NavSatFix tempCoord;
+        Coord tempCoord;
         tempCoord.latitude = coord[0];
         tempCoord.longitude = coord[1];
         tempCoord.altitude = coord[2];
@@ -120,12 +121,13 @@ void path_planner::loadLandingSpots(std::string fileName){
         if (!getline(file, s)) break;
         std::istringstream ss(s);
         std::vector<double> coord;
+        if (s == "" || s.at(0) == '#') continue;
         while (ss){
-            std::string s;
+            std::string s = "";
             if (!getline(ss, s, ',')) break;
             coord.push_back(std::stod(s));
         }
-        sensor_msgs::NavSatFix tempCoord;
+        Coord tempCoord;
         tempCoord.latitude = coord[0];
         tempCoord.longitude = coord[1];
         tempCoord.altitude = coord[2];
@@ -134,7 +136,7 @@ void path_planner::loadLandingSpots(std::string fileName){
     }
 }
 
-bool path_planner::intersection(std::pair<sensor_msgs::NavSatFix, sensor_msgs::NavSatFix> l1, std::pair<sensor_msgs::NavSatFix, sensor_msgs::NavSatFix> l2){
+bool path_planner::intersection(std::pair<Coord, Coord> l1, std::pair<Coord, Coord> l2){
     double x1 = l1.first.latitude;
     double y1 = l1.first.longitude;
     double x2 = l1.second.latitude;
@@ -152,15 +154,15 @@ bool path_planner::intersection(std::pair<sensor_msgs::NavSatFix, sensor_msgs::N
     return ta > 0 && ta < 1 && tb > 0 && tb < 1;
 }
 
-double path_planner::getAngle(sensor_msgs::NavSatFix c1, sensor_msgs::NavSatFix c2){
-    double x = c2.latitude - c1.latitude;
-    double y = c2.longitude - c1.longitude;
+double path_planner::getAngle(Coord c1, Coord c2){
+    double x = c2.longitude - c1.longitude;
+    double y = c2.latitude - c1.latitude;
     return atan2(y, x);
 }
 
-int path_planner::getIndex(sensor_msgs::NavSatFix coord){
+int path_planner::getIndex(Coord coord){
     for (int i = 0; i < geofence.size(); i++){
-        if (coord.latitude == geofence[i].first.latitude && coord.longitude == geofence[i].first.longitude && coord.altitude == geofence[i].first.altitude) return i;
+        if (coord.latitude == geofence[i].first.latitude && coord.longitude == geofence[i].first.longitude) return i;
     }
     return -1;
 }
@@ -196,8 +198,8 @@ void path_planner::connectNodes(){
             if (i == j) continue;
             if (outOfBounds(&nodes[i], &nodes[j]) || outOfBounds(&nodes[j], &nodes[i])) continue;
             for (int k = 0; k < geofence.size(); k++){
-                if (intersection(std::pair<sensor_msgs::NavSatFix, sensor_msgs::NavSatFix>(nodes[i].coord, nodes[j].coord), geofence[k])) break;
-                else if (k == geofence.size() - 1){
+                if (intersection(std::pair<Coord, Coord>(nodes[i].coord, nodes[j].coord), geofence[k])) break;
+                if (k == geofence.size() - 1){
                     addLink(&nodes[i], &nodes[j]);
                 }
             }
@@ -243,7 +245,7 @@ double path_planner::dist(Node *start, Node *goal){
 }
 
 // Return euclidean distance between two nodes
-double path_planner::dist(sensor_msgs::NavSatFix *start, sensor_msgs::NavSatFix *goal){
+double path_planner::dist(Coord *start, Coord *goal){
     return sqrt(pow(start->latitude - goal->latitude, 2) + pow(start->longitude - goal->longitude, 2) + pow(start->altitude - goal->altitude, 2));
 }
 
@@ -258,7 +260,7 @@ std::vector<Node*> path_planner::reconstruc_path(Node *current){
 }
 
 // The standard A* algorithm
-std::vector<Node*> path_planner::aStar(sensor_msgs::NavSatFix startCoord, sensor_msgs::NavSatFix goalCoord){
+std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
 
     nodes.push_back(Node(startCoord, -1));
     Node *start = &nodes.back();
@@ -275,11 +277,6 @@ std::vector<Node*> path_planner::aStar(sensor_msgs::NavSatFix startCoord, sensor
 
     while (openSet.size()){
 
-        // std::cout << "openSet" << std::endl;
-        // printList(openSet);
-        // std::cout << std::endl;
-        // std::cout << std::endl;
-
         Node *current = getLowestFScore(openSet);
         if (current == goal){
             path = reconstruc_path(current);
@@ -292,7 +289,7 @@ std::vector<Node*> path_planner::aStar(sensor_msgs::NavSatFix startCoord, sensor
         for (int i = 0; i < current->link.size(); i++){
             if (inList(closedSet, current->link[i])) continue;
             if (!inList(openSet, current->link[i])) openSet.push_back(current->link[i]);
-            int tantative_gScore = current->gScore + dist(current, current->link[i]);
+            double tantative_gScore = current->gScore + dist(current, current->link[i]);
             if (tantative_gScore >= current->link[i]->gScore) continue;
             current->link[i]->cameFrom = current;
             current->link[i]->gScore = tantative_gScore;
@@ -303,8 +300,8 @@ std::vector<Node*> path_planner::aStar(sensor_msgs::NavSatFix startCoord, sensor
     return std::vector<Node*>();
 }
 
-sensor_msgs::NavSatFix path_planner::getNearestLandingSpot(sensor_msgs::NavSatFix start){
-    sensor_msgs::NavSatFix nearest;
+Coord path_planner::getNearestLandingSpot(Coord start){
+    Coord nearest;
     double distance = std::numeric_limits<double>::max();
     for (int i = 0; i < landingspot.size(); i++){
         if (dist(&start, &landingspot[i]) < distance){
@@ -318,49 +315,59 @@ sensor_msgs::NavSatFix path_planner::getNearestLandingSpot(sensor_msgs::NavSatFi
 #ifdef SDL
 void path_planner::draw(int size){
 
-    static Window *window = new Window(Vector(1920 / 2, 0),Vector(size, size), "Path Planner");
-
     double minX = std::numeric_limits<double>::max();
     double maxX = std::numeric_limits<double>::min();
     double minY = std::numeric_limits<double>::max();
     double maxY = std::numeric_limits<double>::min();
 
     for (int i = 0; i < nodes.size(); i++){
-        minX = std::min(minX, nodes[i].coord.x);
-        maxX = std::max(maxX, nodes[i].coord.x);
-        minY = std::min(minY, nodes[i].coord.y);
-        maxY = std::max(maxY, nodes[i].coord.y);
+        minX = std::min(minX, nodes[i].coord.longitude);
+        maxX = std::max(maxX, nodes[i].coord.longitude);
+        minY = std::min(minY, nodes[i].coord.latitude);
+        maxY = std::max(maxY, nodes[i].coord.latitude);
     }
 
     double scale = size * 0.9 / std::max(maxX - minX, maxY - minY);
+
+    int height = size / 10 + (maxY - minY) * scale;
+    int width = size / 10 + (maxX - minX) * scale;
+
     Vector scaleOffset(-minX, -minY);
+
+    static Window *window = new Window(Vector(1920 / 2, 0),Vector(width, height), "Path Planner");
 
     window->background(White);
     Vector offset(size / 20, size / 20);
 
     for (int i = 0; i < nodes.size(); i++){
-        Vector v1 = Vector(nodes[i].coord.x, nodes[i].coord.y);
+        Vector v1 = Vector(nodes[i].coord.longitude, nodes[i].coord.latitude);
         for (int j = 0; j < nodes[i].link.size(); j++){
-            Vector v2 = Vector(nodes[i].link[j]->coord.x, nodes[i].link[j]->coord.y);
-            window->line((v1 + scaleOffset) * scale + offset, (v2 + scaleOffset) * scale + offset, Green);
+            Vector v2 = Vector(nodes[i].link[j]->coord.longitude, nodes[i].link[j]->coord.latitude);
+            Vector v3 = (v1 + scaleOffset) * scale + offset;
+            Vector v4 = (v2 + scaleOffset) * scale + offset;
+            window->line(Vector(v3.x, height - v3.y), Vector(v4.x, height - v4.y), Green);
         }
     }
 
     for (int i = 0; i < geofence.size(); i++){
-        Vector v1 = Vector(geofence[i].first.x, geofence[i].first.y);
-        Vector v2 = Vector(geofence[i].second.x, geofence[i].second.y);
-        window->line((v1 + scaleOffset) * scale + offset, (v2 + scaleOffset) * scale + offset, Red);
+        Vector v1 = Vector(geofence[i].first.longitude, geofence[i].first.latitude);
+        Vector v2 = Vector(geofence[i].second.longitude, geofence[i].second.latitude);
+        Vector v3 = (v1 + scaleOffset) * scale + offset;
+        Vector v4 = (v2 + scaleOffset) * scale + offset;
+        window->line(Vector(v3.x, height - v3.y), Vector(v4.x, height - v4.y), Red);
     }
 
     for (int i = 1; i < path.size(); i++){
-        Vector v1 = Vector(path[i - 1]->coord.x, path[i - 1]->coord.y);
-        Vector v2 = Vector(path[i]->coord.x, path[i]->coord.y);
-        window->line((v1 + scaleOffset) * scale + offset, (v2 + scaleOffset) * scale + offset, Blue);
+        Vector v1 = Vector(path[i - 1]->coord.longitude, path[i - 1]->coord.latitude);
+        Vector v2 = Vector(path[i]->coord.longitude, path[i]->coord.latitude);
+        Vector v3 = (v1 + scaleOffset) * scale + offset;
+        Vector v4 = (v2 + scaleOffset) * scale + offset;
+        window->line(Vector(v3.x, height - v3.y), Vector(v4.x, height - v4.y), Blue);
     }
 
     for (int i = 0; i < nodes.size(); i++){
-        Vector v1 = Vector(nodes[i].coord.x, nodes[i].coord.y);
-        window->text((v1 + scaleOffset) * scale + offset, nodes[i].id, Black);
+        Vector v1 = (Vector(nodes[i].coord.longitude, nodes[i].coord.latitude) + scaleOffset) * scale + offset;
+        window->text(Vector(v1.x, height - v1.y), nodes[i].id, Black);
     }
 
     window->draw();

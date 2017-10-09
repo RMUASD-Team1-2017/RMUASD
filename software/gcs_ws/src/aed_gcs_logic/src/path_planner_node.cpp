@@ -12,20 +12,32 @@ ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
     path_planner planner(ros::package::getPath("aed_gcs_logic") + "/resources/geofence.csv", ros::package::getPath("aed_gcs_logic") + "/resources/landingspots.csv");
-    sensor_msgs::NavSatFix start = req.start;
-    sensor_msgs::NavSatFix goal = req.end;
-    sensor_msgs::NavSatFix landingPos = planner.getNearestLandingSpot(goal);
+    Coord start;
+    start.latitude = req.start.latitude;
+    start.longitude = req.start.longitude;
+    Coord goal;
+    goal.latitude = req.end.latitude;
+    goal.longitude = req.end.longitude;
+    Coord landingPos = planner.getNearestLandingSpot(goal);
+
     res.result.latitude = landingPos.latitude;
     res.result.longitude = landingPos.longitude;
     res.result.altitude = landingPos.altitude;
 
+
+
     std::vector<Node*> waypoints = planner.aStar(start, landingPos);
+
 #ifdef SDL
-    planner.draw(500);
+    planner.draw(1000);
 #endif
     aed_gcs_logic::waypoints path;
     for (int i = waypoints.size() - 1; i >= 0; i--){
-        path.path.push_back(waypoints[i]->coord);
+        sensor_msgs::NavSatFix node;
+        node.latitude = waypoints[i]->coord.latitude;
+        node.longitude = waypoints[i]->coord.longitude;
+        node.altitude = waypoints[i]->coord.altitude;
+        path.path.push_back(node);
     }
 
     std::cout << std::endl;
@@ -47,7 +59,9 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     std::cout << "The path consists of " << waypoints.size() << " waypoints:" << std::endl;
 
     for (int i = 0; i < waypoints.size(); i++){
-        std::cout << "Node id: " << waypoints[i]->id << std::endl;
+        if (waypoints[i]->id == -2)std::cout << "Node id: Docking station" << waypoints[i]->id << std::endl;
+        else if (waypoints[i]->id == -1) std::cout << "Node id: Landing spot" << std::endl;
+        else std::cout << "Node id: " << waypoints[i]->id << std::endl;
         std::cout << "\tLatitude:   " << waypoints[i]->coord.latitude << std::endl;
         std::cout << "\tLongtitude: " << waypoints[i]->coord.longitude << std::endl;
         std::cout << "\tAltitude:   " << waypoints[i]->coord.altitude << std::endl;
