@@ -9,7 +9,7 @@ drone_handler::drone_handler()
     this->armed = false;
     this->mode = "None";
 
-    this->abort_client = n.serviceClient<aed_gcs_logic::AbortRequest>("drone_logic/abort");
+    this->abort_server = n.advertiseService("drone_logic/abort", &drone_handler::abort_callback, this);
     this->param_set_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
     this->mission_push_client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
     this->arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
@@ -50,6 +50,10 @@ bool drone_handler::setup()
         ros::Duration(1).sleep();
     }
     return false;
+}
+
+bool drone_handler::abort_callback(aed_gcs_logic::AbortRequest::Request &req, aed_gcs_logic::AbortRequest::Response &res){
+
 }
 
 double drone_handler::calc_dist_between_waypoints(double lat1, double lat2, double long1, double long2)

@@ -15,6 +15,7 @@
 #include <GeographicLib/Geodesic.hpp>
 
 #include "aed_gcs_logic/waypoints.h"
+#include "aed_gcs_logic/AbortRequest.h"
 
 #include <vector>
 
@@ -63,6 +64,7 @@ class drone_handler
     private:
         ros::NodeHandle n;
 
+        ros::ServiceServer abort_server;
         ros::ServiceClient param_set_client; // = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
         ros::ServiceClient mission_push_client; // = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
         ros::ServiceClient arming_client; // n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
@@ -72,6 +74,7 @@ class drone_handler
         ros::Publisher velocity_pub; // n.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
 
         // Callbacks
+        bool abort_callback(aed_gcs_logic::AbortRequest::Request &req, aed_gcs_logic::AbortRequest::Response &res);
         void current_state_callback(const mavros_msgs::State::ConstPtr& data);
         void mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data);
 		double calc_dist_between_waypoints(double lat1, double lat2, double long1, double long2);
