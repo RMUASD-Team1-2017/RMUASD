@@ -55,7 +55,6 @@ class GPSMonitor:
                         elif severty == "IGNORE":
                             logging.debug("Lost GPS fix on GPS with severty IGNORE")
                         continue
-                    print(location)
                     locations.append( (projection(location["lat"], location["lon"]), last_fix) )
 
                 if len(locations) <= 1: #We can't check difference if only one point exists
