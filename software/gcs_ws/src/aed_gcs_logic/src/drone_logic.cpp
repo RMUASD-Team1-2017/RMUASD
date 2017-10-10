@@ -4,11 +4,16 @@ drone_handler::drone_handler()
 {
     this->state = IDLE;
     this->received_mission = false;
-    this->off_board_requested = false;
     this->connected = false;
     this->armed = false;
     this->mode = "None";
+	this->latitude = 0;
+	this->longitude = 0;
+	this->altitude = 0;
+    this->abortType = 0;
 
+    this->abort_server = n.advertiseService("drone_logic/abort", &drone_handler::abort_callback, this);
+    this->restart_server = n.advertiseService("drone_logic/restart", &drone_handler::restart_callback, this);
     this->param_set_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
     this->mission_push_client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
     this->arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
@@ -16,6 +21,8 @@ drone_handler::drone_handler()
     this->state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 1, &drone_handler::current_state_callback, this);
     this->mission_sub = n.subscribe<aed_gcs_logic::waypoints>("path", 1, &drone_handler::mission_callback, this);
     this->velocity_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 1);
+	this->pull_client = n.serviceClient<mavros_msgs::WaypointPull>("mavros/mission/pull");
+	this->nav_sat_fix_gps = n.subscribe<sensor_msgs::NavSatFix>("mavros/global_position/global", 1, &drone_handler::gps_callback, this);
 }
 
 drone_handler::~drone_handler(){
@@ -50,19 +57,73 @@ bool drone_handler::setup()
     return false;
 }
 
+bool drone_handler::set_mode(const std::string& mode){
+    mavros_msgs::SetMode mode_msg;
+    mode_msg.request.custom_mode = mode;
+    this->set_mode_client.call(mode_msg);
+    return mode_msg.response.mode_sent;
+}
+
+bool drone_handler::set_arm(const bool& mode){
+    mavros_msgs::CommandBool arm_msg;
+    arm_msg.request.value = mode;
+    this->arming_client.call(arm_msg);
+    return arm_msg.response.success;
+}
+
+bool drone_handler::abort_callback(aed_gcs_logic::AbortRequest::Request &req, aed_gcs_logic::AbortRequest::Response &res){
+    int type = req.abort_type;
+    if(type > 0 && type <= 4){
+        if(type == CONTINUE){
+            if(this->state == WAIT_FOR_CONTINUE){
+                abortType = type;
+                res.success = true;
+                res.message = "Continuing";
+            }
+            else{
+                res.success = false;
+                res.message = "Not currently aborting";
+            }
+        }
+        else{
+            if(this->state == ON_MISSION){
+                abortType = type;
+                res.success = true;
+                res.message = "Aborting";
+            }
+            else{
+                res.success = false;
+                res.message = "Not on mission";
+            }
+        }
+    }
+    else{
+        res.success = false;
+        res.message = "Please Specify a abort type within 1 - 4";
+    }
+    return true;
+}
+
+bool drone_handler::restart_callback(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res){
+    if(this->state == MISSION_DONE){
+        this->reset_cv.notify_all();
+        res.success = true;
+        res.message = "Restart accepted";
+    }
+    else{
+        res.success = false;
+        res.message = "Can't restart, drone is either idle or on mission";
+    }
+
+    return true;
+}
+
 double drone_handler::calc_dist_between_waypoints(double lat1, double lat2, double long1, double long2)
-
 {
-
-
+	double dist_between_waypoints_m;
 	const Geodesic& geod = Geodesic::WGS84();
-
   	geod.Inverse(lat1, long1, lat2, long2, dist_between_waypoints_m);
-
-	std::cout<<" distance "<<dist_between_waypoints_m<<std::endl;
-
 	return dist_between_waypoints_m;
-
 }
 
 
@@ -70,7 +131,14 @@ void drone_handler::current_state_callback(const mavros_msgs::State::ConstPtr& d
 {
     this->connected = data->connected;
     this->armed = data->armed;
-    this->mode = data->mode;  // indicates that is a variable from this class
+    this->mode = data->mode;
+}
+
+void drone_handler::gps_callback(const sensor_msgs::NavSatFix::ConstPtr& data)
+{
+    this->latitude = data->latitude;
+	this->longitude = data->longitude;
+	this->altitude = data->altitude;
 }
 
 void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data)
@@ -86,60 +154,51 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             temp_wp.autocontinue = true;
             temp_wp.x_lat = data->path[0].latitude;
             temp_wp.y_long = data->path[0].longitude;
-            temp_wp.z_alt = 50;
+            temp_wp.z_alt = 20;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);
-            std::cout << "Point 0: " << temp_wp.x_lat << "," << temp_wp.y_long << std::endl;
 
             temp_wp.command = 16;
             temp_wp.is_current = false;
 
             for(int i = 1; i < data->path.size() - 1; i++){
+				double iterator = 0;
+				int iterator_ceil = 0;
 
-
-				if(calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude)>max_dist_between_waypoints){
-					iterator = (calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude)/max_dist_between_waypoints);
+				if(calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude) > MAX_DIST_BETWEEN_WAYPOINTS){
+					iterator = (calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude) / MAX_DIST_BETWEEN_WAYPOINTS);
 					iterator_ceil = ceil( iterator );
-					std::cout<<" number "<<iterator_ceil<<std::endl;
 					for(int counter = 1 ; counter<iterator_ceil; counter++){
-
 						temp_wp.x_lat =  data->path[i-1].latitude + (((data->path[i].latitude - data->path[i-1].latitude)/iterator_ceil)*counter);
-						std::cout<<" latx "<<temp_wp.x_lat<<std::endl;
                		 	temp_wp.y_long = data->path[i-1].longitude + (((data->path[i].longitude - data->path[i-1].longitude)/iterator_ceil)*counter);
-						std::cout<<" longy "<<temp_wp.y_long<<std::endl;
-                		temp_wp.z_alt = 50;
+                		temp_wp.z_alt = 20;
+
 						mission_srv_temp.request.waypoints.push_back(temp_wp);
 					}
 				}
 
                 temp_wp.x_lat = data->path[i].latitude;
                 temp_wp.y_long = data->path[i].longitude;
-                temp_wp.z_alt = 50;
+                temp_wp.z_alt = 20;
 
                 mission_srv_temp.request.waypoints.push_back(temp_wp);
-                std::cout << "Point " << i << ": " << temp_wp.x_lat << "," << temp_wp.y_long << std::endl;
             }
-			std::cout<<" lat1  "<<data->path[data->path.size()-2].latitude<<" lat2 "<<data->path[data->path.size()-1].latitude<<std::endl;
-			std::cout<<" long1 "<<data->path[data->path.size()-2].longitude<<" long2 "<<data->path[data->path.size()-1].longitude<<std::endl;
-
 			if(calc_dist_between_waypoints(data->path[data->path.size()-2].latitude,data->path[data->path.size()-1].latitude,data->path[data->path.size()-2].longitude,data->path[data->path.size()-1].longitude)>500){
-
-
-						temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
-               		 	temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
-                		temp_wp.z_alt = 50;
-						mission_srv_temp.request.waypoints.push_back(temp_wp);
+				temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
+       		 	temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
+        		temp_wp.z_alt = 20;
+				mission_srv_temp.request.waypoints.push_back(temp_wp);
 			}
 
 
             temp_wp.x_lat = data->path[data->path.size() - 1].latitude;
             temp_wp.y_long = data->path[data->path.size() - 1].longitude;
-            temp_wp.z_alt = 50;
+            temp_wp.z_alt = 20;
             temp_wp.command = 21;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);
-            std::cout << "Point " << data->path.size() - 1 << ": " << temp_wp.x_lat << "," << temp_wp.y_long << std::endl;
 
+            std::unique_lock<std::mutex> lock(this->mission_m);
             this->mission_srv = mission_srv_temp;
 
             this->path_cv.notify_one();
@@ -156,83 +215,121 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
     }
 }
 
-void drone_handler::run_state_machine()
+bool drone_handler::run_state_machine()
 {
-//calc_dist_between_waypoints(5,6,6,5);
     switch(this->state){
         case IDLE:{
             /* IDLE STATE */
             std::unique_lock<std::mutex> lock(this->path_m);
             this->path_cv.wait(lock);
-
-            mavros_msgs::SetMode offboard_msg;
-
-            offboard_msg.request.custom_mode = "OFFBOARD";
-            this->set_mode_client.call(offboard_msg);
-            if(offboard_msg.response.mode_sent){
-                this->state = SEND_MISSION;
-                this->received_mission = true;
-            }
-            else{
-                this->state = FAILED;
-            }
+            this->state = set_mode("OFFBOARD") ? SEND_MISSION : FAILED;
             break;}
 
-        case FAILED:{
-            std::cout << "Drone entered failed mode" << std::endl;
-            break;}
+        case FAILED:
+            std::cout << "Drone Encountered an Erorr" << std::endl;
+            return false;
+            break;
 
 		case SEND_MISSION:{
             /* SEND MISSION TO DRONE */
+            std::unique_lock<std::mutex> lock(this->mission_m);
+            this->received_mission = true;
             this->mission_push_client.call(this->mission_srv);
-            std::cout << "Mission ";
-            if(this->mission_srv.response.success){
-                std::cout << "Sent!" << std::endl;
-                this->state = ARM;
-            }
-            else{
-                std::cout << "Failed!" << std::endl;
-                this->state = FAILED;
-            }
-            std::cout << "Mission wp sent: " << mission_srv.response.wp_transfered << std::endl;
+            this->state = this->mission_srv.response.success ? ARM : FAILED;
             break;}
 
-
-        case ARM:{
+        case ARM:
             /* ARMED STATE */
-            if(!this->armed){
-                mavros_msgs::CommandBool arm_msg;
-                arm_msg.request.value = true;
-                this->arming_client.call(arm_msg);
-                if(arm_msg.response.success){
-                    std::cout << "Armed sent" << std::endl;
-                }
+            set_arm(true);
+            this->arm_time = ros::Time::now();
+            this->state = WAITING_STATE;
+            break;
+
+		case WAITING_STATE:
+            /* WATING STATE */
+			// wait until the arm is registered
+			if(this->armed){   // if armed go to next state.
+                this->state = AUTO_MISSION;
             }
-            else{
+			else if(ros::Time::now() - arm_time > ros::Duration(5.0)){
+				this->state = ARM;
+            }
+            break;
+
+
+        case AUTO_MISSION:
+            /* AUTO MISSION */
+            if(set_mode("AUTO.MISSION")){
+				this->start_height = this->altitude;
+				this->start_time = ros::Time::now();
                 this->state = START_MISSION;
             }
-            break;}
-        case START_MISSION:{
-            /* START MISSION */
-            mavros_msgs::SetMode mission_msg;
-            mission_msg.request.custom_mode = "AUTO.MISSION";
-            this->set_mode_client.call(mission_msg);
-            if(mission_msg.response.mode_sent){
-				std::cout << "Mission Started!" << std::endl;
-                this->state = ON_MISSION;
-            }
             else{
                 this->state = FAILED;
             }
+            break;
+
+		case START_MISSION:
+            /* START MISSION */
+            this->current_height = this->altitude;
+            if(start_height + 5 < current_height){  // when the drone is 5 meters over its start position, it is assumed, that the mission is started succesfully.
+                this->state = ON_MISSION; // the drone is in the air
+            }
+			else if(ros::Time::now() - start_time > ros::Duration(10.0)){
+				this->state = FAILED; // if not the drone is in the air after 10 seconds, it failed.
+			}
+            break;
+
+        case ON_MISSION:
+			// be sure that the drone has been in air
+       		if(!this->armed){
+                this->state = MISSION_DONE;
+        	}
+            else if(abortType != NOTHING){
+                switch(abortType){
+                    case TYPE_SOFT_ABORT_RTL:
+                        this->state = SOFT_ABORT_RTL;
+                        break;
+                    case TYPE_SOFT_ABORT_LAND:
+                        this->state = SOFT_ABORT_LAND;
+                        break;
+                    case TYPE_HARD_ABORT:
+                        this->state = HARD_ABORT;
+                        break;
+                }
+            }
+            break;
+        case MISSION_DONE:{
+            /* WAIT FOR RESTART */
+            std::unique_lock<std::mutex> lock(this->reset_m);
+            this->reset_cv.wait(lock);
+            this->received_mission = false;
+            this->state = IDLE;
             break;}
-        case ON_MISSION:{
-            if(!this->armed){
-                std::cout << "Drone has finished mission" << std::endl;
+
+        case SOFT_ABORT_RTL:
+            this->state = set_mode("AUTO.RTL") ? WAIT_FOR_CONTINUE : FAILED;
+            break;
+
+        case SOFT_ABORT_LAND:
+            this->state = set_mode("AUTO.LAND") ? WAIT_FOR_CONTINUE : FAILED;
+            break;
+
+        case HARD_ABORT:
+            this->state = set_arm(false) ? MISSION_DONE : FAILED;
+            break;
+
+        case WAIT_FOR_CONTINUE:
+            if(abortType == CONTINUE){
+                this->abortType = NOTHING;
+                this->state = set_mode("AUTO.MISSION") ? ON_MISSION : FAILED;
+            }
+            else if(!armed){
+                this->abortType = NOTHING;
                 this->state = MISSION_DONE;
             }
-            break;}
-        case MISSION_DONE:
-            /* DO NOTHING */
             break;
     }
+
+    return true;
 }
