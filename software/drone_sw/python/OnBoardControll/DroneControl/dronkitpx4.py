@@ -14,7 +14,7 @@ import numpy
 ################################################################################################
 # Settings
 ################################################################################################
-connection_string       = '/dev/ttyPX4_out'
+connection_string       = '/dev/ttyLP1'
 MAV_MODE_AUTO   = 4
 # https://github.com/PX4/Firmware/blob/master/Tools/mavlink_px4.py
 

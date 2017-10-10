@@ -15,8 +15,10 @@ class DroneController:
     def __init__(self, port, baud):
         print(port, baud)
         self.vehicle = connect(port, rate = 2, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
+        print("Connected")
+        print("Listing parameters")
         #If the used serial port actually disapears, there will be no way to recover, but this can only happen for non-usb serial ports, so it should not really matter
-
+        print("Listed parameters")
         self.home_set = False
         self.vehicle.drone_controller = self #Hack to access this class from the vehicle in the quite strange decorator functions
         self.lock = threading.RLock()
@@ -64,17 +66,19 @@ class DroneController:
                                                        0, 0, 0, 0, 0, 0)
     def takeoff(self, altitude):
         with self.lock:
-            self.vehicle.mode = VehicleMode("MISSION")
-            cmds = self.vehicle.commands
-            cmds.clear()
-
-            wp = get_location_offset_meters(self.vehicle.home_location, 0, 0, altitude);
-            cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
-            wp.lat, wp.lon, wp.alt)
-            cmds.add(cmd)
-            cmds.upload()
-            time.sleep(2)
-            self.vehicle.armed = True
+            if self.vehicle.home_location == None:
+                logging.warning("No home position set yet, can not take off")
+            else:
+                self.vehicle.mode = VehicleMode("MISSION")
+                cmds = self.vehicle.commands
+                cmds.clear()
+                wp = get_location_offset_meters(self.vehicle.home_location, 0, 0, altitude);
+                cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
+                wp.lat, wp.lon, wp.alt)
+                cmds.add(cmd)
+                cmds.upload()
+                time.sleep(2)
+                self.vehicle.armed = True
 
     def get_last_fix(self):
         with self.lock:

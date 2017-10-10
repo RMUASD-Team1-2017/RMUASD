@@ -20,12 +20,12 @@ def __main__():
     parser.add_argument('--rmquser', nargs='?', default="drone", type=str)
     parser.add_argument('--rmqpass', nargs='?', default="drone", type=str)
     parser.add_argument('--rmqhost', nargs='?', default="drone.stefanrvo.dk", type=str)
-    parser.add_argument('--mavport', nargs='?', default='/dev/ttyLP1', type=str)
+    parser.add_argument('--mavport', nargs='?', default='/dev/ttyLP2', type=str)
     parser.add_argument('--mavbaud', nargs='?', default=57600, type=int)
     parser.add_argument('--droneid', nargs='?', default=1, type=int)
     parser.add_argument('--loglevel', nargs='?', default="INFO", type=str)
-    parser.add_argument('--gpsport', nargs='?', default="/dev/ttyLP0", type=str)
-    parser.add_argument('--gpsbaud', nargs='?', default=115200, type=int)
+    parser.add_argument('--gpsport', nargs='?', default="/dev/ttyACM0", type=str)
+    parser.add_argument('--gpsbaud', nargs='?', default=921600, type=int)
     parser.add_argument('--simufile', nargs='?', default=None, type=str)
 
 
