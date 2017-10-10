@@ -1,0 +1,10 @@
+# Abort types described below
+uint8 TEST_SOFT_ABORT_RTL = 1
+uint8 SOFT_ABORT_LAND = 2
+uint8 HARD_ABORT = 3
+uint8 CONTINUE = 4
+
+uint8 abort_type
+---
+bool success
+string message

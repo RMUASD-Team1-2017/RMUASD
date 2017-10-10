@@ -32,6 +32,7 @@ add_message_files(
 add_service_files(
   FILES
   mission_request.srv
+  AbortRequest.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -93,8 +94,8 @@ add_dependencies(control_logic_node_test ${PROJECT_NAME}_generate_messages_cpp)
 
 
 
-   
-   
+
+
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
