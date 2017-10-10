@@ -17,12 +17,12 @@ int main(int argc, char **argv)
         spinner.start();
 
         while(ros::ok()){
-            handler.run_state_machine();
+            if(!handler.run_state_machine()){
+                break;
+            }
             rate.sleep();
         }
-
-        ros::waitForShutdown();
-
+        std::cout << "Drone logic exiting..." << std::endl;
     }
     else{
         std::cout << "Drone did not get connection or setup failed" << std::endl;
