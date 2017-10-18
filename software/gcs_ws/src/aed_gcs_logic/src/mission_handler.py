@@ -6,8 +6,6 @@ from aed_gcs_logic.msg import *
 from Drone import Drone, Mission
 from ros_rabbitmq_bridge.msg import mission_request
 
-
-
 class mission_handler:
     """Path Planner class"""
 
