@@ -68,3 +68,5 @@ class Drone:
             time = datetime.datetime.now() + datetime.timedelta(seconds = diff.to_sec())
             self.location["update_time"] = time.strftime("%Y/%m/%d_%H:%M:%S")
             self.publish_sem.release()
+
+   
