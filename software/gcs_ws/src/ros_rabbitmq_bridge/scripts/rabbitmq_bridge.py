@@ -46,9 +46,9 @@ if __name__ == '__main__':
     ]
     rabbit_to_ros_settings = [
     {"ros_topic" : "drone/missionrequest", "message_type_str" : "ros_rabbitmq_bridge/mission_request", "message_type" : mission_request, "routing_key" : "drone.mission_request", "exchange" : "drone"},
-    {"ros_topic" : "drone/heartbeat", "message_type_str" : "std_msgs/Empty", "message_type" : Empty, "routing_key" : "drone.heartbeat.{}".format(DRONE_ID), "exchange" : "drone"},
-    {"ros_topic" : "drone/drone_external_gps", "message_type_str" : "std_msgs/NavSatFix", "message_type" : NavSatFix, "routing_key" : "drone.heartbeat.{}".format(DRONE_ID), "exchange" : "drone", "callback" : rabbitmq_to_ros_bridge.navsatfix_callback},
-    {"ros_topic" : "drone/drone_onboard_gps", "message_type_str" : "sensor_msgs/NavSatFix", "message_type" : NavSatFix, "routing_key" : "drone.external_gps.{}".format(DRONE_ID), "exchange" : "drone", "callback" : rabbitmq_to_ros_bridge.navsatfix_callback},
+    {"ros_topic" : "drone/heartbeat", "message_type_str" : "std_msgs/Empty", "message_type" : Empty, "routing_key" : "drone.heartbeat.{}".format(DRONE_ID), "exchange" : "dronesensor"},
+    {"ros_topic" : "drone/drone_external_gps", "message_type_str" : "sensor_msgs/NavSatFix", "message_type" : NavSatFix, "routing_key" : "drone.external_gps.{}".format(DRONE_ID), "exchange" : "dronesensor", "callback" : rabbitmq_to_ros_bridge.navsatfix_callback},
+    {"ros_topic" : "drone/drone_onboard_gps", "message_type_str" : "sensor_msgs/NavSatFix", "message_type" : NavSatFix, "routing_key" : "drone.onboard_gps.{}".format(DRONE_ID), "exchange" : "dronesensor", "callback" : rabbitmq_to_ros_bridge.navsatfix_callback},
 
 
 

@@ -63,4 +63,4 @@ class DroneProducer:
         timer.daemon = True
         timer.start() #Call ourself in 1 second
         logging.debug("Publishing heartbeat")
-        self.put(body = "", routing_key = "drone.heartbeat.{}".format(self._id), exchange = self.dronesensor, declare = [self.dronesensor], retry = False)
+        self.put(body = "{}", routing_key = "drone.heartbeat.{}".format(self._id), exchange = self.dronesensor, declare = [self.dronesensor], retry = False)

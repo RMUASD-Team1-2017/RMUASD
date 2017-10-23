@@ -90,8 +90,8 @@ class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
         settings = kwargs["settings"]
         data = json.loads(body)
         message = settings["message_type"]()
-        message.status = message.STATUS_NO_FIX if data["info"]["fix_type"] <= 1 else message.STATUS_FIX
-        message.service = message.SERVICE_GPS
+        message.status.status = message.status.STATUS_NO_FIX if data["info"]["fix_type"] <= 1 else message.status.STATUS_FIX
+        message.status.service = message.status.SERVICE_GPS
         message.latitude = data["location"]["lat"]
         message.longitude = data["location"]["lon"]
         message.altitude = data["location"]["alt"]
