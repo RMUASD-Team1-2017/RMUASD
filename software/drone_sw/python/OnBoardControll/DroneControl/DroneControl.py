@@ -21,18 +21,26 @@ class DroneController:
         print("Listed parameters")
         self.home_set = False
         self.vehicle.drone_controller = self #Hack to access this class from the vehicle in the quite strange decorator functions
-        self.lock = threading.RLock()
+        lock = threading.RLock()
+        self.lock = lock
         self.location = None
         self.last_fix = None
+        self.last_communication = datetime.datetime.now()
+
+        @self.vehicle.on_message('*')
+        def listener(self, name, message):
+            with lock:
+                self.drone_controller.last_communication = datetime.datetime.now()
 
         @self.vehicle.on_message('HOME_POSITION')
         def listener(self, name, home_position):
-             self.drone_controller.home_set = True
+            with lock:
+                self.drone_controller.home_set = True
 
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
             #We import the publisher everytime, as it may have updated
-            with self.drone_controller.lock:
+            with lock:
                 self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
                 self.drone_controller.last_fix = datetime.datetime.now()
 
@@ -53,6 +61,11 @@ class DroneController:
             # In testing, we do not do this...
             #self.vehicle.armed = False
             logging.warning("Recieved a hard abort command, but this is not enabled ATM!!")
+
+    def powercut(self):
+        with self.lock:
+            #Cut the power for the drone
+            logging.warning("Recieved a power cut command, but this is not implemented ATM!!")
 
     def land(self):
         with self.lock:
@@ -83,6 +96,10 @@ class DroneController:
     def get_last_fix(self):
         with self.lock:
             return "FAIL", self.location, self.last_fix
+
+    def get_last_communication(self):
+        with self.lock:
+            return self.last_communication
 
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):

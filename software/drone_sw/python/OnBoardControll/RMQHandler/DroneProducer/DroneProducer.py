@@ -59,6 +59,8 @@ class DroneProducer:
                 logging.exception("Exception in publisher thread")
 
     def heartbeat(self):
-        threading.Timer(1.0, self.heartbeat).start() #Call ourself in 1 second
+        timer = threading.Timer(1.0, self.heartbeat)
+        timer.daemon = True
+        timer.start() #Call ourself in 1 second
         logging.debug("Publishing heartbeat")
         self.put(body = "", routing_key = "drone.heartbeat.{}".format(self._id), exchange = self.dronesensor, declare = [self.dronesensor], retry = False)

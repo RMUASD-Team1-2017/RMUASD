@@ -79,3 +79,21 @@ class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
         message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], body)
         settings["publisher"].publish(message)
         ch.basic_ack(delivery_tag = method.delivery_tag)
+
+    @classmethod
+    def navsatfix_callback(self, *args, **kwargs):
+        if len(args) != 4:
+            return
+        ch = args[0]
+        method = args[1]
+        body = args[3]
+        settings = kwargs["settings"]
+        data = json.loads(body)
+        message = settings["message_type"]()
+        message.status = message.STATUS_NO_FIX if data["info"]["fix_type"] <= 1 else message.STATUS_FIX
+        message.service = message.SERVICE_GPS
+        message.latitude = data["location"]["lat"]
+        message.longitude = data["location"]["lon"]
+        message.altitude = data["location"]["alt"]
+        settings["publisher"].publish(message)
+        ch.basic_ack(delivery_tag = method.delivery_tag)

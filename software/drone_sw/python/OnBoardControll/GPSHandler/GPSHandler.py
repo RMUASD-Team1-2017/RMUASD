@@ -13,6 +13,7 @@ class GPSHandler:
         self.last_fix = None
         self.location = None
         self.lock = threading.RLock()
+        print(port, baud, simulation_filepath)
         if simulation_filepath:
             self.simulation_file = open(simulation_filepath, "r")
             self.line_func = self.file_get_line
