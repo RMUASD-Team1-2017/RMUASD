@@ -12,8 +12,8 @@ ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
     path_planner planner(
-        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence",  // geofence
-        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_inner_fence.fence",  // shrinken geofence
+        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_inner_fence.fence",  // geofence
+        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence",  // shrinken geofence
         ros::package::getPath("aed_gcs_logic") + "/resources/testrally.rally"       // landing spots
     );
     Coord start;
@@ -33,7 +33,7 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     std::vector<Node*> waypoints = planner.aStar(start, landingPos);
 
 #ifdef SDL
-    planner.draw(1000);
+    planner.draw(960);
 #endif
     aed_gcs_logic::waypoints path;
     for (int i = waypoints.size() - 1; i >= 0; i--){

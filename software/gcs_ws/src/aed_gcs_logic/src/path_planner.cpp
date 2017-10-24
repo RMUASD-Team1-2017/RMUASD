@@ -13,13 +13,9 @@
 #endif
 
 path_planner::path_planner(std::string geo_fence, std::string inner_geofence, std::string landingspotFile){
-    std::cout << __LINE__ << std::endl;
     loadMap(geo_fence);
-    std::cout << __LINE__ << std::endl;
     loadGeofence(inner_geofence);
-    std::cout << __LINE__ << std::endl;
     loadLandingSpots(landingspotFile);
-    std::cout << __LINE__ << std::endl;
 }
 
 // Debugging function for printing all specs of a node
@@ -67,7 +63,6 @@ void path_planner::loadGeofence(std::string fileName){
     Coord prev;
 
     for (int i = 0; i < j["polygon"].size(); i++){
-        std::cout << i << std::endl;
         Coord tempCoord;
         tempCoord.latitude = j["polygon"][i][0];
         tempCoord.longitude = j["polygon"][i][1];
@@ -75,6 +70,12 @@ void path_planner::loadGeofence(std::string fileName){
         if (i) geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
         prev = tempCoord;
     }
+
+    Coord tempCoord;
+    tempCoord.latitude = j["polygon"][0][0];
+    tempCoord.longitude = j["polygon"][0][1];
+    tempCoord.altitude = 0;
+    geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
 }
 
 // Load comma-seperated file into list of nodes for the map
@@ -89,7 +90,6 @@ void path_planner::loadMap(std::string fileName){
     file >> j;
 
     for (int i = 0; i < j["polygon"].size(); i++){
-        std::cout << i << std::endl;
         Coord tempCoord;
         tempCoord.latitude = j["polygon"][i][0];
         tempCoord.longitude = j["polygon"][i][1];
@@ -113,13 +113,11 @@ void path_planner::loadLandingSpots(std::string fileName){
     file >> j;
 
     for (int i = 0; i < j["points"][0].size(); i++){
-        std::cout << i << std::endl;
         Coord tempCoord;
         tempCoord.latitude = j["points"][i][0];
         tempCoord.longitude = j["points"][i][1];
         tempCoord.altitude = j["points"][i][2];
         landingspot.push_back(tempCoord);
-        std::cout << tempCoord.latitude << ", " << tempCoord.longitude << ", " << tempCoord.altitude << std::endl;
     }
 }
 
@@ -228,12 +226,12 @@ bool path_planner::inList(std::vector<Node*> &list, Node *node){
 
 // Return euclidean distance between two nodes
 double path_planner::dist(Node *start, Node *goal){
-    return sqrt(pow(start->coord.latitude - goal->coord.latitude, 2) + pow(start->coord.longitude - goal->coord.longitude, 2) + pow(start->coord.altitude - goal->coord.altitude, 2));
+    return sqrt(pow(start->coord.latitude - goal->coord.latitude, 2) + pow(start->coord.longitude - goal->coord.longitude, 2));
 }
 
 // Return euclidean distance between two nodes
 double path_planner::dist(Coord *start, Coord *goal){
-    return sqrt(pow(start->latitude - goal->latitude, 2) + pow(start->longitude - goal->longitude, 2) + pow(start->altitude - goal->altitude, 2));
+    return sqrt(pow(start->latitude - goal->latitude, 2) + pow(start->longitude - goal->longitude, 2));
 }
 
 // Recunstruct path after A*-algorithm
