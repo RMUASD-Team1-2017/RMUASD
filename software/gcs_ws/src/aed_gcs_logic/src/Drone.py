@@ -7,6 +7,8 @@ import threading
 from ros_rabbitmq_bridge.msg import userinfo
 from aed_gcs_logic.srv import mission_request
 
+POSITION_INTERVAL = datetime.timedelta(milliseconds = 500) #We only update the position if it is this time since we did it last
+
 class Mission:
     def __init__(self, mission_id, destination):
         self.mission_id = mission_id
@@ -16,6 +18,7 @@ class Mission:
 
     def plan(self, start_pos):
         self.goal = self.plan_path(start_pos, self.destination)
+
 
 class Drone:
     def __init__(self, drone_id):
@@ -30,6 +33,7 @@ class Drone:
         self.status_publisher_thread = threading.Thread(target = self.status_publisher)
         self.status_publisher_thread.daemon = True
         self.status_publisher_thread.start()
+        self.last_pos_update = datetime.datetime.min
 
     def set_mission(self, mission):
         with self.lock:
@@ -66,4 +70,6 @@ class Drone:
             self.location["location"] = data
             time = datetime.datetime.now() + datetime.timedelta(seconds = diff.to_sec())
             self.location["update_time"] = time.strftime("%Y/%m/%d_%H:%M:%S")
-            self.publish_sem.release()
+            if self.last_pos_update < datetime.datetime.now() - POSITION_INTERVAL:
+                self.last_pos_update = datetime.datetime.now()
+                self.publish_sem.release()

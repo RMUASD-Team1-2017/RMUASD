@@ -43,7 +43,7 @@ class GPSMonitor:
                 current_time = datetime.datetime.now()
                 locations = [] #List if tuples with utm, fix_time
                 for severty, location, last_fix in [x() for x in self.monitor_functions]:
-                    if last_fix: fix_age = current_time - last_fix
+                    if last_fix and None not in location.values(): fix_age = current_time - last_fix
                     else:        fix_age = None
                     if fix_age == None or fix_age > FIX_LOST_AGE:
                         if severty == "FAIL":

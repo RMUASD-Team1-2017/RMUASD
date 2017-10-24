@@ -11,7 +11,7 @@ class DroneProducer:
         self.connection = connection
         self.dronesensor = kombu.Exchange(name="dronesensor", type="topic", durable = False)
         self.producer = connection.Producer()
-        self.queue = Queue.Queue(maxsize = 10)
+        self.queue = Queue.Queue(maxsize = 100)
         self.run_thread = None
 
     def put(self, *args, **kwargs):
@@ -37,11 +37,8 @@ class DroneProducer:
         data["info"] = info
         data["location"] = location
         body = json.dumps(data)
-        try:
-            self.put(body = body, routing_key = "drone.external_gps.{}".format(self._id), exchange = self.dronesensor,
-                declare =  [self.dronesensor], retry =  False)
-        except Queue.Full:
-            logging.exception()
+        self.put(body = body, routing_key = "drone.external_gps.{}".format(self._id), exchange = self.dronesensor,
+            declare =  [self.dronesensor], retry =  False)
 
     def start_publishing(self):
         self.run_thread = threading.Thread(target = self.publisher_thread)
@@ -50,6 +47,7 @@ class DroneProducer:
         logging.info("Started publisher")
 
     def publisher_thread(self):
+        self.heartbeat() #Start sending a heartbeat
         while True:
             try:
                 kwargs = self.queue.get()
@@ -59,3 +57,10 @@ class DroneProducer:
                 self.producer.revive(self.connection)
             except:
                 logging.exception("Exception in publisher thread")
+
+    def heartbeat(self):
+        timer = threading.Timer(1.0, self.heartbeat)
+        timer.daemon = True
+        timer.start() #Call ourself in 1 second
+        logging.debug("Publishing heartbeat")
+        self.put(body = "{}", routing_key = "drone.heartbeat.{}".format(self._id), exchange = self.dronesensor, declare = [self.dronesensor], retry = False)
