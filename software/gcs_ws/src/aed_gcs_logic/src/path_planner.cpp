@@ -5,17 +5,21 @@
 #include <fstream>
 #include <string>
 #include <exception>
-
+#include "aed_gcs_logic/json.hpp"
 #include "aed_gcs_logic/path_planner.h"
 
 #ifdef SDL
 #include <2D.hpp>
 #endif
 
-path_planner::path_planner(std::string map, std::string landingspotFile){
-    loadMap(map);
-    loadGeofence(map);
+path_planner::path_planner(std::string geo_fence, std::string inner_geofence, std::string landingspotFile){
+    std::cout << __LINE__ << std::endl;
+    loadMap(geo_fence);
+    std::cout << __LINE__ << std::endl;
+    loadGeofence(inner_geofence);
+    std::cout << __LINE__ << std::endl;
     loadLandingSpots(landingspotFile);
+    std::cout << __LINE__ << std::endl;
 }
 
 // Debugging function for printing all specs of a node
@@ -56,26 +60,20 @@ void path_planner::loadGeofence(std::string fileName){
     std::ifstream file(fileName);
     if (!file) std::cout << "Can't find geofence file: " << fileName << std::endl;
 
-    int index = 0;
+    nlohmann::json j;
+
+    file >> j;
+
     Coord prev;
 
-    while (file){
-        std::string s;
-        if (!getline(file, s)) break;
-        std::istringstream ss(s);
-        std::vector<double> coord;
-        while (ss){
-            std::string s;
-            if (!getline(ss, s, ',')) break;
-            coord.push_back(std::stod(s));
-        }
+    for (int i = 0; i < j["polygon"].size(); i++){
+        std::cout << i << std::endl;
         Coord tempCoord;
-        tempCoord.latitude = coord[0];
-        tempCoord.longitude = coord[1];
+        tempCoord.latitude = j["polygon"][i][0];
+        tempCoord.longitude = j["polygon"][i][1];
         tempCoord.altitude = 0;
-        if (index) geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
+        if (i) geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
         prev = tempCoord;
-        index++;
     }
 }
 
@@ -86,23 +84,17 @@ void path_planner::loadMap(std::string fileName){
     std::ifstream file(fileName);
     if (!file) std::cout << "Can't find map file: " << fileName << std::endl;
 
-    int index = 0;
-    while (file){
-        std::string s;
-        if (!getline(file, s)) break;
-        std::istringstream ss(s);
-        std::vector<double> coord;
-        while (ss){
-            std::string s;
-            if (!getline(ss, s, ',')) break;
-            coord.push_back(std::stod(s));
-        }
+    nlohmann::json j;
+
+    file >> j;
+
+    for (int i = 0; i < j["polygon"].size(); i++){
+        std::cout << i << std::endl;
         Coord tempCoord;
-        tempCoord.latitude = coord[0];
-        tempCoord.longitude = coord[1];
-        tempCoord.altitude = coord[2];
-        nodes.push_back(Node(tempCoord, index));
-        index++;
+        tempCoord.latitude = j["polygon"][i][0];
+        tempCoord.longitude = j["polygon"][i][1];
+        tempCoord.altitude = 0;
+        nodes.push_back(Node(tempCoord, i));
     }
 
     for (int i = 1; i < nodes.size(); i++){
@@ -112,27 +104,22 @@ void path_planner::loadMap(std::string fileName){
 }
 
 void path_planner::loadLandingSpots(std::string fileName){
+
     std::ifstream file(fileName);
     if (!file) std::cout << "Can't find landingspot file: " << fileName << std::endl;
 
-    int index = 0;
-    while (file){
-        std::string s;
-        if (!getline(file, s)) break;
-        std::istringstream ss(s);
-        std::vector<double> coord;
-        if (s == "" || s.at(0) == '#') continue;
-        while (ss){
-            std::string s = "";
-            if (!getline(ss, s, ',')) break;
-            coord.push_back(std::stod(s));
-        }
+    nlohmann::json j;
+
+    file >> j;
+
+    for (int i = 0; i < j["points"][0].size(); i++){
+        std::cout << i << std::endl;
         Coord tempCoord;
-        tempCoord.latitude = coord[0];
-        tempCoord.longitude = coord[1];
-        tempCoord.altitude = coord[2];
+        tempCoord.latitude = j["points"][i][0];
+        tempCoord.longitude = j["points"][i][1];
+        tempCoord.altitude = j["points"][i][2];
         landingspot.push_back(tempCoord);
-        index++;
+        std::cout << tempCoord.latitude << ", " << tempCoord.longitude << ", " << tempCoord.altitude << std::endl;
     }
 }
 
