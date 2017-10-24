@@ -223,6 +223,7 @@ bool drone_handler::run_state_machine()
             std::unique_lock<std::mutex> lock(this->path_m);
             this->path_cv.wait(lock);
             this->state = set_mode("OFFBOARD") ? SEND_MISSION : FAILED;
+            std::cout << "Going Offboard" << std::endl;
             break;}
 
         case FAILED:
@@ -232,6 +233,7 @@ bool drone_handler::run_state_machine()
 
 		case SEND_MISSION:{
             /* SEND MISSION TO DRONE */
+            std::cout << "Sending Mission" << std::endl;
             std::unique_lock<std::mutex> lock(this->mission_m);
             this->received_mission = true;
             this->mission_push_client.call(this->mission_srv);
@@ -252,6 +254,7 @@ bool drone_handler::run_state_machine()
                 this->state = AUTO_MISSION;
             }
 			else if(ros::Time::now() - arm_time > ros::Duration(5.0)){
+                std::cout << "Armed" << std::endl;
 				this->state = ARM;
             }
             break;
@@ -263,6 +266,7 @@ bool drone_handler::run_state_machine()
 				this->start_height = this->altitude;
 				this->start_time = ros::Time::now();
                 this->state = START_MISSION;
+                std::cout << "Mission Started" << std::endl;
             }
             else{
                 this->state = FAILED;
@@ -274,6 +278,7 @@ bool drone_handler::run_state_machine()
             this->current_height = this->altitude;
             if(start_height + 5 < current_height){  // when the drone is 5 meters over its start position, it is assumed, that the mission is started succesfully.
                 this->state = ON_MISSION; // the drone is in the air
+                std::cout << "On Mission" << std::endl;
             }
 			else if(ros::Time::now() - start_time > ros::Duration(10.0)){
 				this->state = FAILED; // if not the drone is in the air after 10 seconds, it failed.
@@ -283,6 +288,7 @@ bool drone_handler::run_state_machine()
         case ON_MISSION:
 			// be sure that the drone has been in air
        		if(!this->armed){
+                std::cout << "Mission Done" << std::endl;
                 this->state = MISSION_DONE;
         	}
             else if(abortType != NOTHING){
