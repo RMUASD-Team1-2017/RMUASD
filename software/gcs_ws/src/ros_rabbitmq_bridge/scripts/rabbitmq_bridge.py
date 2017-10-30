@@ -15,7 +15,7 @@ from sensor_msgs.msg import NavSatFix
 from ros_rabbitmq_bridge.msg import userinfo, mission_request
 from rospy_message_converter import json_message_converter
 import threading
-
+import os
 
 # test case for json to ros conversion
 #datain = '{"current_time": {"data": {"secs" : 22, "nsecs": 2200}}, "state": "flying", "destination" : {"longitude": 10000, "latitude": 20000, "position_covariance_type" : 1}, "eta" : 100}'
@@ -30,8 +30,12 @@ def heartbeat_thread(publisher, timeout):
     timer.start()
 
 if __name__ == '__main__':
-
-    RABBIT_BROKER = "amqp://drone:drone@drone.stefanrvo.dk:5672/%2F?connection_attempts=3&heartbeat_interval=3600"
+    user = os.environ.get("rmq_user", "drone")
+    password = os.environ.get("rmq_pass", "drone")
+    host = os.environ.get("rmq_host", "drone.stefanrvo.dk")
+    port = os.environ.get("rmq_port", "5672")
+    RABBIT_BROKER = "amqp://{}:{}@{}:{}/%2F?connection_attempts=3&heartbeat_interval=3600".format(user, password, host, port)
+    print("Connecting to {}".format(RABBIT_BROKER))
 
     rospy.init_node('rabbitmq_bridge', anonymous=True)
     heartbeat_pulbisher = rospy.Publisher("gcs/heartbeat", Empty, queue_size=10)

@@ -1,7 +1,9 @@
 sudo: required
 
-language: generic
-
+language: python
+python:
+  - "3.5"
+  
 services:
   - docker
 
@@ -9,17 +11,20 @@ services:
 env:
   - DOCKER_COMPOSE_VERSION=1.15.0
 
-before_install:
+install:
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
+  -
 
 script:
   #Build the docker image
 - docker-compose build
-  #Run tests (only webui for now)
+  #Run individual unit tests (only webui for now)
 - docker run --rm stefanrvo/rmuasdweb:latest test
+  #Run full system unit test
+-docker
 deploy:
   - provider: script
     script: "./deploy_latest.sh"
