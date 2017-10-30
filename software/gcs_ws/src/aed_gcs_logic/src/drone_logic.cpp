@@ -222,8 +222,7 @@ bool drone_handler::run_state_machine()
             /* IDLE STATE */
             std::unique_lock<std::mutex> lock(this->path_m);
             this->path_cv.wait(lock);
-            this->state = set_mode("OFFBOARD") ? SEND_MISSION : FAILED;
-            std::cout << "Going Offboard" << std::endl;
+            this->state = SEND_MISSION;
             break;}
 
         case FAILED:
@@ -238,13 +237,17 @@ bool drone_handler::run_state_machine()
             this->received_mission = true;
             this->mission_push_client.call(this->mission_srv);
             this->state = this->mission_srv.response.success ? ARM : FAILED;
+            ros::Duration(3).sleep();
             break;}
 
         case ARM:
             /* ARMED STATE */
+            std::cout << "Trying to Arm" << std::endl;
+
             set_arm(true);
             this->arm_time = ros::Time::now();
             this->state = WAITING_STATE;
+            ros::Duration(3).sleep();
             break;
 
 		case WAITING_STATE:
@@ -262,6 +265,8 @@ bool drone_handler::run_state_machine()
 
         case AUTO_MISSION:
             /* AUTO MISSION */
+            std::cout << "Setting mode to AUTO.MISSION" << std::endl;
+            ros::Duration(2).sleep();
             if(set_mode("AUTO.MISSION")){
 				this->start_height = this->altitude;
 				this->start_time = ros::Time::now();
