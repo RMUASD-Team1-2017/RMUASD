@@ -11,5 +11,5 @@
 	path = software/gcs_ws/src/realtime_tools
 	url = https://github.com/ros-controls/realtime_tools
 [submodule "Firmware"]
-	path = Firmware
+	path = simulation/Firmware
 	url = https://github.com/RMUASD-Team1-2017/Firmware
