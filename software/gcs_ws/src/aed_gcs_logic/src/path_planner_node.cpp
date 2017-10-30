@@ -20,9 +20,9 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     goal.longitude = req.end.longitude;
     Coord landingPos = planner.getNearestLandingSpot(goal);
 
-    res.result.latitude = landingPos.latitude;
-    res.result.longitude = landingPos.longitude;
-    res.result.altitude = landingPos.altitude;
+    res.goal.latitude = landingPos.latitude;
+    res.goal.longitude = landingPos.longitude;
+    res.goal.altitude = landingPos.altitude;
 
 
 
@@ -52,9 +52,9 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     std::cout << "\tAltitude:   " << req.end.altitude << std::endl;
     std::cout << std::endl;
     std::cout << "Redirected goal position:" << std::endl;
-    std::cout << "\tLatitude:   " << res.result.latitude << std::endl;
-    std::cout << "\tLongtitude: " << res.result.longitude << std::endl;
-    std::cout << "\tAltitude:   " << res.result.altitude << std::endl;
+    std::cout << "\tLatitude:   " << res.goal.latitude << std::endl;
+    std::cout << "\tLongtitude: " << res.goal.longitude << std::endl;
+    std::cout << "\tAltitude:   " << res.goal.altitude << std::endl;
     std::cout << std::endl;
     std::cout << "The path consists of " << waypoints.size() << " waypoints:" << std::endl;
 

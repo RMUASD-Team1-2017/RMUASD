@@ -20,7 +20,7 @@ def startMission(url, mission_id):
     if request.status_code is not 200: return -1
     s.headers.update({'referer': url, "X-CSRFToken" : request.cookies["csrftoken"], 'content-type': 'application/json'})
     request = s.post(url, data = json.dumps({"decision" : "accept", "mission" : mission_id}))
-    if not request.status_code == 200:
+    if not request.status_code in (200, 204):
         return 1
     return 0
 def __main__():

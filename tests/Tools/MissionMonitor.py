@@ -18,7 +18,7 @@ def monitor_progress(url, drone, goal_precision, goal_height, deadline):
     bar = None
     while datetime.datetime.now() < deadline:
         if None in start_location.values():
-            print("Trying to get start location")
+            print("Trying to get start location, currently {}".format(start_location))
             start_location = get_location(url, drone)
         else:
             current_location = get_location(url, drone)
@@ -26,22 +26,21 @@ def monitor_progress(url, drone, goal_precision, goal_height, deadline):
             goal_coord = projection(goal_location["latitude"], goal_location["longitude"])
             current_coord =  projection(current_location["latitude"], current_location["longitude"])
             start_coord = projection(start_location["latitude"], start_location["longitude"])
-            print(goal_coord, start_coord, current_coord)
             start_distance = numpy.linalg.norm( (goal_coord[0] - start_coord[0], goal_coord[1]- start_coord[1]) )
             current_distance = numpy.linalg.norm( (goal_coord[0] - current_coord[0], goal_coord[1]- current_coord[1]) )
             if bar is None:
-                bar = progressbar.ProgressBar(redirect_stdout=True, max_value = start_distance)
+                bar = progressbar.ProgressBar(redirect_stdout=True, max_value = start_distance, unit = "m")
             try:
                 bar.update(start_distance - current_distance)
             except ValueError:
                 pass
-            if current_distance < goal_precision and current_location["altitude"] < goal_height:
+            if current_distance < goal_precision and current_location["altitude"] - start_location["altitude"] < goal_height:
                 if not bar.value == bar.max_value: bar.finish()
                 print("Reached goal")
                 sys.exit(0)
             if current_distance < goal_precision:
                 if not bar.value == bar.max_value: bar.finish()
-                print("At goal position, waiting for landing. Current altitude: {}".format(current_location["altitude"]))
+                print("At goal position, waiting for landing. Current altitude: {} (start altitude {})".format(current_location["altitude"], start_location["altitude"]))
         time.sleep(1)
     sys.exit(1)
 

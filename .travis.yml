@@ -3,7 +3,7 @@ sudo: required
 language: python
 python:
   - "3.5"
-  
+
 services:
   - docker
 
@@ -24,7 +24,6 @@ script:
   #Run individual unit tests (only webui for now)
 - docker run --rm stefanrvo/rmuasdweb:latest test
   #Run full system unit test
--docker
 deploy:
   - provider: script
     script: "./deploy_latest.sh"
