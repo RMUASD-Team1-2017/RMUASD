@@ -11,7 +11,11 @@
 ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
-    path_planner planner(ros::package::getPath("aed_gcs_logic") + "/resources/geofence.csv", ros::package::getPath("aed_gcs_logic") + "/resources/landingspots.csv");
+    path_planner planner(
+        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_inner_fence.fence",  // geofence
+        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence",  // shrinken geofence
+        ros::package::getPath("aed_gcs_logic") + "/resources/testrally.rally"       // landing spots
+    );
     Coord start;
     start.latitude = req.start.latitude;
     start.longitude = req.start.longitude;
@@ -29,7 +33,7 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     std::vector<Node*> waypoints = planner.aStar(start, landingPos);
 
 #ifdef SDL
-    planner.draw(1000);
+    planner.draw(960);
 #endif
     aed_gcs_logic::waypoints path;
     for (int i = waypoints.size() - 1; i >= 0; i--){
@@ -58,8 +62,8 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     std::cout << std::endl;
     std::cout << "The path consists of " << waypoints.size() << " waypoints:" << std::endl;
 
-    for (int i = 0; i < waypoints.size(); i++){
-        if (waypoints[i]->id == -2)std::cout << "Node id: Docking station" << waypoints[i]->id << std::endl;
+    for (int i = waypoints.size() - 1; i >= 0; i--){
+        if (waypoints[i]->id == -2) std::cout << "Node id: Docking station" << waypoints[i]->id << std::endl;
         else if (waypoints[i]->id == -1) std::cout << "Node id: Landing spot" << std::endl;
         else std::cout << "Node id: " << waypoints[i]->id << std::endl;
         std::cout << "\tLatitude:   " << waypoints[i]->coord.latitude << std::endl;
