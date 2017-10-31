@@ -43,6 +43,7 @@ class DroneController:
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
             #We import the publisher everytime, as it may have updated
+            print(self.mode)
             with lock:
                 self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
                 self.drone_controller.last_fix = datetime.datetime.now()
@@ -57,6 +58,9 @@ class DroneController:
 
     def softabort(self):
         with self.lock:
+            if not self.vehicle.mode == VehicleMode("MISSION"):
+                logging.warning("Softabort requested, but vehicle is not on a mission")
+                return
             self.vehicle.mode = VehicleMode("RTL")
 
     def hardabort(self):
@@ -72,6 +76,9 @@ class DroneController:
 
     def land(self):
         with self.lock:
+            if not self.vehicle.mode == VehicleMode("MISSION"):
+                logging.warning("Landing requested, but vehicle is not on a mission")
+                return
             self.vehicle.mode = VehicleMode("LAND")
 
     def PX4setMode(self, mavMode):
