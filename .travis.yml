@@ -16,7 +16,7 @@ install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-  -
+  - pip install -r tests/Tools/requirements.txt
 
 script:
   #Build the docker image
@@ -24,6 +24,7 @@ script:
   #Run individual unit tests (only webui for now)
 - docker run --rm stefanrvo/rmuasdweb:latest test
   #Run full system unit test
+- ./tests/normal_operation_test.sh
 deploy:
   - provider: script
     script: "./deploy_latest.sh"
