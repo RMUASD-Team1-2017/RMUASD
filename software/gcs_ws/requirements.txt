@@ -6,7 +6,6 @@ enum34==1.1.6
 functools32==3.2.3.post2
 jsonschema==2.6.0
 kombu==4.1.0
-lxml==4.0.0
 MarkupSafe==1.0
 monotonic==1.2
 numpy==1.13.3

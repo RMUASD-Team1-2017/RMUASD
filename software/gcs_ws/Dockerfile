@@ -14,6 +14,7 @@ RUN /bin/bash ./install_geographiclib_datasets.sh
 RUN source /opt/ros/kinetic/setup.bash && catkin_make -j4 || catkin_make -j4 || catkin_make -j4
 ADD requirements.txt /usr/src/app/
 ADD run_with_mavros.sh /usr/src/app/
+RUN pip install future
 RUN pip install -r requirements.txt
 EXPOSE 14540
 
