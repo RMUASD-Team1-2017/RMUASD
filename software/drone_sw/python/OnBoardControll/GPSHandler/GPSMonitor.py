@@ -33,8 +33,8 @@ class GPSMonitor:
 
     def monitor(self):
         start_time = datetime.datetime.now()
-        logging.info("GPS Monitoring starting. Waiting 60 seconds untill enforcement, to ensure that the GPS lock stabilizes")
-        time.sleep(60)
+        logging.info("GPS Monitoring starting. Waiting 10 seconds untill enforcement, to ensure that the GPS lock stabilizes")
+        time.sleep(10)
         logging.info("GPS Monitor enforcement now active!")
 
         while True:
