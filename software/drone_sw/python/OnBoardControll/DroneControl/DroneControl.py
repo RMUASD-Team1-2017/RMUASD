@@ -43,7 +43,6 @@ class DroneController:
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
             #We import the publisher everytime, as it may have updated
-            print(self.mode)
             with lock:
                 self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
                 self.drone_controller.last_fix = datetime.datetime.now()
