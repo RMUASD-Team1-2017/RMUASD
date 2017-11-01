@@ -3,6 +3,7 @@ import rospy
 import logging
 import threading
 import sys
+import time
 
 from mavros_msgs.msg import State
 from std_msgs.msg import Empty # empty message.
@@ -64,6 +65,7 @@ class link_monitor:
             self.link_monitor_GSM.publish(False)
 
     def start_monitor(self):
+        time.sleep(1)
         self.mavros_check()
         self.gsm_check()
 
