@@ -342,7 +342,8 @@ bool drone_handler::run_state_machine()
             break;
 
         case HARD_ABORT:
-            this->state = set_arm(false) ? MISSION_DONE : FAILED;
+            // Hard abort is not enabled (for safety reasons)
+            // this->state = set_arm(false) ? MISSION_DONE : FAILED;
             if(this->state == FAILED) std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Failed to disarm the drone" << std::endl;
             break;
 
