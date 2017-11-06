@@ -8,9 +8,8 @@ from pymavlink import mavutil
 import traceback
 import threading
 import datetime
-
 MAV_MODE_AUTO   = 4
-
+from GeoFenceChecker.GeoFenceChecker import fencechecker
 class DroneController:
     def __init__(self, port, baud, connectstring):
         print(port, baud)
@@ -54,12 +53,19 @@ class DroneController:
             from RMQHandler.DroneProducer import droneproducer
             if droneproducer:
                 droneproducer.publish_onboard_gps(info, self.drone_controller.location)
+            if fencechecker.initialised:
+                try:
+                    fencechecker.position_callback(self.drone_controller.location)
+                except Exception as e:
+                    logging.exception("Got exception while checking geofence.")
 
     def softabort(self):
         with self.lock:
             if not self.vehicle.mode == VehicleMode("MISSION"):
                 logging.warning("Softabort requested, but vehicle is not on a mission")
                 return
+            logging.warning("RTL requested!")
+
             self.vehicle.mode = VehicleMode("RTL")
 
     def hardabort(self):
@@ -78,6 +84,7 @@ class DroneController:
             if not self.vehicle.mode == VehicleMode("MISSION"):
                 logging.warning("Landing requested, but vehicle is not on a mission")
                 return
+            logging.warning("Landing requested!")
             self.vehicle.mode = VehicleMode("LAND")
 
     def PX4setMode(self, mavMode):
@@ -110,6 +117,9 @@ class DroneController:
         with self.lock:
             return self.last_communication
 
+    def get_home_location(self):
+        with self.lock:
+            return self.vehicle.home_location
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):
     """
