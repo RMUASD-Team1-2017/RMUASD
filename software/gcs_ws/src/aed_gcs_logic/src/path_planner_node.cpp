@@ -12,9 +12,9 @@ ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
     path_planner planner(
-        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_inner_fence.fence",  // geofence
-        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence",  // shrinken geofence
-        ros::package::getPath("aed_gcs_logic") + "/resources/testrally.rally"       // landing spots
+        ros::package::getPath("aed_gcs_logic") + "/resources/model_airfield_inner.fence",// shrinken geofence
+        ros::package::getPath("aed_gcs_logic") + "/resources/model_airfield.fence",      // geofence
+        ros::package::getPath("aed_gcs_logic") + "/resources/model_airfield.rally"           // landing spots
     );
     Coord start;
     start.latitude = req.start.latitude;
@@ -27,8 +27,6 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     res.goal.latitude = landingPos.latitude;
     res.goal.longitude = landingPos.longitude;
     res.goal.altitude = landingPos.altitude;
-
-
 
     std::vector<Node*> waypoints = planner.aStar(start, landingPos);
 
