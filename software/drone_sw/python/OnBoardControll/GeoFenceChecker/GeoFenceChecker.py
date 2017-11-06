@@ -38,7 +38,11 @@ class GeoFence:
 class GeoFenceChecker:
     def __init__(self):
         self.initialised = False
+        self.within_fence = False
         self.lock = RLock()
+
+    def getStatus(self):
+        return self.within_fence
 
     def intialize(self, drone, fence):
         with self.lock:
@@ -57,13 +61,16 @@ class GeoFenceChecker:
             logging.debug("Geofence distance is {}".format(distance))
             altitude = gpsposition["alt"]
             if distance == 0.0 and altitude < RTL_HEIGHT:
+                self.within_fence = True
                 return
+
             elif distance >= HARD_ABORT_DISTANCE or altitude >= HARD_ABORT_HEIGHT:
                 self.drone.hardabort()
             elif distance >= LAND_DISTANCE or altitude >= LAND_HEIGHT:
                 self.drone.land()
             elif distance >= RTL_DISTANCE or altitude >= RTL_HEIGHT:
                 self.drone.softabort()
+            self.within_fence = False
 
 
         logging.warning("Trying to abort due to geofence breach. Result was Distance from fence: {}, altitude {}".format(distance, altitude))

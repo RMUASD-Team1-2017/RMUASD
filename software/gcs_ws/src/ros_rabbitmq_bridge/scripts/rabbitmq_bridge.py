@@ -5,7 +5,7 @@ import rospy
 import numpy as np
 import threading
 import json
-from rabbitmq_classes import ros_to_rabbitmq_bridge, rabbitmq_to_ros_bridge
+from rabbitmq_classes import ros_to_rabbitmq_bridge, rabbitmq_to_ros_bridge, ServiceHandler
 
 from Queue import Queue
 from std_msgs.msg import Int32
@@ -16,6 +16,7 @@ from ros_rabbitmq_bridge.msg import userinfo, mission_request
 from rospy_message_converter import json_message_converter
 import threading
 import os
+from aed_gcs_logic.srv import OnboardStatus
 
 # test case for json to ros conversion
 #datain = '{"current_time": {"data": {"secs" : 22, "nsecs": 2200}}, "state": "flying", "destination" : {"longitude": 10000, "latitude": 20000, "position_covariance_type" : 1}, "eta" : 100}'
@@ -41,6 +42,7 @@ if __name__ == '__main__':
     rospy.init_node('rabbitmq_bridge', anonymous=True)
     heartbeat_pulbisher = rospy.Publisher("gcs/heartbeat", Empty, queue_size=10)
     heartbeat_thread(heartbeat_pulbisher, 1.0)
+    readyness_servicehandler = ServiceHandler()
 
     ros_to_rabbit_settings = [
     {"ros_topic" : "drone/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}, \
@@ -48,8 +50,9 @@ if __name__ == '__main__':
     {"ros_topic" : "drone/hardabort", "message_type" : Empty, "routing_key" : "drone.hardabort.{}".format(DRONE_ID), "exchange" : "droneabort", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
     {"ros_topic" : "gcs/heartbeat", "message_type" : Empty, "routing_key" : "gcs.heartbeat.{}".format(DRONE_ID), "exchange" : "drone", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
     {"ros_topic" : "drone/setgeofence", "message_type" : String, "routing_key" : "drone.geofence.{}".format(DRONE_ID), "exchange" : "drone"}, \
-
+    {"ros_service" : "drone/get_readyness" , "routing_key" : "drone.ready_rpc.{}".format(DRONE_ID), "exchange" : "drone", "callback" : readyness_servicehandler.ros_callback, "response_callback" : readyness_servicehandler.service_response_callback, "service_type" : OnboardStatus}, \
     ]
+
     rabbit_to_ros_settings = [
     {"ros_topic" : "drone/missionrequest", "message_type_str" : "ros_rabbitmq_bridge/mission_request", "message_type" : mission_request, "routing_key" : "drone.mission_request", "exchange" : "drone"},
     {"ros_topic" : "drone/requestgeofence", "message_type_str" : "std_msgs/Empty", "message_type" : Empty, "routing_key" : "drone.geofencerequest.{}".format(DRONE_ID), "exchange" : "drone"},

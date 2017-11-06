@@ -14,11 +14,19 @@ class ConnectionMonitor:
         self.thread = threading.Thread(target = self.monitor, args = (gcs_network_check, network_check,  telemetry_gcs_check, telemetry_oes_check, drone) )
         self.thread.daemon = True
         self.thread.start()
+        self.hasGSM = False
+        self.hasGCS_GSM = False
+        self.hasTELEM = False
+        self.hasGCS_TELEM = False
+
+    def getConnectionStatus(self):
+        return {"GSM" : self.hasGSM, "GCS_GSM" : self.hasGCS_GSM,
+                "TELEM" : self.hasTELEM, "GCS_TELEM" : self.hasGCS_TELEM}
 
 
     def monitor(self, gcs_network_check, network_check,  telemetry_gcs_check, telemetry_oes_check, drone):
-        logging.info("Performing 60 second delay to ensure that startup is completed")
-        time.sleep(60)
+        logging.info("Performing 10 second delay to ensure that startup is completed")
+        time.sleep(10)
         while True:
             try:
                 time.sleep(1)
@@ -26,8 +34,12 @@ class ConnectionMonitor:
                 network_lost = network_check() < datetime.datetime.now() - NETWORK_LOSS_TIMEOUT
                 telem_fligt_control_lost = telemetry_oes_check() < datetime.datetime.now() - TELEMETRY_LOSS_TIMEOUT
                 telem_gcs_loss = telemetry_gcs_check() < datetime.datetime.now() - TELEMETRY_LOSS_TIMEOUT
-                print(gcs_network_lost, network_lost, telem_fligt_control_lost, telem_gcs_loss)
-                print(gcs_network_check(), network_check(), telemetry_oes_check(), telemetry_gcs_check())
+                self.hasGSM = not network_lost
+                self.hasGCS_GSM = not gcs_network_lost
+                self.hasTELEM = not telem_fligt_control_lost
+                self.hasGCS_TELEM = not telem_gcs_loss
+                #print(gcs_network_lost, network_lost, telem_fligt_control_lost, telem_gcs_loss)
+                #print(gcs_network_check(), network_check(), telemetry_oes_check(), telemetry_gcs_check())
                 if gcs_network_lost:
                     if network_lost:
                         pass
