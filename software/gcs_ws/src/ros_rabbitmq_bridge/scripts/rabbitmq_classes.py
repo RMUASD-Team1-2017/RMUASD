@@ -31,7 +31,11 @@ class ros_to_rabbitmq_bridge:
             if not "callback" in setting.keys():
                 setting["callback"] = self.simple_callback
             self.channel.exchange_declare(exchange=setting["exchange"], type='topic', durable = False)
-            rospy.Subscriber(setting["ros_topic"], setting["message_type"], setting["callback"], (setting, self.channel,), queue_size=10)
+            if "ros_topic" in setting.keys():
+                rospy.Subscriber(setting["ros_topic"], setting["message_type"], setting["callback"], (setting, self.channel,), queue_size=10)
+            else:
+                print("Not a valid subscription entry: {}".format(setting))
+
 
     def setup_rabbitmq(self):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.host))

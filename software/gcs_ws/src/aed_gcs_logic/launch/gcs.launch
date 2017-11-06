@@ -16,4 +16,5 @@
 
     <node name="link_monitor" pkg="aed_gcs_logic" type="link_monitor_node.py" output="screen" />
     <node name="geofence_checker" pkg="aed_gcs_logic" type="GeofenceChecker.py" output="screen" />
+    <node name="geofence_sender" pkg="aed_gcs_logic" type="GeofenceSender.py" output="screen" />
 </launch>
