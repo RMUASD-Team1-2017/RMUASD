@@ -37,7 +37,7 @@ class path_planner
 {
     public:
 
-        path_planner(std::string geofence, std::string landingspotFile);
+        path_planner(std::string geofence, std::string inner_geofence, std::string landingspotFile);
         void loadGeofence(std::string fileName);
         void loadMap(std::string fileName);
         void connectNodes();

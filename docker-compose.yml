@@ -1,3 +1,5 @@
+#This file have two purposes: Building the docker images
+
 version: '3.3'
 services:
   webapp:
@@ -10,6 +12,7 @@ services:
       replicas: 1
     networks:
       - rmuasd_network
+
   groundcontrol:
     image: stefanrvo/rmuasd_groundcontrol:latest
     build:
@@ -20,11 +23,26 @@ services:
       replicas: 1
     networks:
       - rmuasd_network
+
   drone:
     image: stefanrvo/rmuasd_drone:latest
     build:
-      context: ./software/drone_sw/Cpp/
+      context: ./software/drone_sw/python/OnBoardControll/
       dockerfile: Dockerfile
+    deploy:
+      replicas: 1
+    networks:
+      - rmuasd_network
+
+  gazebo:
+    image: stefanrvo/rmuasd_simulation:latest
+    build:
+      context: ./simulation/
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 1
+    networks:
+      - rmuasd_network
 
 
 

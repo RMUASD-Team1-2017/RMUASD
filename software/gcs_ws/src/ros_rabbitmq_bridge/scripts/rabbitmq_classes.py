@@ -15,6 +15,7 @@ from rospy_message_converter import json_message_converter
 from ros_rabbitmq_bridge import *
 import functools
 import datetime
+import genpy
 class ros_to_rabbitmq_bridge:
     def __init__(self, rabbitmq_host, bridge_settings):
         #Bridge settings is a list of dicts with the following content:
@@ -41,8 +42,11 @@ class ros_to_rabbitmq_bridge:
         #Demo callback. Simply publishes the converted json on the same topic as recieved on.
         settings = args[0]
         channel = args[1]
-        json_str = json_message_converter.convert_ros_message_to_json(data)
-        channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json_str)
+        try:
+            json_str = json_message_converter.convert_ros_message_to_json(data)
+            channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json_str)
+        except:
+            traceback.print_exc()
 
     @classmethod
     def time_callback(cls, data, args):
@@ -92,8 +96,10 @@ class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
         message = settings["message_type"]()
         message.status.status = message.status.STATUS_NO_FIX if data["info"]["fix_type"] <= 1 else message.status.STATUS_FIX
         message.status.service = message.status.SERVICE_GPS
+
         message.latitude = data["location"]["lat"]
         message.longitude = data["location"]["lon"]
         message.altitude = data["location"]["alt"]
-        settings["publisher"].publish(message)
+        if not None in data["location"].values():
+            settings["publisher"].publish(message)
         ch.basic_ack(delivery_tag = method.delivery_tag)

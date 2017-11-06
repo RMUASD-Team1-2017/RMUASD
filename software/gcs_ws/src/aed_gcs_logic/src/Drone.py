@@ -17,7 +17,7 @@ class Mission:
         self.goal = None
 
     def plan(self, start_pos):
-        self.goal = self.plan_path(start_pos, self.destination)
+        self.goal = self.plan_path(start_pos, self.destination).goal
 
 
 class Drone:
@@ -57,9 +57,9 @@ class Drone:
                 info.state = self.state
                 info.serial = self.drone_id
                 info.current_time = self.location["update_time"]
-                if self.mission:
+                if self.mission and self.mission.goal:
                     info.mission_id = self.mission.mission_id
-                    info.destination = self.mission.destination
+                    info.destination = self.mission.goal
                 self.status_publish.publish(info)
 
 

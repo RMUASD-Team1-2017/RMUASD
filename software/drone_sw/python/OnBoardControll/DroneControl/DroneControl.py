@@ -12,9 +12,12 @@ import datetime
 MAV_MODE_AUTO   = 4
 
 class DroneController:
-    def __init__(self, port, baud):
+    def __init__(self, port, baud, connectstring):
         print(port, baud)
-        self.vehicle = connect(port, rate = 2, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
+        if connectstring:
+            self.vehicle = connect(connectstring, rate = 2, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
+        else:
+            self.vehicle = connect(port, rate = 2, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
         print("Connected")
         print("Listing parameters")
         #If the used serial port actually disapears, there will be no way to recover, but this can only happen for non-usb serial ports, so it should not really matter
@@ -54,6 +57,9 @@ class DroneController:
 
     def softabort(self):
         with self.lock:
+            if not self.vehicle.mode == VehicleMode("MISSION"):
+                logging.warning("Softabort requested, but vehicle is not on a mission")
+                return
             self.vehicle.mode = VehicleMode("RTL")
 
     def hardabort(self):
@@ -69,6 +75,9 @@ class DroneController:
 
     def land(self):
         with self.lock:
+            if not self.vehicle.mode == VehicleMode("MISSION"):
+                logging.warning("Landing requested, but vehicle is not on a mission")
+                return
             self.vehicle.mode = VehicleMode("LAND")
 
     def PX4setMode(self, mavMode):

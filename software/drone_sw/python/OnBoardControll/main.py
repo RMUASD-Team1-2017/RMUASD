@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #Python service running on the drone can do soft (RTL) and hard (motor shutdown) abort,
 #And send requested telemetry
 from __future__ import print_function
@@ -34,20 +35,23 @@ def __main__():
     parser.add_argument('--simufile', nargs='?', default=None, type=str)
     parser.add_argument('--gcsport', nargs='?', default="/dev/ttyLP1", type=str)
     parser.add_argument('--gcsbaud', nargs='?', default=57600, type=int)
+    parser.add_argument('--connectstring', nargs='?', default="", type=str)
+    parser.add_argument('--syslog', nargs='?', default=1, type=int)
     args = parser.parse_args()
 
     logging.getLogger().setLevel(args.loglevel)
     logging.getLogger().addHandler(logging.StreamHandler())
-    logging.getLogger().addHandler(logging.handlers.SysLogHandler(address = '/dev/log'))
+    if args.syslog:
+        logging.getLogger().addHandler(logging.handlers.SysLogHandler(address = '/dev/log'))
     logging.info("Starting Drone Onboard Control!")
 
     #Setup mavlink connection
     logging.info("Establishing mavlink connection")
-    drone = DroneController(port = args.mavport, baud = args.mavbaud)
+    drone = DroneController(port = args.mavport, baud = args.mavbaud, connectstring = args.connectstring)
     logging.info("Established mavlink connection")
-    gps_handler = GPSHandler(args.gpsport, args.gpsbaud, args.simufile)
-    gps_handler.start_handler()
     if not args.ignoregps:
+        gps_handler = GPSHandler(args.gpsport, args.gpsbaud, args.simufile)
+        gps_handler.start_handler()
         gps_monitor = GPSMonitor([drone.get_last_fix, gps_handler.get_last_fix], drone.softabort)
         gps_monitor.start_monitor()
     connection_monitor = ConnectionMonitor( gcs_network_check = DroneConsumer.get_last_gcs_heartbeat,

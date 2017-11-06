@@ -6,10 +6,14 @@
     <!-- Start the mission handler -->
     <node name="mission_handler" pkg="aed_gcs_logic" type="mission_handler.py" output="screen" />
 
+
+
+
     <!-- Start the path planner -->
     <node name="path_planner" pkg="aed_gcs_logic" type="path_planner_node" output="screen" />
 
     <node name="control_logic" pkg="aed_gcs_logic" type="control_logic_node" output="screen" />
 
     <node name="link_monitor" pkg="aed_gcs_logic" type="link_monitor_node.py" output="screen" />
+    <node name="geofence_checker" pkg="aed_gcs_logic" type="GeofenceChecker.py" output="screen" />
 </launch>
