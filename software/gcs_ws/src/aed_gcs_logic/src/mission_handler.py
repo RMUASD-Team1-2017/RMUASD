@@ -10,7 +10,7 @@ from sensor_msgs.msg import NavSatFix
 import math
 from  geopy.distance import vincenty    # pip install geopy
 
-#gps_velocity = 1 
+#gps_velocity = 1
 
 class mission_handler:
     """Path Planner class"""
@@ -51,18 +51,18 @@ class mission_handler:
         self.velocityx = data.twist.linear.x
         self.velocityy = data.twist.linear.y
         self.velocityz = data.twist.linear.z
-        		
-	
+
+
     def position_callback(self,data):
         self.latitude = data.latitude
         self.longitude = data.longitude
         self.altitude = data.altitude
         #print ' heejj ',data.latitude
-    #    velocity_gps = rospy.Subscriber("global_position/raw/gps_vel", Twist, self.Twist_request_callback, queue_size=1)	
+    #    velocity_gps = rospy.Subscriber("global_position/raw/gps_vel", Twist, self.Twist_request_callback, queue_size=1)
 
     def calc_velocity(self):
         self.velocity = math.sqrt((self.velocityx * self.velocityx) + (self.velocityy * self.velocityy) + (self.velocityz * self.velocityz))
-        
+
         #print ' x ' ,self.velocityx
         #print ' y ' ,self.velocityy
         #print ' z ' ,self.velocityz
@@ -70,7 +70,7 @@ class mission_handler:
         #self.velocity = 5
         return self.velocity
         #return self.velocity
-  
+
 
     def calc_distance(self):
         end_position = (55.564339, 10.121369)
@@ -84,7 +84,7 @@ class mission_handler:
         if self.velocity > 0:
             time = self.distance/self.velocity
             time_min = time/60
-        
+
         return time_min
 
 
@@ -96,20 +96,19 @@ if __name__ == "__main__":
     rospy.init_node('mission_handler_node', anonymous=True)
 
     m_handler = mission_handler()
-    while(1):
-          #m_handler.gps_velocity
-         #print' latitude ',m_handler.latitude
-        #udskriv = m_handler.calc_velocity()
-        #m_handler.calc_velocity
-        print'velocity ',m_handler.calc_velocity()
-        print'distance ',m_handler.calc_distance()
-        print' time ', m_handler.calc_time_to_end_pos()
-        #print'latitude',m_handler.latitude
-        #print'longitude',m_handler.longitude
-        #print'altitude',m_handler.altitude
-    vector = m_handler.gps_velocity
-        #type(vector)
-        # print'Velocity x',vector
-    print("Startup of mission handler complete")
+    # while(1):
+    #       #m_handler.gps_velocity
+    #      #print' latitude ',m_handler.latitude
+    #     #udskriv = m_handler.calc_velocity()
+    #     #m_handler.calc_velocity
+    #     print'velocity ',m_handler.calc_velocity()
+    #     print'distance ',m_handler.calc_distance()
+    #     print' time ', m_handler.calc_time_to_end_pos()
+    #     #print'latitude',m_handler.latitude
+    #     #print'longitude',m_handler.longitude
+    #     #print'altitude',m_handler.altitude
+    # vector = m_handler.gps_velocity
+    #     #type(vector)
+    #     # print'Velocity x',vector
+    # print("Startup of mission handler complete")
     rospy.spin()
-

@@ -3,8 +3,10 @@
 drone_handler::drone_handler()
 {
     this->state = IDLE;
+    this->lastState = IDLE;
     this->received_mission = false;
     this->connected = false;
+    this->mavrosConnection = false;
     this->armed = false;
     this->mode = "None";
 	this->latitude = 0;
@@ -215,8 +217,15 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
     }
 }
 
+
 bool drone_handler::run_state_machine()
 {
+    if(!this->connected && this->state != WAIT_FOR_MAVROS){
+        std::cout << "MAVROS Lost, going to waiting state" << std::endl;
+        this->lastState = this->state;
+        this->state = WAIT_FOR_MAVROS;
+    }
+
     switch(this->state){
         case IDLE:{
             /* IDLE STATE */
@@ -226,19 +235,21 @@ bool drone_handler::run_state_machine()
             break;}
 
         case FAILED:
-            std::cout << "Drone Encountered an Erorr" << std::endl;
+            std::cout << "Drone Encountered an Error" << std::endl;
             return false;
-            break;
 
-		case SEND_MISSION:{
+		case SEND_MISSION:
+          {
             /* SEND MISSION TO DRONE */
             std::cout << "Sending Mission" << std::endl;
             std::unique_lock<std::mutex> lock(this->mission_m);
             this->received_mission = true;
             this->mission_push_client.call(this->mission_srv);
             this->state = this->mission_srv.response.success ? ARM : FAILED;
+            if(this->state == FAILED) std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Sending mission to drone failed" << std::endl;
             ros::Duration(3).sleep();
-            break;}
+            break;
+          }
 
         case ARM:
             /* ARMED STATE */
@@ -257,7 +268,6 @@ bool drone_handler::run_state_machine()
                 this->state = AUTO_MISSION;
             }
 			else if(ros::Time::now() - arm_time > ros::Duration(5.0)){
-                std::cout << "Armed" << std::endl;
 				this->state = ARM;
             }
             break;
@@ -274,6 +284,7 @@ bool drone_handler::run_state_machine()
                 std::cout << "Mission Started" << std::endl;
             }
             else{
+                std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Setting mode to AUTO.MISSION failed" << std::endl;
                 this->state = FAILED;
             }
             break;
@@ -281,22 +292,24 @@ bool drone_handler::run_state_machine()
 		case START_MISSION:
             /* START MISSION */
             this->current_height = this->altitude;
-            if(start_height + 5 < current_height){  // when the drone is 5 meters over its start position, it is assumed, that the mission is started succesfully.
+            if(this->start_height + 2 < this->current_height){  // when the drone is 2 meters over its start position, it is assumed, that the mission is started succesfully.
                 this->state = ON_MISSION; // the drone is in the air
                 std::cout << "On Mission" << std::endl;
             }
-			else if(ros::Time::now() - start_time > ros::Duration(10.0)){
-				this->state = FAILED; // if not the drone is in the air after 10 seconds, it failed.
-			}
+            else if(ros::Time::now() - start_time > ros::Duration(10.0))
+            {
+              std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Switching to failed mode, the drone did not reach an altitude of 5 meters within 10 seconds." << std::endl;
+		      this->state = FAILED; // if the drone is not in the air after 10 seconds, it failed.
+	        }
             break;
 
         case ON_MISSION:
 			// be sure that the drone has been in air
-       		if(!this->armed){
+       		if(!this->armed && this->connected){
                 std::cout << "Mission Done" << std::endl;
                 this->state = MISSION_DONE;
         	}
-            else if(abortType != NOTHING){
+            else if(this->abortType != NOTHING){
                 switch(abortType){
                     case TYPE_SOFT_ABORT_RTL:
                         this->state = SOFT_ABORT_RTL;
@@ -320,26 +333,39 @@ bool drone_handler::run_state_machine()
 
         case SOFT_ABORT_RTL:
             this->state = set_mode("AUTO.RTL") ? WAIT_FOR_CONTINUE : FAILED;
+            if(this->state == FAILED) std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Failed switching to RTL mode" << std::endl;
             break;
 
         case SOFT_ABORT_LAND:
             this->state = set_mode("AUTO.LAND") ? WAIT_FOR_CONTINUE : FAILED;
+            if(this->state == FAILED) std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Failed switching to LAND mode" << std::endl;
             break;
 
         case HARD_ABORT:
             this->state = set_arm(false) ? MISSION_DONE : FAILED;
+            if(this->state == FAILED) std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Failed to disarm the drone" << std::endl;
             break;
 
         case WAIT_FOR_CONTINUE:
             if(abortType == CONTINUE){
                 this->abortType = NOTHING;
                 this->state = set_mode("AUTO.MISSION") ? ON_MISSION : FAILED;
+                if(this->state == FAILED) std::cout << "Failed switching to mission mode" << std::endl;
+
             }
             else if(!armed){
                 this->abortType = NOTHING;
                 this->state = MISSION_DONE;
             }
             break;
+
+        case WAIT_FOR_MAVROS:
+            if(this->connected){
+                std::cout << "MAVROS regained, continuing..." << std::endl;
+                this->state = this->lastState;
+            }
+            break;
+
     }
 
     return true;

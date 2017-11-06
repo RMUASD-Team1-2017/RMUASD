@@ -61,6 +61,7 @@ enum droneState {
     WAIT_FOR_CONTINUE = 11,
 	WAITING_STATE = 12,
     AUTO_MISSION = 13,
+    WAIT_FOR_MAVROS = 14
 };
 
 
@@ -99,11 +100,14 @@ class drone_handler
 		double calc_dist_between_waypoints(double lat1, double lat2, double long1, double long2);
         bool set_mode(const std::string& mode);
         bool set_arm(const bool& command);
+        void check_mavros_connection();
 
         droneState state;
+        droneState lastState;
         bool received_mission;
         bool connected;
         bool armed;
+        bool mavrosConnection;
 		double latitude;
 		double longitude;
 		double altitude;
