@@ -108,6 +108,7 @@ class drone_handler
         bool connected;
         bool armed;
         bool mavrosConnection;
+        double timeFromLastPosition;
 		double latitude;
 		double longitude;
 		double altitude;

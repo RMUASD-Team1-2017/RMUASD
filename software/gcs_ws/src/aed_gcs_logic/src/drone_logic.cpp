@@ -13,6 +13,7 @@ drone_handler::drone_handler()
 	this->longitude = 0;
 	this->altitude = 0;
     this->abortType = 0;
+    this->timeFromLastPosition = 0;
 
     this->abort_server = n.advertiseService("drone_logic/abort", &drone_handler::abort_callback, this);
     this->restart_server = n.advertiseService("drone_logic/restart", &drone_handler::restart_callback, this);
@@ -141,11 +142,14 @@ void drone_handler::gps_callback(const sensor_msgs::NavSatFix::ConstPtr& data)
     this->latitude = data->latitude;
 	this->longitude = data->longitude;
 	this->altitude = data->altitude;
+    this->timeFromLastPosition = ros::Time::now().toSec();
 }
 
 void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data)
 {
-    if(!this->received_mission){
+    double timeSinceLastGPS = ros::Time::now().toSec() - this->timeFromLastPosition;
+
+    if(!this->received_mission && timeSinceLastGPS < 2){
         if(data->path.size() >= 2){
             mavros_msgs::WaypointPush mission_srv_temp;
             mavros_msgs::Waypoint temp_wp;
