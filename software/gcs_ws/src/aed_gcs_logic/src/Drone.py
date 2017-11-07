@@ -8,6 +8,7 @@ from ros_rabbitmq_bridge.msg import userinfo
 from aed_gcs_logic.srv import mission_request, OnboardStatus, OnboardStatusRequest
 POSITION_INTERVAL = datetime.timedelta(milliseconds = 500) #We only update the position if it is this time since we did it last
 import traceback
+import json
 class Mission:
     def __init__(self, mission_id, destination):
         self.mission_id = mission_id
@@ -80,7 +81,7 @@ class Drone:
             request = OnboardStatusRequest()
             response = self.drone_ready_service(request)
             return json.loads(response.response.data)["ready"]
-        except:
+        except Exception as e:
             try:
                 print("Drone not ready, response was {}".format(response))
             except:

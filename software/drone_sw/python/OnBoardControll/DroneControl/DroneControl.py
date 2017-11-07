@@ -9,6 +9,9 @@ import traceback
 import threading
 import datetime
 MAV_MODE_AUTO   = 4
+BATTERY_CELLS = 3
+MIN_VOLTAGE = 3500 * BATTERY_CELLS
+
 from GeoFenceChecker.GeoFenceChecker import fencechecker
 class DroneController:
     def __init__(self, port, baud, connectstring):
@@ -28,11 +31,21 @@ class DroneController:
         self.location = None
         self.last_fix = None
         self.last_communication = datetime.datetime.now()
+        self.battery = 0
 
         @self.vehicle.on_message('*')
         def listener(self, name, message):
             with lock:
                 self.drone_controller.last_communication = datetime.datetime.now()
+
+        @self.vehicle.on_message('SYS_STATUS')
+        def listener(self, name, message):
+            voltage = message.to_dict()["voltage_battery"]
+            logging.info("Battery voltage {}".format(voltage))
+            self.battery = voltage
+            if voltage < MIN_VOLTAGE:
+                logging.warning("Battery voltage is too low, trying to land immediately!")
+                self.drone_controller.land()
 
         @self.vehicle.on_message('HOME_POSITION')
         def listener(self, name, home_position):
