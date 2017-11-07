@@ -42,7 +42,7 @@ class path_planner
         void loadMap(std::string fileName);
         void connectNodes();
         std::vector<Node*> aStar(Coord start, Coord goal);
-        Coord getNearestLandingSpot(Coord start);
+        Coord getNearestLandingSpot(Coord goal);
 
         static void printNode(Node *node);
         static void printList(std::vector<Node*> &list);
@@ -57,6 +57,7 @@ class path_planner
         std::vector<Node> nodes;
         std::vector<Coord> landingspot;
         std::vector<Node*> path;
+        Coord target;
 
     private:
 
