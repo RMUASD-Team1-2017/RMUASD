@@ -103,6 +103,9 @@ class ServiceHandler:
                 connection.process_data_events()
         except:
             traceback.print_exc()
+        resp =  settings["service_type"]._response_class()
+        resp.response.data = ""
+        return resp
 
     def service_response_callback(self, ch, method, props, body):
         with self.lock:

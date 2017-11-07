@@ -1,7 +1,10 @@
  <launch>
-	<!-- rabbitMQ bridge node -->
-	<node pkg="ros_rabbitmq_bridge" type="rabbitmq_bridge.py" name="rabbitmq_bridge" output="screen">
-	</node>
+    <!-- Do we want to ignore the opinion of the OES? -->
+    <param name="/ignore_onboard" type="bool" value="false" />
+
+    <!-- rabbitMQ bridge node -->
+    <node pkg="ros_rabbitmq_bridge" type="rabbitmq_bridge.py" name="rabbitmq_bridge" output="screen">
+    </node>
 
     <!-- Start the mission handler -->
     <node name="mission_handler" pkg="aed_gcs_logic" type="mission_handler.py" output="screen" />

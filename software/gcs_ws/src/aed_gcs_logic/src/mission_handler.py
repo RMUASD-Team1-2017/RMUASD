@@ -22,6 +22,7 @@ class mission_handler:
         self.mission_request_sub = rospy.Subscriber("drone/missionrequest", mission_request, self.mission_request_callback, queue_size=10)
         self.velocity_gps = rospy.Subscriber("/mavros/local_position/velocity", TwistStamped, self.twist_request_callback, queue_size=10)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
+
         self.gps_velocity = 0
         self.velocityx = 0
         self.velocityy = 0
@@ -39,6 +40,9 @@ class mission_handler:
     def mission_request_callback(self, data):
         mission = Mission(data.mission_id, data.destination)
         if not self.drone.mission:
+            if not self.drone.rpcIsDroneReady():
+                print("Drone OES is not ready for mission")
+                return
             if self.drone.set_mission(mission):
                 mission.plan(self.drone.location["location"])
                 print("Mission was set!")
@@ -91,24 +95,7 @@ class mission_handler:
 if __name__ == "__main__":
 
     print "Starting Mission Handler Node"
-        #print gps_velocity
-        #print'Foo',gps_velocity
     rospy.init_node('mission_handler_node', anonymous=True)
 
     m_handler = mission_handler()
-    # while(1):
-    #       #m_handler.gps_velocity
-    #      #print' latitude ',m_handler.latitude
-    #     #udskriv = m_handler.calc_velocity()
-    #     #m_handler.calc_velocity
-    #     print'velocity ',m_handler.calc_velocity()
-    #     print'distance ',m_handler.calc_distance()
-    #     print' time ', m_handler.calc_time_to_end_pos()
-    #     #print'latitude',m_handler.latitude
-    #     #print'longitude',m_handler.longitude
-    #     #print'altitude',m_handler.altitude
-    # vector = m_handler.gps_velocity
-    #     #type(vector)
-    #     # print'Velocity x',vector
-    # print("Startup of mission handler complete")
     rospy.spin()

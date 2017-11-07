@@ -5,10 +5,9 @@ from sensor_msgs.msg import NavSatFix
 import rospy
 import threading
 from ros_rabbitmq_bridge.msg import userinfo
-from aed_gcs_logic.srv import mission_request
-
+from aed_gcs_logic.srv import mission_request, OnboardStatus, OnboardStatusRequest
 POSITION_INTERVAL = datetime.timedelta(milliseconds = 500) #We only update the position if it is this time since we did it last
-
+import traceback
 class Mission:
     def __init__(self, mission_id, destination):
         self.mission_id = mission_id
@@ -28,6 +27,7 @@ class Drone:
         self.mission = None
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
+        self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
         self.status_publisher_thread = threading.Thread(target = self.status_publisher)
@@ -62,7 +62,6 @@ class Drone:
                     info.destination = self.mission.goal
                 self.status_publish.publish(info)
 
-
     def position_callback(self, data):
         now = rospy.get_rostime()
         diff = now - data.header.stamp
@@ -73,3 +72,16 @@ class Drone:
             if self.last_pos_update < datetime.datetime.now() - POSITION_INTERVAL:
                 self.last_pos_update = datetime.datetime.now()
                 self.publish_sem.release()
+
+    def rpcIsDroneReady(self):
+        if rospy.get_param('/ignore_onboard', False) is True:
+            return True
+        try:
+            request = OnboardStatusRequest()
+            response = self.drone_ready_service(request)
+            return json.loads(response.response.data)["ready"]
+        except:
+            try:
+                print("Drone not ready, response was {}".format(response))
+            except:
+                traceback.print_exc()

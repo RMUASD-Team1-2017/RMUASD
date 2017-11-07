@@ -47,6 +47,7 @@ if __name__ == '__main__':
     ros_to_rabbit_settings = [
     {"ros_topic" : "drone/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}, \
     {"ros_topic" : "drone/softabort", "message_type" : Empty, "routing_key" : "drone.softabort.{}".format(DRONE_ID), "exchange" : "droneabort", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
+    {"ros_topic" : "drone/softabort", "message_type" : Empty, "routing_key" : "drone.land.{}".format(DRONE_ID), "exchange" : "droneabort", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
     {"ros_topic" : "drone/hardabort", "message_type" : Empty, "routing_key" : "drone.hardabort.{}".format(DRONE_ID), "exchange" : "droneabort", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
     {"ros_topic" : "gcs/heartbeat", "message_type" : Empty, "routing_key" : "gcs.heartbeat.{}".format(DRONE_ID), "exchange" : "drone", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
     {"ros_topic" : "drone/setgeofence", "message_type" : String, "routing_key" : "drone.geofence.{}".format(DRONE_ID), "exchange" : "drone"}, \
