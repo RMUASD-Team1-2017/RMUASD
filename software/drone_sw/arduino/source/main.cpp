@@ -7,6 +7,14 @@
 
 #include <FastLED.h>
 
+//Fix some linker stuff...
+__extension__ typedef int __guard __attribute__((mode (__DI__)));
+
+int __cxa_guard_acquire(__guard *g) {return !*(char *)(g);};
+void __cxa_guard_release (__guard *g) {*(char *)g = 1;};
+void __cxa_guard_abort (__guard *) {};
+
+
 #define OFF_MODE 0x00
 #define BLINK_MODE 0x01
 #define ROTATE_MODE 0x02
@@ -33,9 +41,9 @@ struct Color{
         blue = _blue;
     }
 
-    int8_t red;
-    int8_t green;
-    int8_t blue;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
 };
 
 Color color1;
@@ -43,9 +51,43 @@ Color color2;
 Color color3;
 
 uint8_t mode = OFF_MODE;
+uint8_t request_mode = DEBUG_1_MODE; //Which ring are we going to read from when requesting debug color
 
-void callback(int bytes){
-    if (bytes == 4){
+void req_callback()
+{
+    switch(request_mode)
+    {
+        case DEBUG_1_MODE:
+            Wire.write(color1.red);
+            Wire.write(color1.green);
+            Wire.write(color1.blue);
+            break;
+        case DEBUG_2_MODE:
+            Wire.write(color2.red);
+            Wire.write(color2.green);
+            Wire.write(color2.blue);
+            break;
+        case DEBUG_3_MODE:
+            Wire.write(color3.red);
+            Wire.write(color3.green);
+            Wire.write(color3.blue);
+            break;
+    }
+}
+
+void recv_callback(int bytes){
+    if (bytes == 1)
+    {   //This is needed before a read command to select the correct ring to read from
+        uint8_t cmd = Wire.read();
+        switch(Wire.read())
+        {
+            case DEBUG_1_MODE:
+            case DEBUG_2_MODE:
+            case DEBUG_3_MODE:
+                request_mode = cmd;
+        }
+    }
+    else if (bytes == 4){
 
         int cmd = Wire.read();
         int red = Wire.read();
@@ -99,7 +141,8 @@ int main(void)
     init();
 
     Wire.begin(0x08);
-    Wire.onReceive(callback);
+    Wire.onReceive(recv_callback);
+    Wire.onRequest(req_callback);
     Serial.begin(57600);
 
     CRGBArray<TOTAL_LEDS> leds;
