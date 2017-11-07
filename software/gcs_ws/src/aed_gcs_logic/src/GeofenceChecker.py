@@ -36,7 +36,7 @@ class GeoFence:
 class GeoFenceChecker:
     def __init__(self):
         rospy.init_node('link_monitor_node', anonymous=True)
-        self.fence = GeoFence(rospack.get_path("aed_gcs_logic") + "/resources/polygon_fence.fence")
+        self.fence = GeoFence(rospack.get_path("aed_gcs_logic") + "/resources/airport.fence")
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         rospy.wait_for_service('drone_logic/abort')
         self.abort_callback = rospy.ServiceProxy("drone_logic/abort", AbortRequest)

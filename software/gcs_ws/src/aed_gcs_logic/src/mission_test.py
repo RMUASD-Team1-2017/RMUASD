@@ -28,19 +28,22 @@ waypoint4 = NavSatFix()
 # Second Point: 55.471625, 10.323037
 # Landing point: 55.471246, 10.323417
 
-waypoint1.latitude = 55.4705315
-waypoint1.longitude = 10.3290467
+#55.471434, 10.323979
+#55.471683 10.323753
 
-waypoint2.latitude = 55.4705000
-waypoint2.longitude = 10.3290467
+#55.471680 y: 10.324129
+#55.471668 y: 10.323848
 
-waypoint3.latitude = 55.47053115
-waypoint3.longitude = 10.3290467
-#
-# waypoint4.latitude = 55.47583
-# waypoint4.longitude = 10.329944
+waypoint1.latitude = 55.4717077
+waypoint1.longitude = 10.324197
 
-path.path = [waypoint1, waypoint2, waypoint3]
+#latitude: 55.4717042
+#longitude: 10.3238927
+
+waypoint2.latitude = 55.4717042
+waypoint2.longitude = 10.3238474
+
+path.path = [waypoint1, waypoint2]
 
 print "Publishing"
 time.sleep(1)

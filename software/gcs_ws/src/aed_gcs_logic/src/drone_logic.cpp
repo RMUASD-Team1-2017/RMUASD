@@ -32,7 +32,7 @@ drone_handler::~drone_handler(){
 
 bool drone_handler::wait_for_connection()
 {
-    for(auto i = 0; i < 10; i++){
+    while(ros::ok()){
         if(this->connected){
             std::cout << "Drone connected..." << std::endl;
             return true;
@@ -156,7 +156,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             temp_wp.autocontinue = true;
             temp_wp.x_lat = data->path[0].latitude;
             temp_wp.y_long = data->path[0].longitude;
-            temp_wp.z_alt = 20;
+            temp_wp.z_alt = this->missionHeight;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);
 
@@ -181,21 +181,21 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
 
                 temp_wp.x_lat = data->path[i].latitude;
                 temp_wp.y_long = data->path[i].longitude;
-                temp_wp.z_alt = 20;
+                temp_wp.z_alt = this->missionHeight;
 
                 mission_srv_temp.request.waypoints.push_back(temp_wp);
             }
 			if(calc_dist_between_waypoints(data->path[data->path.size()-2].latitude,data->path[data->path.size()-1].latitude,data->path[data->path.size()-2].longitude,data->path[data->path.size()-1].longitude)>500){
 				temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
        		 	temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
-        		temp_wp.z_alt = 20;
+        		temp_wp.z_alt = this->missionHeight;
 				mission_srv_temp.request.waypoints.push_back(temp_wp);
 			}
 
 
             temp_wp.x_lat = data->path[data->path.size() - 1].latitude;
             temp_wp.y_long = data->path[data->path.size() - 1].longitude;
-            temp_wp.z_alt = 20;
+            temp_wp.z_alt = this->missionHeight;
             temp_wp.command = 21;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);
@@ -236,7 +236,8 @@ bool drone_handler::run_state_machine()
 
         case FAILED:
             std::cout << "Drone Encountered an Error" << std::endl;
-            return false;
+            this->state = MISSION_DONE;
+            break;
 
 		case SEND_MISSION:
           {
