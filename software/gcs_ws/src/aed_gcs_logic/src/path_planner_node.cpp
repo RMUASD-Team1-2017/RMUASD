@@ -28,8 +28,6 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     res.goal.longitude = landingPos.longitude;
     res.goal.altitude = landingPos.altitude;
 
-
-
     std::vector<Node*> waypoints = planner.aStar(start, landingPos);
 
 #ifdef SDL
