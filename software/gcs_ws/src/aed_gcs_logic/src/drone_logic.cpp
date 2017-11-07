@@ -148,9 +148,10 @@ void drone_handler::gps_callback(const sensor_msgs::NavSatFix::ConstPtr& data)
 void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& data)
 {
     double timeSinceLastGPS = ros::Time::now().toSec() - this->timeFromLastPosition;
+    std::cout << "Time since last GPS: " << timeSinceLastGPS << std::endl;
 
     if(!this->received_mission && timeSinceLastGPS < 2){
-        if(data->path.size() >= 2){
+        if(data->path.size() >= 1){
             mavros_msgs::WaypointPush mission_srv_temp;
             mavros_msgs::Waypoint temp_wp;
 
@@ -158,8 +159,8 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             temp_wp.command = 22;
             temp_wp.is_current = true;
             temp_wp.autocontinue = true;
-            temp_wp.x_lat = data->path[0].latitude;
-            temp_wp.y_long = data->path[0].longitude;
+            temp_wp.x_lat = this->latitude;
+            temp_wp.y_long = this->longitude;
             temp_wp.z_alt = this->missionHeight;
 
             mission_srv_temp.request.waypoints.push_back(temp_wp);

@@ -70,6 +70,9 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     }
     std::cout << std::endl;
 
+    // Remove first waypoint in path, since dronelogic will take the current position and takeoff from there.
+    path.path.erase(path.path.begin());
+
     pub.publish(path);
     return true;
 }
