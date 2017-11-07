@@ -112,7 +112,10 @@ void path_planner::loadLandingSpots(std::string fileName){
 
     file >> j;
 
-    for (int i = 0; i < j["points"][0].size(); i++){
+    std::cout << j["points"].size() << std::endl;
+
+    for (int i = 0; i < j["points"].size(); i++){
+        std::cout << i << ", " << j["points"].size() << std::endl;
         Coord tempCoord;
         tempCoord.latitude = j["points"][i][0];
         tempCoord.longitude = j["points"][i][1];
@@ -285,13 +288,14 @@ std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
     return std::vector<Node*>();
 }
 
-Coord path_planner::getNearestLandingSpot(Coord start){
+Coord path_planner::getNearestLandingSpot(Coord goal){
+    target = goal;
     Coord nearest;
     double distance = std::numeric_limits<double>::max();
     for (int i = 0; i < landingspot.size(); i++){
-        if (dist(&start, &landingspot[i]) < distance){
+        if (dist(&goal, &landingspot[i]) < distance){
             nearest = landingspot[i];
-            distance = dist(&start, &landingspot[i]);
+            distance = dist(&goal, &landingspot[i]);
         }
     }
     return nearest;
@@ -321,8 +325,16 @@ void path_planner::draw(int size){
 
     static Window *window = new Window(Vector(1920 / 2, 0),Vector(width, height), "Path Planner");
 
-    window->background(White);
+    window->background(Black);
     Vector offset(size / 20, size / 20);
+
+    Vector v1 = (Vector(target.longitude, target.latitude) + scaleOffset) * scale + offset;
+    window->circle(Vector(v1.x, height - v1.y), 10, Black, Cyan);
+
+    for (int i = 0; i < landingspot.size(); i++){
+        Vector v1 = (Vector(landingspot[i].longitude, landingspot[i].latitude) + scaleOffset) * scale + offset;
+        window->circle(Vector(v1.x, height - v1.y), 10, Black, Yellow);
+    }
 
     for (int i = 0; i < nodes.size(); i++){
         Vector v1 = Vector(nodes[i].coord.longitude, nodes[i].coord.latitude);
@@ -330,7 +342,8 @@ void path_planner::draw(int size){
             Vector v2 = Vector(nodes[i].link[j]->coord.longitude, nodes[i].link[j]->coord.latitude);
             Vector v3 = (v1 + scaleOffset) * scale + offset;
             Vector v4 = (v2 + scaleOffset) * scale + offset;
-            window->line(Vector(v3.x, height - v3.y), Vector(v4.x, height - v4.y), Green);
+            if (v3.y < 0 || v4.y < 0);// std::cout << "Error " << i << ", " << j << std::endl;
+            else window->line(Vector(v3.x, height - v3.y), Vector(v4.x, height - v4.y), Green);
         }
     }
 
@@ -352,7 +365,7 @@ void path_planner::draw(int size){
 
     for (int i = 0; i < nodes.size(); i++){
         Vector v1 = (Vector(nodes[i].coord.longitude, nodes[i].coord.latitude) + scaleOffset) * scale + offset;
-        window->text(Vector(v1.x, height - v1.y), nodes[i].id, Black);
+        window->text(Vector(v1.x, height - v1.y), nodes[i].id, White);
     }
 
     window->draw();
