@@ -11,10 +11,17 @@
 ros::Publisher pub;
 bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::mission_request::Response &res)
 {
+  std::string inner_geofence_file;
+  ros::param::get("/inner_geofence_file", inner_geofence_file);
+  std::string geofence_file;
+  ros::param::get("/geofence_file", geofence_file);
+  std::string landing_spots_file;
+  ros::param::get("/landing_spots_file", landing_spots_file);
+
     path_planner planner(
-        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_inner_fence.fence",// shrinken geofence
-        ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence",      // geofence
-        ros::package::getPath("aed_gcs_logic") + "/resources/testrally.rally"           // landing spots
+        inner_geofence_file,  // shrinken geofence
+        geofence_file,        // geofence
+        landing_spots_file         // landing spots
     );
     Coord start;
     start.latitude = req.start.latitude;

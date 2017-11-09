@@ -43,7 +43,7 @@ class GeoFence:
 class GeoFenceChecker:
     def __init__(self):
         rospy.init_node('link_monitor_node', anonymous=True)
-        self.fence = GeoFence(rospack.get_path("aed_gcs_logic") + "/resources/polygon_fence.fence")
+        self.fence = GeoFence(rospy.get_param('/geofence_file'))
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.altitude_sub = rospy.Subscriber("mavros/global_position/rel_alt", Float64, self.altitude_callback, queue_size=10)
 
