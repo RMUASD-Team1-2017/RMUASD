@@ -1,6 +1,6 @@
 set -e
-echo "Running normal mission test"
-$DIR/start_containers.sh
+echo "Running GCS failure test"
+./start_containers.sh
 mission_id=$(python $DIR/Tools/start_mission.py --lat 55.556966 --lon 10.110615 --requesturl http://$webui_ip:8000/EmergencyUser/DroneDispatch/ --accepturl http://$webui_ip:8000/EmergencyControl/control/)
 echo "Mission ID is $mission_id"
 python $DIR/Tools/MissionMonitor.py --id $mission_id --locationurl http://$webui_ip:8000/EmergencyControl/mission_queue_json/True/ --goal_precision 10 --goal_height 3 --max_mission_time 600
