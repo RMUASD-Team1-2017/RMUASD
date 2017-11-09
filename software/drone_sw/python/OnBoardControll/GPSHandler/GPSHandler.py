@@ -6,6 +6,7 @@ import threading
 import time
 import datetime
 import logging
+from LEDControl.LEDControl import led as debug_led
 
 class GPSHandler:
     def __init__(self, port, baud, simulation_filepath = None):
@@ -37,6 +38,7 @@ class GPSHandler:
                             self.last_fix = datetime.datetime.now()
                             self.location =  {"lat" : msg.latitude, "lon" : msg.longitude, "alt" : msg.altitude}
                             logging.debug("Got external GPS location: {}".format(self.location))
+                        debug_led.setDebugColor(debug_type = "GPS_EXTERNAL_FIX", status = True)
 
                 elif "$GPGSA" in line:
                     msg = pynmea2.parse(line)

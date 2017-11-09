@@ -7,6 +7,14 @@
 
 #include <FastLED.h>
 
+//Fix some linker stuff...
+__extension__ typedef int __guard __attribute__((mode (__DI__)));
+
+int __cxa_guard_acquire(__guard *g) {return !*(char *)(g);};
+void __cxa_guard_release (__guard *g) {*(char *)g = 1;};
+void __cxa_guard_abort (__guard *) {};
+
+
 #define OFF_MODE 0x00
 #define BLINK_MODE 0x01
 #define ROTATE_MODE 0x02
@@ -33,9 +41,9 @@ struct Color{
         blue = _blue;
     }
 
-    int8_t red;
-    int8_t green;
-    int8_t blue;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
 };
 
 Color color1;
@@ -43,53 +51,133 @@ Color color2;
 Color color3;
 
 uint8_t mode = OFF_MODE;
+uint8_t request_mode = DEBUG_1_MODE; //Which ring are we going to read from when requesting debug color
 
-void callback(int bytes){
-    if (bytes == 4){
+void req_callback()
+{
+    switch(request_mode)
+    {
+        case DEBUG_1_MODE:
+            Wire.write(color1.red);
+            Wire.write(color1.green);
+            Wire.write(color1.blue);
+            break;
+        case DEBUG_2_MODE:
+            Wire.write(color2.red);
+            Wire.write(color2.green);
+            Wire.write(color2.blue);
+            break;
+        case DEBUG_3_MODE:
+            Wire.write(color3.red);
+            Wire.write(color3.green);
+            Wire.write(color3.blue);
+            break;
+    }
+}
 
-        int cmd = Wire.read();
-        int red = Wire.read();
-        int green = Wire.read();
-        int blue = Wire.read();
-
-        Color color(red, green, blue);
-
-        switch (cmd){
-            case OFF_MODE:
-                mode = OFF_MODE;
-                break;
-
-            case BLINK_MODE:
-                mode = BLINK_MODE;
-                break;
-
-            case ROTATE_MODE:
-                mode = ROTATE_MODE;
-                break;
-
-            case DEBUG_1_MODE:
-                mode = DEBUG_MODE;
-                color1 = color;
-                break;
-
-            case DEBUG_2_MODE:
-                mode = DEBUG_MODE;
-                color2 = color;
-                break;
-
-            case DEBUG_3_MODE:
-                mode = DEBUG_MODE;
-                color3 = color;
-                break;
-
-            case DEBUG_MODE:
-                mode = DEBUG_MODE;
-                break;
-
-            default:
-
-                break;
+void recv_callback(int bytes){
+    Serial.println(bytes, HEX);
+    switch(bytes)
+    {
+        case 1:
+        {   //This is needed before a read command to select the correct ring to read from
+            uint8_t cmd = Wire.read();
+            switch(Wire.read())
+            {
+                case DEBUG_1_MODE:
+                case DEBUG_2_MODE:
+                case DEBUG_3_MODE:
+                    request_mode = cmd;
+                    return;
+                default:
+                    return;
+            }
         }
+        return;
+        case 3: //Set a single color component of a ring
+        {
+           uint8_t cmd = Wire.read();
+            uint8_t component = Wire.read();
+            uint8_t value = Wire.read();
+
+            Color *color = nullptr;
+            switch(cmd)
+            {
+                case DEBUG_1_MODE:
+                    color = &color1;
+                    break;
+                case DEBUG_2_MODE:
+                    color = &color2;
+                    break;
+                case DEBUG_3_MODE:
+                    color = &color3;
+                    break;
+                default:
+                    return;
+            }
+            switch(component)
+            {
+                case 0x01:
+                    color->red = value;
+                    break;
+                case 0x02:
+                    color->green = value;
+                    break;
+                case 0x03:
+                    color->blue = value;
+                    break;
+                default:
+                    return;
+            }
+        }
+        return;
+        case 4:
+        {
+            //Set the color of a ring
+            uint8_t cmd = Wire.read();
+            uint8_t red = Wire.read();
+            uint8_t green = Wire.read();
+            uint8_t blue = Wire.read();
+
+            Color color(red, green, blue);
+
+            switch (cmd){
+                case OFF_MODE:
+                    mode = OFF_MODE;
+                    break;
+
+                case BLINK_MODE:
+                    mode = BLINK_MODE;
+                    break;
+
+                case ROTATE_MODE:
+                    mode = ROTATE_MODE;
+                    break;
+
+                case DEBUG_1_MODE:
+                    color1 = color;
+                    break;
+
+                case DEBUG_2_MODE:
+                    color2 = color;
+                    break;
+
+                case DEBUG_3_MODE:
+                    color3 = color;
+                    break;
+
+                case DEBUG_MODE:
+                    mode = DEBUG_MODE;
+                    break;
+
+                default:
+
+                    break;
+            }
+        }
+        return;
+        default:
+          for (int i = 0; i < bytes; i++) Wire.read();
     }
 }
 
@@ -99,7 +187,8 @@ int main(void)
     init();
 
     Wire.begin(0x08);
-    Wire.onReceive(callback);
+    Wire.onReceive(recv_callback);
+    Wire.onRequest(req_callback);
     Serial.begin(57600);
 
     CRGBArray<TOTAL_LEDS> leds;
@@ -122,7 +211,7 @@ int main(void)
             case BLINK_MODE:
                 // Blink all leds
                 for (int i = 0; i < TOTAL_LEDS; i++){
-                    if (time > max_time / 2) leds[i] = CRGB::White;
+                    if (time > max_time / 2) leds[i] = CRGB::Blue;
                     else leds[i] = CRGB::Black;
                 }
                 break;
@@ -169,8 +258,8 @@ int main(void)
                 break;
         }
 
-        Serial.println(mode, HEX);
-        Serial.println(0, HEX);
+      //  Serial.println(mode, HEX);
+      //  Serial.println(0, HEX);
 
         FastLED.show();
 

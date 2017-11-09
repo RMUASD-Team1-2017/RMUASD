@@ -11,6 +11,7 @@ import datetime
 MAV_MODE_AUTO   = 4
 BATTERY_CELLS = 3
 MIN_VOLTAGE = 3500 * BATTERY_CELLS
+from LEDControl.LEDControl import led as debug_led
 
 from GeoFenceChecker.GeoFenceChecker import fencechecker
 class DroneController:
@@ -42,7 +43,7 @@ class DroneController:
         def listener(self, name, message):
             voltage = message.to_dict()["voltage_battery"]
             logging.info("Battery voltage {}".format(voltage))
-            self.battery = voltage
+            self.drone_controller.battery = voltage
             if voltage < MIN_VOLTAGE:
                 logging.warning("Battery voltage is too low, trying to land immediately!")
                 self.drone_controller.land()
@@ -54,15 +55,15 @@ class DroneController:
 
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
-            #We import the publisher everytime, as it may have updated
             with lock:
                 self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
                 self.drone_controller.last_fix = datetime.datetime.now()
+            debug_led.setDebugColor(debug_type = "GPS_INTERNAL_FIX", status = True)
 
             info = {"eph" : self.gps_0.eph, "epv" : self.gps_0.epv, "fix_type" : self.gps_0.fix_type, "satellites_visible" : self.gps_0.satellites_visible}
 
             logging.debug("Got onboard GPS: {}, {}".format(self.location.global_relative_frame, self.gps_0) )
-
+            #We import the publisher everytime, as it may have updated
             from RMQHandler.DroneProducer import droneproducer
             if droneproducer:
                 droneproducer.publish_onboard_gps(info, self.drone_controller.location)

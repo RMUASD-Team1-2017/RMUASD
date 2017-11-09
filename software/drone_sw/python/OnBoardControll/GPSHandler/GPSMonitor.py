@@ -15,7 +15,7 @@ FIX_LOST_AGE = datetime.timedelta(seconds = 5)
 FAILURE_DEVIATION_BASE = 15 #We never fail if gps difference is below 15 meters
 FAILURE_DEVIATION_DELAY = 10 #We allow 10 extra meters of deviation per second
 # All differences is betwee max and min
-
+from LEDControl.LEDControl import led as debug_led
 class GPSMonitor:
     #Class for porforming gps monitoring.
     # Monitor functions is a list of functions which return tuples of the format:
@@ -46,7 +46,7 @@ class GPSMonitor:
             isNominal = True
             try:
                 current_time = datetime.datetime.now()
-                locations = [] #List if tuples with utm, fix_time
+                locations = [] #List of tuples with utm, fix_time
                 for severty, location, last_fix in [x() for x in self.monitor_functions]:
                     if last_fix and None not in location.values(): fix_age = current_time - last_fix
                     else: fix_age = None
@@ -54,9 +54,11 @@ class GPSMonitor:
                         isNominal = False
                         if severty == "FAIL":
                             logging.error("Lost needed GPS fix, aborting!")
+                            debug_led.setDebugColor(debug_type = "GPS_INTERNAL_FIX", status = False)
                             self.abort_function()
                             break
                         elif severty == "WARNING":
+                            debug_led.setDebugColor(debug_type = "GPS_EXTERNAL_FIX", status = False)
                             logging.warning("Lost GPS fix on GPS with severty warning. Ignoring for now")
                         elif severty == "IGNORE":
                             logging.debug("Lost GPS fix on GPS with severty IGNORE")
@@ -76,6 +78,7 @@ class GPSMonitor:
                 isNominal = False
                 logging.exception("Got exception in GPSMonitor")
             self.isNominal = isNominal
+            debug_led.setDebugColor(debug_type = "GPS_DISAGREE", status = isNominal)
 
 
     def find_furthest_points(self, locations):

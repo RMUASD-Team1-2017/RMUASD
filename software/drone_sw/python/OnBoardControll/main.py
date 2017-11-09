@@ -20,6 +20,8 @@ from NetworkMonitor.NetworkMonitor import monitor as network_monitor
 from NetworkMonitor.ConnectionMonitor import ConnectionMonitor
 import datetime
 from SerialMonitor.SerialMonitor import SerialMonitor
+from LEDControl.LEDControl import led as debug_led
+
 def __main__():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rmquser', nargs='?', default="drone", type=str)
@@ -37,7 +39,9 @@ def __main__():
     parser.add_argument('--gcsbaud', nargs='?', default=57600, type=int)
     parser.add_argument('--connectstring', nargs='?', default="", type=str)
     parser.add_argument('--syslog', nargs='?', default=1, type=int)
+    parser.add_argument('--ledmode', nargs='?', default="BLINK", type=str)
     args = parser.parse_args()
+    debug_led.initialise(args.ledmode)
 
     logging.getLogger().setLevel(args.loglevel)
     logging.getLogger().addHandler(logging.StreamHandler())

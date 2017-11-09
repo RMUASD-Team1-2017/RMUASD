@@ -10,7 +10,7 @@ from std_msgs.msg import Empty, String
 class GeoFenceSender:
     def __init__(self):
         rospy.init_node('geofence_sender', anonymous=True)
-        with open(rospack.get_path("aed_gcs_logic") + "/resources/polygon_fence.fence", "r") as fencefile:
+        with open(rospy.get_param('/geofence_file'), "r") as fencefile:
             self.fence_str = fencefile.read()
         self.fence_publisher = rospy.Publisher("drone/setgeofence", String, queue_size=1)
         self.request_sub = rospy.Subscriber("drone/requestgeofence", Empty, self.fencerequestcallback)
