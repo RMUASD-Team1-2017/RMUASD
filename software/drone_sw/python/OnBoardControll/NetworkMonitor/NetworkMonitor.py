@@ -4,6 +4,8 @@ import socket
 import datetime
 import threading
 import logging
+from LEDControl.LEDControl import led as debug_led
+
 class NetworkMonitor:
     def __init__(self, hosts = ["8.8.8.8", "8.8.4.4", "ns1.stefanrvo.dk"], port = 53, check_interval = 1):
         self.last_connect = datetime.datetime.now() #Pretend we had connectivity at startup
