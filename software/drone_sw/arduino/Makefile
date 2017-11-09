@@ -8,21 +8,12 @@
 MCU = atmega328p
 BOARD_TAG    = nano
 BOARD_SUB    = atmega328p
-ISP_PROG     = usbasp
-#MONITOR_PORT = /dev/ttyUSB0
-#AVR_TOOLS_DIR = /usr/
-OPTIMIZATION_LEVEL = s
-# --- mega2560 ide 1.6
-#BOARD_TAG    = mega
-#BOARD_SUB    = atmega2560
-#MONITOR_PORT = /dev/ttyUSB0
+#ISP_PROG     = usbasp
 ARDUINO = /usr/share/arduino
 ARDUINO_DIR = $(ARDUINO)
-#ARDMK_VENDOR = archlinux-arduino
-#MCU = atmega2560
+ARDMK_VENDOR = archlinux-arduino
 F_CPU = 16000000L
-#MONITOR_BAUDRATE = 115200
-
+AVRDUDE_ARD_BAUDRATE = 57600
 CFLAGS_STD = -std=gnu11 -lstdc++
 CXXFLAGS_STD  = -std=c++11 -lstdc++
 
