@@ -8,6 +8,9 @@ echo "Coordinates: $coordinates"
 start_pos=$(echo "$coordinates" | cut -f1 -d$'\n')
 goal_pos=$(echo "$coordinates" | cut -f2 -d$'\n')
 midway_pos=$(echo "$coordinates" | cut -f3 -d$'\n')
+echo "Start pos : $start_pos"
+echo "Goal pos : $goal_pos"
+echo "midway_pos : $midway_pos"
 echo "Drone is 20% of the way. Triggering GCS failure by stoping the container"
 docker stop gcs
 echo "The  drone should now perform a RTL, starting monitoring"
