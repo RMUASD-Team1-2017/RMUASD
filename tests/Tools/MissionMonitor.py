@@ -15,17 +15,16 @@ import logging
 projection = Proj(init="epsg:7419") #EPSG:7416 / ETRS89 / UTM zone 32N (http://spatialreference.org/ref/epsg/7416/)
 
 def monitor_progress(args, url, drone, goal_precision, goal_height, deadline):
-    if not args.start_pos:
-        start_location = get_location(url, drone, args.oes_position)
-    else:
-        start_location = args.start_pos
-    if args.zero_start_alt: start_location["altitude"] = 0
     bar = None
     goal_location = None
+    start_location = None
     while datetime.datetime.now() < deadline:
-        if None in start_location.values():
+        if start_location is None or None in start_location.values():
             logging.info("Trying to get start location, currently {}".format(start_location))
-            start_location = get_location(url, drone, args.oes_position)
+            if not args.start_pos:
+                start_location = get_location(url, drone, args.oes_position)
+            else:
+                start_location = args.start_pos
             if args.zero_start_alt: start_location["altitude"] = 0
             if None not in start_location.values() and args.print_start:
                 print("{},{},{}".format(start_location["latitude"], start_location["longitude"], start_location["altitude"]))
