@@ -6,7 +6,7 @@ WORKDIR /usr/src/app/
 ADD src /usr/src/app/src
 ADD install_geographiclib_datasets.sh /usr/src/app/
 
-RUN apt update && apt install -y ros-kinetic-mavlink ros-kinetic-geographic-msgs geographiclib-tools protobuf-compiler ros-kinetic-diagnostic-updater ros-kinetic-mavros-msgs python-pip
+RUN apt update && apt install -y ros-kinetic-mavlink ros-kinetic-geographic-msgs geographiclib-tools protobuf-compiler ros-kinetic-diagnostic-updater ros-kinetic-mavros-msgs python-pip iptables
 RUN wget https://sourceforge.net/projects/geographiclib/files/distrib/GeographicLib-1.48.tar.gz && tar xfpz GeographicLib-1.48.tar.gz
 RUN cd GeographicLib-1.48 && mkdir build && cd build && cmake .. && make -j4 && make install
 RUN /bin/bash ./install_geographiclib_datasets.sh
