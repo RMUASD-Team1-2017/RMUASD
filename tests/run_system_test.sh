@@ -19,4 +19,4 @@ trap 'error_handler $LINENO' ERR
 export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 $DIR/normal_operation_test.sh
 $DIR/gcs_failure_test.sh
-
+$DIR/oes_failure_test.sh
