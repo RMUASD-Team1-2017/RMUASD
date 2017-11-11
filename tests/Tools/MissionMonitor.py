@@ -55,11 +55,13 @@ def monitor_progress(args, url, drone, goal_precision, goal_height, deadline):
                 if not bar.value == bar.max_value: bar.finish()
                 if args.print_goal:
                     print("{},{},{}".format(current_location["latitude"], current_location["longitude"], current_location["altitude"]))
+                sys.stdout.flush()
                 sys.exit(0)
             if current_distance < goal_precision:
                 if not bar.value == bar.max_value: bar.finish()
                 logging.info("At goal position, waiting for landing. Current altitude: {} (start altitude {})".format(current_location["altitude"], start_location["altitude"]))
         time.sleep(1)
+    sys.stdout.flush()
     sys.exit(1)
 
 
