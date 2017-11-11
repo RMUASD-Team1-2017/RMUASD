@@ -21,5 +21,5 @@ echo "Drone Onboard SW log:"
 docker logs drone
 echo "GCS log:"
 docker logs gcs
-docker stop simulation webui drone
+docker stop simulation webui gcs
 docker rm simulation webui drone gcs
