@@ -33,6 +33,7 @@ add_service_files(
   FILES
   mission_request.srv
   AbortRequest.srv
+  HealthCheckService.srv
 )
 
 ## Generate actions in the 'action' folder

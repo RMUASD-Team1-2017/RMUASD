@@ -19,9 +19,9 @@ class mission_handler:
         self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
         self.drone = Drone(drone_id = int(rospy.get_param('/drone_id', 1)) )
         self.current_risk_metric = 0
-        self.mission_request_sub = rospy.Subscriber("drone/missionrequest", mission_request, self.mission_request_callback, queue_size=10)
-        self.velocity_gps = rospy.Subscriber("/mavros/local_position/velocity", TwistStamped, self.twist_request_callback, queue_size=10)
-        self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
+        self.mission_request_sub = rospy.Subscriber("drone/missionrequest", mission_request, self.mission_request_callback, queue_size=1)
+        self.velocity_gps = rospy.Subscriber("/mavros/local_position/velocity", TwistStamped, self.twist_request_callback, queue_size=1)
+        self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=1)
         self.gps_velocity = 0
         self.velocityx = 0
         self.velocityy = 0
@@ -51,12 +51,15 @@ class mission_handler:
         self.velocityx = data.twist.linear.x
         self.velocityy = data.twist.linear.y
         self.velocityz = data.twist.linear.z
+        print" velocity callback"
         		
 	
     def position_callback(self,data):
         self.latitude = data.latitude
         self.longitude = data.longitude
         self.altitude = data.altitude
+        print" position callback"
+        
         #print ' heejj ',data.latitude
     #    velocity_gps = rospy.Subscriber("global_position/raw/gps_vel", Twist, self.Twist_request_callback, queue_size=1)	
 
@@ -73,7 +76,9 @@ class mission_handler:
   
 
     def calc_distance(self):
-        end_position = (55.564339, 10.121369)
+        end_position = (55.564339, 10.121369)    # is hard coded to Test
+        print" lat1 ", self.latitude
+        print" long1 ", self.longitude
         current_position = ( self.latitude, self.longitude)
         self.distance = vincenty(current_position, end_position).meters
         return self.distance
@@ -104,6 +109,7 @@ if __name__ == "__main__":
         print'velocity ',m_handler.calc_velocity()
         print'distance ',m_handler.calc_distance()
         print' time ', m_handler.calc_time_to_end_pos()
+        
         #print'latitude',m_handler.latitude
         #print'longitude',m_handler.longitude
         #print'altitude',m_handler.altitude
