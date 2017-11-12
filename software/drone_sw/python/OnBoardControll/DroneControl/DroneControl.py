@@ -55,10 +55,14 @@ class DroneController:
 
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
+            got_fix = False
             with lock:
                 self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
-                self.drone_controller.last_fix = datetime.datetime.now()
-            debug_led.setDebugColor(debug_type = "GPS_INTERNAL_FIX", status = True)
+                if not None in self.drone_controller.location.values():
+                    got_fix = True
+                    self.drone_controller.last_fix = datetime.datetime.now()
+
+            debug_led.setDebugColor(debug_type = "GPS_INTERNAL_FIX", status = got_fix)
 
             info = {"eph" : self.gps_0.eph, "epv" : self.gps_0.epv, "fix_type" : self.gps_0.fix_type, "satellites_visible" : self.gps_0.satellites_visible}
 
@@ -76,7 +80,7 @@ class DroneController:
     def softabort(self):
         with self.lock:
             if not self.vehicle.mode == VehicleMode("MISSION"):
-                logging.warning("Softabort requested, but vehicle is not on a mission")
+                logging.warning("Softabort requested, but vehicle is not on a mission. Mode was {}".format(self.vehicle.mode))
                 return
             logging.warning("RTL requested!")
 
@@ -96,7 +100,7 @@ class DroneController:
     def land(self):
         with self.lock:
             if not self.vehicle.mode == VehicleMode("MISSION"):
-                logging.warning("Landing requested, but vehicle is not on a mission")
+                logging.warning("Landing requested, but vehicle is not on a mission. Mode was {}".format(self.vehicle.mode))
                 return
             logging.warning("Landing requested!")
             self.vehicle.mode = VehicleMode("LAND")
