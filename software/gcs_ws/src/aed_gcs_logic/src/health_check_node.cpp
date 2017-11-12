@@ -6,7 +6,7 @@
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 
-//sysstatus  kan give batteri spaending
+//sysstatus  kan give batteri spaending   men vil den ikke blive merged med batterystate.   Der staar at batteryStatus er udfaset
 
 using namespace std;
 int BatCondi = 0;
@@ -163,10 +163,10 @@ void printGlobalGpsState(sensor_msgs::NavSatFix globalGpsState){
 // state subscriber
 sensor_msgs::BatteryState batteryState;
 void batteryStateSub(const sensor_msgs::BatteryState::ConstPtr &msg){
-//void batteryStateSub(const mavros_msgs::BatteryStatus StatusBatery::ConstPtr &msg){
+//void batteryStateSub(const mavros_msgs::BatteryStatus::ConstPtr &msg){
   batteryState = *msg;
-  //printBatteryInformation(batteryState);
-  BatCondi = batteryFLy(batteryState);
+  printBatteryInformation(batteryState);
+  //BatCondi = batteryFLy(batteryState);
   std::cout<<"BatCondis "<<BatCondi<<std::endl;
 }
 
@@ -183,14 +183,16 @@ void globalGpsStateSub(const sensor_msgs::NavSatFix::ConstPtr &msg){
   std::cout<<"GPS condition "<<GPSCondition<<std::endl;
 }
 
-bool isFlyingOkay(aed_gcs_logic::HealthCheckService::Request  &req){
+bool isFlyingOkay(aed_gcs_logic::HealthCheckService::Request  &req, aed_gcs_logic::HealthCheckService::Response &res){
 
 
   if (BatCondi == 1 && GPSCondition == 1) {
+    res.flight = true;
     return true;
   }
    else {
-    return false;
+     res.flight = false;
+    return true;
   }
 }
 
@@ -205,15 +207,16 @@ int main(int argc, char **argv){
 
 	// Init ros node
 	//ros::init(argc, argv, "Health_check_node");
-  ros::init(argc, argv, "Health_check_service");
+  ros::init(argc, argv, "Health_check_server");
 	ros::NodeHandle nh;
 	ros::Rate rate(20);
 
 	// Setup ros subscribtions
 	ros::Subscriber mavrosBatteryStateSub = nh.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, batteryStateSub);
+
 	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 1, globalGpsStateSub);
 	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 1, localGpsStateSub);
-  //ros::ServiceServer service = nh.advertiseService("Health_check_service", isFlyingOkay);
+  ros::ServiceServer service = nh.advertiseService("Health_check_service", isFlyingOkay);
   std::cout<<"BatCondi "<<BatCondi<<std::endl;
 	// Setup ros publisher
 //	ros::Publisher localPosPub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
