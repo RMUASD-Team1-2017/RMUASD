@@ -6,12 +6,12 @@
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 
-//sysstatus  kan give batteri spaending   men vil den ikke blive merged med batterystate.   Der staar at batteryStatus er udfaset
+//sysstatus  kan give batteri spaending   men vil den ikke blive merge med batterystate.   Der staar at batteryStatus er udfaset
 
 using namespace std;
 int BatCondi = 0;
 int GPSCondition = 0;
-float MinCellVoltage = 4.2;
+float MinCellVoltage = 12.5;
 
 void printBatteryInformation(sensor_msgs::BatteryState batteryState){
   std::cout << "Voltage: \t" << batteryState.voltage << std::endl;
@@ -82,20 +82,20 @@ int batteryFLy(sensor_msgs::BatteryState batteryState){
         BatteryStat = 0;
       }
       else {
-        for (int i = 0; i < sizeof(batteryState.cell_voltage) / sizeof(float) / 2; i++){
+      //  for (int i = 0; i < sizeof(batteryState.cell_voltage) / sizeof(float) / 2; i++){
 
-          if (batteryState.cell_voltage[i] >= MinCellVoltage) {  // should be 4.2 in real life, the 4V is only for test.
-            std::cout << "Cell " << i << ": " << batteryState.cell_voltage[i] << std::endl;
-            std::cout << "Cell " << i << ": " << MinCellVoltage << std::endl;
+          if (batteryState.voltage >= MinCellVoltage) {  // should be 4.2 in real life, the 4V is only for test.
+            //std::cout << "Cell " << i << ": " << batteryState.cell_voltage[i] << std::endl;
+            std::cout << "battery " << ": " << MinCellVoltage << std::endl;
             BatteryStat = 1;
           }
           else {
-            std::cout<<"Cells are not fully charged!"<<std::endl;
+            std::cout<<"Battery are not fully charged!"<<std::endl;
              BatteryStat=0;
              return BatteryStat;
           }
         //std::cout<<"The Battery is not fully charged"<<std::endl, BatteryStat=0;
-        }
+      //  }
       }
     }
     else if (batteryState.power_supply_health == sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN) {
