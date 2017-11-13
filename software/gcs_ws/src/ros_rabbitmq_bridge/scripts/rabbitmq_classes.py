@@ -16,6 +16,10 @@ from ros_rabbitmq_bridge import *
 import functools
 import datetime
 import genpy
+import uuid
+import threading
+import traceback
+
 class ros_to_rabbitmq_bridge:
     def __init__(self, rabbitmq_host, bridge_settings):
         #Bridge settings is a list of dicts with the following content:
@@ -30,8 +34,16 @@ class ros_to_rabbitmq_bridge:
         for setting in self.settings:
             if not "callback" in setting.keys():
                 setting["callback"] = self.simple_callback
-            self.channel.exchange_declare(exchange=setting["exchange"], type='topic', durable = False)
-            rospy.Subscriber(setting["ros_topic"], setting["message_type"], setting["callback"], (setting, self.channel,), queue_size=10)
+            if "ros_topic" in setting.keys():
+                self.channel.exchange_declare(exchange=setting["exchange"], type='topic', durable = False)
+                rospy.Subscriber(setting["ros_topic"], setting["message_type"], setting["callback"], (setting, self.channel,), queue_size=10)
+            elif "ros_service" in setting.keys():
+                setting["callback_queue"] = self.channel.queue_declare(exclusive = True).method.queue
+                self.channel.basic_consume(setting["response_callback"], queue=setting["callback_queue"])
+                rospy.Service(setting["ros_service"], setting["service_type"], functools.partial(setting["callback"], args = (setting, self.channel, self.connection)) )
+            else:
+                print("Not a valid subscription entry: {}".format(setting))
+
 
     def setup_rabbitmq(self):
         self.connection = pika.BlockingConnection(pika.URLParameters(self.host))
@@ -56,6 +68,53 @@ class ros_to_rabbitmq_bridge:
         time_str = datetime.datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
         data = {"time" : time_str}
         channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json.dumps(data))
+
+class ServiceHandler:
+    def __init__(self):
+        self.lock = threading.RLock()
+        self.responses = {}
+    def ros_callback(self, req, args):
+        #Example callback for services
+        settings = args[0]
+        channel = args[1]
+        connection = args[2]
+        try:
+            json_str = json_message_converter.convert_ros_message_to_json(req.request)
+            corr_id = str(uuid.uuid4())
+            with self.lock:
+                self.responses[corr_id] = None
+            channel.basic_publish(exchange=settings["exchange"], \
+                                  routing_key=settings["routing_key"],  \
+                                  body=json_str, \
+                                  properties=pika.BasicProperties(
+                                    reply_to = settings["callback_queue"],
+                                    correlation_id = corr_id,
+                                    ),
+            )
+            start_wait = datetime.datetime.now()
+            while datetime.datetime.now() < start_wait + datetime.timedelta(seconds=10):
+                with self.lock:
+                    response = self.responses[corr_id]
+                if response is not None:
+                    del self.responses[corr_id]
+                    resp =  settings["service_type"]._response_class()
+                    resp.response.data = response
+                    return resp
+                connection.process_data_events()
+        except:
+            traceback.print_exc()
+        resp =  settings["service_type"]._response_class()
+        resp.response.data = ""
+        return resp
+
+    def service_response_callback(self, ch, method, props, body):
+        with self.lock:
+            try:
+                if props.correlation_id in self.responses.keys():
+                    self.responses[props.correlation_id] = body
+            except:
+                traceback.print_exc()
+        ch.basic_ack(delivery_tag = method.delivery_tag)
 
 
 class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):

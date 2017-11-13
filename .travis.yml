@@ -24,7 +24,7 @@ script:
   #Run individual unit tests (only webui for now)
 - docker run --rm stefanrvo/rmuasdweb:latest test
   #Run full system unit test
-- ./tests/normal_operation_test.sh
+- ./tests/run_system_test.sh
 deploy:
   - provider: script
     script: "./deploy_latest.sh"

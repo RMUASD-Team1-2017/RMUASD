@@ -28,3 +28,4 @@ websocket-client==0.44.0
 pika==0.10.0
 geopy
 rospy-message-converter
+Shapely==1.6.2.post1

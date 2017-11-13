@@ -11,11 +11,12 @@ RUN git clone https://github.com/RMUASD-Team1-2017/Firmware.git
 #PX4 gazebo build progress is retarted, so we need to do it like this...
 RUN source /opt/ros/kinetic/setup.bash && cd Firmware && make all -j4
 RUN source /opt/ros/kinetic/setup.bash && cd Firmware && DONT_RUN=1 make posix_sitl_ekf2_serial gazebo
-
+RUN source /opt/ros/kinetic/setup.bash && cd Firmware && DONT_RUN=1 make posix_sitl_ekf2_slow_bat_drain gazebo
+RUN source /opt/ros/kinetic/setup.bash && cd Firmware && DONT_RUN=1 make posix_sitl_ekf2 gazebo
 ADD run.sh /usr/src/run.sh
 RUN chmod +x /usr/src/run.sh
 EXPOSE 14557
 EXPOSE 14554
 
 ENTRYPOINT ["/usr/src/run.sh"]
-
+CMD ["serial"]

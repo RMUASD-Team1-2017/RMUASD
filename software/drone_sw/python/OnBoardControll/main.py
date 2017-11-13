@@ -20,6 +20,8 @@ from NetworkMonitor.NetworkMonitor import monitor as network_monitor
 from NetworkMonitor.ConnectionMonitor import ConnectionMonitor
 import datetime
 from SerialMonitor.SerialMonitor import SerialMonitor
+from LEDControl.LEDControl import led as debug_led
+
 def __main__():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rmquser', nargs='?', default="drone", type=str)
@@ -37,7 +39,9 @@ def __main__():
     parser.add_argument('--gcsbaud', nargs='?', default=57600, type=int)
     parser.add_argument('--connectstring', nargs='?', default="", type=str)
     parser.add_argument('--syslog', nargs='?', default=1, type=int)
+    parser.add_argument('--ledmode', nargs='?', default="BLINK", type=str)
     args = parser.parse_args()
+    debug_led.initialise(args.ledmode)
 
     logging.getLogger().setLevel(args.loglevel)
     logging.getLogger().addHandler(logging.StreamHandler())
@@ -54,6 +58,11 @@ def __main__():
         gps_handler.start_handler()
         gps_monitor = GPSMonitor([drone.get_last_fix, gps_handler.get_last_fix], drone.softabort)
         gps_monitor.start_monitor()
+    else: #We fake and use the onboard gps two times.
+        gps_monitor = GPSMonitor([drone.get_last_fix, drone.get_last_fix], drone.softabort)
+        gps_monitor.start_monitor()
+
+
     connection_monitor = ConnectionMonitor( gcs_network_check = DroneConsumer.get_last_gcs_heartbeat,
                                             network_check = network_monitor.get_last_connection,
                                             telemetry_gcs_check = SerialMonitor(args.gcsport, args.gcsbaud).get_last_communication,
@@ -64,7 +73,7 @@ def __main__():
     #Setting up kombu connection
     with kombu.Connection("amqp://{}:{}@{}:5672/".format(args.rmquser, args.rmqpass, args.rmqhost), failover_strategy='shuffle', heartbeat=4)  as connection:
         DroneProducer.initialise(args.droneid, connection)
-        DroneConsumer.initialise(connection, args.droneid, drone)
+        DroneConsumer.initialise(connection, args.droneid, drone, gps_monitor, connection_monitor)
         DroneConsumer.droneconsumer.run()
 
 if __name__ == "__main__":

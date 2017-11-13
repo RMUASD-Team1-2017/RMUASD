@@ -13,3 +13,6 @@
 [submodule "Firmware"]
 	path = simulation/Firmware
 	url = https://github.com/RMUASD-Team1-2017/Firmware
+[submodule "software/drone_sw/arduino/libs/FastLED"]
+	path = software/drone_sw/arduino/libs/FastLED
+	url = https://github.com/FastLED/FastLED.git

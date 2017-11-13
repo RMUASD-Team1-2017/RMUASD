@@ -5,6 +5,7 @@ import threading
 import time
 import datetime
 import logging
+from LEDControl.LEDControl import led as debug_led
 
 class SerialMonitor:
     def __init__(self, port, baud):
@@ -23,6 +24,7 @@ class SerialMonitor:
                 if len(self.serial.read(1000)):
                     with self.lock:
                         self.last_communication = datetime.datetime.now()
+
             except:
                 logging.exception("Got exception in serial monitor.")
 

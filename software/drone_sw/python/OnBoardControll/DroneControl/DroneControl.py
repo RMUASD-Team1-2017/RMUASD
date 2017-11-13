@@ -8,9 +8,12 @@ from pymavlink import mavutil
 import traceback
 import threading
 import datetime
-
 MAV_MODE_AUTO   = 4
+BATTERY_CELLS = 3
+MIN_VOLTAGE = 3500 * BATTERY_CELLS
+from LEDControl.LEDControl import led as debug_led
 
+from GeoFenceChecker.GeoFenceChecker import fencechecker
 class DroneController:
     def __init__(self, port, baud, connectstring):
         print(port, baud)
@@ -29,11 +32,21 @@ class DroneController:
         self.location = None
         self.last_fix = None
         self.last_communication = datetime.datetime.now()
+        self.battery = 0
 
         @self.vehicle.on_message('*')
         def listener(self, name, message):
             with lock:
                 self.drone_controller.last_communication = datetime.datetime.now()
+
+        @self.vehicle.on_message('SYS_STATUS')
+        def listener(self, name, message):
+            voltage = message.to_dict()["voltage_battery"]
+            logging.info("Battery voltage {}".format(voltage))
+            self.drone_controller.battery = voltage
+            if voltage < MIN_VOLTAGE:
+                logging.warning("Battery voltage is too low, trying to land immediately!")
+                self.drone_controller.land()
 
         @self.vehicle.on_message('HOME_POSITION')
         def listener(self, name, home_position):
@@ -42,24 +55,35 @@ class DroneController:
 
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
-            #We import the publisher everytime, as it may have updated
+            got_fix = False
             with lock:
                 self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
-                self.drone_controller.last_fix = datetime.datetime.now()
+                if not None in self.drone_controller.location.values():
+                    got_fix = True
+                    self.drone_controller.last_fix = datetime.datetime.now()
+
+            debug_led.setDebugColor(debug_type = "GPS_INTERNAL_FIX", status = got_fix)
 
             info = {"eph" : self.gps_0.eph, "epv" : self.gps_0.epv, "fix_type" : self.gps_0.fix_type, "satellites_visible" : self.gps_0.satellites_visible}
 
             logging.debug("Got onboard GPS: {}, {}".format(self.location.global_relative_frame, self.gps_0) )
-
+            #We import the publisher everytime, as it may have updated
             from RMQHandler.DroneProducer import droneproducer
             if droneproducer:
                 droneproducer.publish_onboard_gps(info, self.drone_controller.location)
+            if fencechecker.initialised:
+                try:
+                    fencechecker.position_callback(self.drone_controller.location)
+                except Exception as e:
+                    logging.exception("Got exception while checking geofence.")
 
     def softabort(self):
         with self.lock:
             if not self.vehicle.mode == VehicleMode("MISSION"):
-                logging.warning("Softabort requested, but vehicle is not on a mission")
+                logging.warning("Softabort requested, but vehicle is not on a mission. Mode was {}".format(self.vehicle.mode))
                 return
+            logging.warning("RTL requested!")
+
             self.vehicle.mode = VehicleMode("RTL")
 
     def hardabort(self):
@@ -76,8 +100,9 @@ class DroneController:
     def land(self):
         with self.lock:
             if not self.vehicle.mode == VehicleMode("MISSION"):
-                logging.warning("Landing requested, but vehicle is not on a mission")
+                logging.warning("Landing requested, but vehicle is not on a mission. Mode was {}".format(self.vehicle.mode))
                 return
+            logging.warning("Landing requested!")
             self.vehicle.mode = VehicleMode("LAND")
 
     def PX4setMode(self, mavMode):
@@ -110,6 +135,9 @@ class DroneController:
         with self.lock:
             return self.last_communication
 
+    def get_home_location(self):
+        with self.lock:
+            return self.vehicle.home_location
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):
     """

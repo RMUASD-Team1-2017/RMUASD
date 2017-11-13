@@ -5,11 +5,13 @@ import threading
 import Queue
 import logging
 import socket
+from GeoFenceChecker.GeoFenceChecker import fencechecker
 class DroneProducer:
     def __init__(self, _id, connection):
         self._id = _id
         self.connection = connection
         self.dronesensor = kombu.Exchange(name="dronesensor", type="topic", durable = False)
+        self.droneExchange = kombu.Exchange(name="drone", type="topic", durable = False)
         self.producer = connection.Producer()
         self.queue = Queue.Queue(maxsize = 100)
         self.run_thread = None
@@ -40,6 +42,10 @@ class DroneProducer:
         self.put(body = body, routing_key = "drone.external_gps.{}".format(self._id), exchange = self.dronesensor,
             declare =  [self.dronesensor], retry =  False)
 
+    def request_geofence(self):
+        self.put(body = "", routing_key = "drone.geofencerequest.{}".form(self._id), exchange = self.droneExchange)
+
+
     def start_publishing(self):
         self.run_thread = threading.Thread(target = self.publisher_thread)
         self.run_thread.daemon = True
@@ -48,6 +54,7 @@ class DroneProducer:
 
     def publisher_thread(self):
         self.heartbeat() #Start sending a heartbeat
+        self.geofenceRequester() #Start requesting geofencing
         while True:
             try:
                 kwargs = self.queue.get()
@@ -64,3 +71,11 @@ class DroneProducer:
         timer.start() #Call ourself in 1 second
         logging.debug("Publishing heartbeat")
         self.put(body = "{}", routing_key = "drone.heartbeat.{}".format(self._id), exchange = self.dronesensor, declare = [self.dronesensor], retry = False)
+
+    def geofenceRequester(self):
+        if not fencechecker.initialised:
+            timer = threading.Timer(10.0, self.geofenceRequester)
+            timer.daemon = True
+            timer.start()
+            logging.debug("Requesting geofence from GCS")
+            self.put(body = "{}", routing_key = "drone.geofencerequest.{}".format(self._id), exchange = self.droneExchange, declare = [self.droneExchange], retry = False)

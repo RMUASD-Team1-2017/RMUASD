@@ -24,6 +24,8 @@ class link_monitor:
         self.link_monitor_GSM = rospy.Publisher("/link_monitor/timeout_GSM", Bool, queue_size=1)
         rospy.wait_for_service('drone_logic/abort')
         self.abort_callback = rospy.ServiceProxy("drone_logic/abort", AbortRequest)
+        self.gsm_land = rospy.Publisher("drone/softabort", Empty, queue_size=10)
+
         self.lastHeartbeatMavros = rospy.get_rostime().secs
         self.lastHeartbeatGSM = rospy.get_rostime().secs
 
@@ -47,7 +49,8 @@ class link_monitor:
         timeDifference = rospy.get_rostime().secs - self.lastHeartbeatMavros
         if timeDifference > self.acceptedDowntimeMavros:
             self.link_monitor_mavros.publish(True)
-            print("Trying to abort due to lost MAVROS link. Result was {}".format(self.abort_callback(req)))
+            print("Trying to abort through GSM due to lost MAVROS link")
+            self.gsm_land.publish(Empty())
         elif timeDifference < self.acceptedDowntimeMavros:
             self.link_monitor_mavros.publish(False)
 
@@ -55,6 +58,8 @@ class link_monitor:
         timer_thread = threading.Timer(1.0, self.gsm_check) #Call ourself in 1 second
         timer_thread.daemon = True
         timer_thread.start()
+        if rospy.get_param('/ignore_onboard', False) is True:
+            return
         req = srv.AbortRequestRequest()
         req.abort_type = srv.AbortRequestRequest.TEST_SOFT_ABORT_RTL
         timeDiff = rospy.get_rostime().secs - self.lastHeartbeatGSM
