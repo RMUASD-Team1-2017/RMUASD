@@ -18,5 +18,5 @@ TIMEOUT 3
 'OK-AT-OK' @/etc/ppp/chatscripts/apn.telenor
 'OK' 'ATDT*99***1#'
 
-TIMEOUT 30
+TIMEOUT 100
 CONNECT ''

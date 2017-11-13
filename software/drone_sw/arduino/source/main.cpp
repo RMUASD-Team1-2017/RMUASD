@@ -10,10 +10,9 @@
 //Fix some linker stuff...
 __extension__ typedef int __guard __attribute__((mode (__DI__)));
 
-int __cxa_guard_acquire(__guard *g) {return !*(char *)(g);};
-void __cxa_guard_release (__guard *g) {*(char *)g = 1;};
-void __cxa_guard_abort (__guard *) {};
-
+__attribute__((weak)) int __cxa_guard_acquire(__guard *g) {return !*(char *)(g);};
+__attribute__((weak)) void __cxa_guard_release (__guard *g) {*(char *)g = 1;};
+__attribute__((weak)) void __cxa_guard_abort (__guard *) {};
 
 #define OFF_MODE 0x00
 #define BLINK_MODE 0x01
@@ -144,30 +143,37 @@ void recv_callback(int bytes){
             switch (cmd){
                 case OFF_MODE:
                     mode = OFF_MODE;
+                    digitalWrite(1, LOW);
                     break;
 
                 case BLINK_MODE:
                     mode = BLINK_MODE;
+                    digitalWrite(1, HIGH);
                     break;
 
                 case ROTATE_MODE:
                     mode = ROTATE_MODE;
+                    digitalWrite(1, HIGH);
                     break;
 
                 case DEBUG_1_MODE:
                     color1 = color;
+                    digitalWrite(1, LOW);
                     break;
 
                 case DEBUG_2_MODE:
                     color2 = color;
+                    digitalWrite(1, LOW);
                     break;
 
                 case DEBUG_3_MODE:
                     color3 = color;
+                    digitalWrite(1, LOW);
                     break;
 
                 case DEBUG_MODE:
                     mode = DEBUG_MODE;
+                    digitalWrite(1, LOW);
                     break;
 
                 default:
@@ -189,16 +195,18 @@ int main(void)
     Wire.begin(0x08);
     Wire.onReceive(recv_callback);
     Wire.onRequest(req_callback);
-    Serial.begin(57600);
 
     CRGBArray<TOTAL_LEDS> leds;
     FastLED.addLeds<WS2812B, PIN, GRB>(leds, TOTAL_LEDS);
     leds[0].b = 255;
 
+    pinMode(1, OUTPUT);
+
     int time = 0;
 
     while (true){
 
+        digitalWrite(1, LOW);
         switch (mode){
 
             case OFF_MODE:
@@ -257,9 +265,6 @@ int main(void)
                 }
                 break;
         }
-
-      //  Serial.println(mode, HEX);
-      //  Serial.println(0, HEX);
 
         FastLED.show();
 
