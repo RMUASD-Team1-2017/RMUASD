@@ -1,6 +1,6 @@
-/dev/ttyLP2
+/dev/ttyGSM
 115200
-#lock
+nolock
 crtscts
 modem
 passive
