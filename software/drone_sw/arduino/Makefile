@@ -11,7 +11,7 @@ BOARD_SUB    = atmega328p
 #ISP_PROG     = usbasp
 ARDUINO = /usr/share/arduino
 ARDUINO_DIR = $(ARDUINO)
-ARDMK_VENDOR = archlinux-arduino
+#ARDMK_VENDOR = archlinux-arduino
 F_CPU = 16000000L
 AVRDUDE_ARD_BAUDRATE = 57600
 CFLAGS_STD = -std=gnu11 -lstdc++
