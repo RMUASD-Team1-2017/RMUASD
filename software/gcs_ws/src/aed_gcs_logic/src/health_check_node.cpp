@@ -1,9 +1,17 @@
 #include <sensor_msgs/BatteryState.h>
+#include <mavros_msgs/BatteryStatus.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <aed_gcs_logic/HealthCheckService.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
+#include "std_msgs/String.h"
+
+//sysstatus  kan give batteri spaending   men vil den ikke blive merge med batterystate.   Der staar at batteryStatus er udfaset
 
 using namespace std;
+int BatCondi = 0;
+int GPSCondition = 0;
+float MinCellVoltage = 12.01;
 
 void printBatteryInformation(sensor_msgs::BatteryState batteryState){
   std::cout << "Voltage: \t" << batteryState.voltage << std::endl;
@@ -57,6 +65,81 @@ void printBatteryInformation(sensor_msgs::BatteryState batteryState){
   std::cout << "Serial number" << batteryState.serial_number << std::endl;
 }
 
+
+int batteryFLy(sensor_msgs::BatteryState batteryState){
+  int BatteryStat = 0;
+  if (batteryState.present){
+    //std::cout << "Battery is present!" << std::endl;
+
+    if (batteryState.power_supply_health == 1) {  // 0 is used for test, when there are no connection to the battery. otherwise it is 1.
+      //std::cout<<"Battery condition is good!"<<std::endl;
+      if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_FULL){//) { // two is choosen as test value. the right values are 3 and 4
+      //  std::cout<<"The battery isfully charged!"<<std::endl;
+        BatteryStat = 1;
+      }
+      else if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN) {
+        std::cout<<"The battery power supply status is unknown!"<<std::endl;
+        BatteryStat = 0;
+      }
+      else {
+      //  for (int i = 0; i < sizeof(batteryState.cell_voltage) / sizeof(float) / 2; i++){
+
+          if (batteryState.voltage >= MinCellVoltage) {  // should be 4.2 in real life, the 4V is only for test.
+            //std::cout << "Cell " << i << ": " << batteryState.cell_voltage[i] << std::endl;
+          //  std::cout << "battery " << ": " << MinCellVoltage << std::endl;
+            BatteryStat = 1;
+          }
+          else {
+            std::cout<<"Battery are not fully charged!"<<std::endl;
+             BatteryStat=0;
+             return BatteryStat;
+          }
+        //std::cout<<"The Battery is not fully charged"<<std::endl, BatteryStat=0;
+      //  }
+      }
+    }
+    else if (batteryState.power_supply_health == sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN) {
+      std::cout<<"The battery supply health status is unknown!"<<std::endl;
+      BatteryStat = 0;
+    }
+    else std::cout<<"Battery is not in good condition! "<<batteryState.power_supply_health<<std::endl, BatteryStat=0;
+
+
+  }
+  else std::cout << "Battery is not present!" << std::endl, BatteryStat=0;
+
+  //std::cout<<" stat! "<<BatteryStat<<std::endl;
+  //std::cout << "Location: " << batteryState.location << std::endl;
+  return BatteryStat;
+}
+
+int GPSstate(sensor_msgs::NavSatFix globalGpsState){
+  int GPSConnection = 0;
+  if (globalGpsState.status.status == sensor_msgs::NavSatStatus::STATUS_NO_FIX) {
+    GPSConnection = 0;
+    std::cout << "There are No GPS fix! " << std::endl;
+  }
+  else {
+
+    if (globalGpsState.status.status == sensor_msgs::NavSatStatus::STATUS_SBAS_FIX) {
+      GPSConnection = 1;
+      std::cout << "There are SBAS fix " << std::endl;
+    }
+    else if (globalGpsState.status.status == sensor_msgs::NavSatStatus::STATUS_GBAS_FIX) {
+      GPSConnection = 1;
+      std::cout << "There are GBAS fix " << std::endl;
+    }
+    else {
+      //std::cout << "There are GPS fix "  << std::endl;
+      GPSConnection = 1;
+    }
+
+  }
+  return GPSConnection;
+
+}
+
+
 void printGlobalGpsState(sensor_msgs::NavSatFix globalGpsState){
   std::cout << "GPS status: ";
   switch (globalGpsState.status.status){
@@ -80,8 +163,11 @@ void printGlobalGpsState(sensor_msgs::NavSatFix globalGpsState){
 // state subscriber
 sensor_msgs::BatteryState batteryState;
 void batteryStateSub(const sensor_msgs::BatteryState::ConstPtr &msg){
-	batteryState = *msg;
-  printBatteryInformation(batteryState);
+//void batteryStateSub(const mavros_msgs::BatteryStatus::ConstPtr &msg){
+  batteryState = *msg;
+  //printBatteryInformation(batteryState);
+  BatCondi = batteryFLy(batteryState);
+  std::cout<<"BatCondis "<<BatCondi<<std::endl;
 }
 
 nav_msgs::Odometry localGpsState;
@@ -92,21 +178,42 @@ void localGpsStateSub(const nav_msgs::Odometry::ConstPtr &msg){
 sensor_msgs::NavSatFix globalGpsState;
 void globalGpsStateSub(const sensor_msgs::NavSatFix::ConstPtr &msg){
 	globalGpsState = *msg;
-  printGlobalGpsState(globalGpsState);
+  //printGlobalGpsState(globalGpsState);
+  GPSCondition = GPSstate(globalGpsState);
+  //std::cout<<"GPS condition "<<GPSCondition<<std::endl;
 }
+
+bool isFlyingOkay(aed_gcs_logic::HealthCheckService::Request  &req, aed_gcs_logic::HealthCheckService::Response &res){
+
+
+  if (BatCondi == 1 && GPSCondition == 1) {
+    res.flight = true;
+    return true;
+  }
+   else {
+     res.flight = false;
+    return true;
+  }
+}
+
+
+
 
 int main(int argc, char **argv){
 
 	// Init ros node
-	ros::init(argc, argv, "Health_check_node");
+	//ros::init(argc, argv, "Health_check_node");
+  ros::init(argc, argv, "Health_check_server");
 	ros::NodeHandle nh;
 	ros::Rate rate(20);
 
 	// Setup ros subscribtions
-	ros::Subscriber mavrosBatteryStateSub = nh.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 10, batteryStateSub);
-	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 10, globalGpsStateSub);
-	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10, localGpsStateSub);
+	ros::Subscriber mavrosBatteryStateSub = nh.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, batteryStateSub);
 
+	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 1, globalGpsStateSub);
+	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 1, localGpsStateSub);
+  ros::ServiceServer service = nh.advertiseService("drone/Health_check_service", isFlyingOkay);
+  std::cout<<"BatCondi "<<BatCondi<<std::endl;
 	// Setup ros publisher
 //	ros::Publisher localPosPub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
 
