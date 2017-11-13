@@ -109,7 +109,7 @@ bool drone_handler::abort_callback(aed_gcs_logic::AbortRequest::Request &req, ae
 
 bool drone_handler::restart_callback(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res){
     if(this->state == MISSION_DONE){
-        this->reset_cv.notify_all();
+        this->reset = true;
         res.success = true;
         res.message = "Restart accepted";
     }
@@ -155,6 +155,8 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             mavros_msgs::WaypointPush mission_srv_temp;
             mavros_msgs::Waypoint temp_wp;
 
+            aed_gcs_logic::waypoints localCopy = *data;
+
             temp_wp.frame = 3;
             temp_wp.command = 22;
             temp_wp.is_current = true;
@@ -163,52 +165,56 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             temp_wp.y_long = this->longitude;
             temp_wp.z_alt = this->missionHeight;
 
+            std::cout << "Pushing Back: " << temp_wp << std::endl;
             mission_srv_temp.request.waypoints.push_back(temp_wp);
+
+            // Add starting point to local Copy
+            sensor_msgs::NavSatFix tempCoord;
+            tempCoord.latitude = this->latitude;
+            tempCoord.longitude = this->longitude;
+            localCopy.path.insert(localCopy.path.begin(), tempCoord);
 
             temp_wp.command = 16;
             temp_wp.is_current = false;
 
-            for(int i = 1; i < data->path.size() - 1; i++){
-				double iterator = 0;
-				int iterator_ceil = 0;
+            for(int i = 1; i < localCopy.path.size() - 1; i++){
+                double distanceBetweenPoints = calc_dist_between_waypoints(localCopy.path[i-1].latitude,
+                                                                           localCopy.path[i].latitude,
+                                                                           localCopy.path[i-1].longitude,
+                                                                           localCopy.path[i].longitude);
 
-				if(calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude) > MAX_DIST_BETWEEN_WAYPOINTS){
-					iterator = (calc_dist_between_waypoints(data->path[i-1].latitude,data->path[i].latitude,data->path[i-1].longitude,data->path[i].longitude) / MAX_DIST_BETWEEN_WAYPOINTS);
-					iterator_ceil = ceil( iterator );
-					for(int counter = 1 ; counter<iterator_ceil; counter++){
-						temp_wp.x_lat =  data->path[i-1].latitude + (((data->path[i].latitude - data->path[i-1].latitude)/iterator_ceil)*counter);
-               		 	temp_wp.y_long = data->path[i-1].longitude + (((data->path[i].longitude - data->path[i-1].longitude)/iterator_ceil)*counter);
-                		temp_wp.z_alt = 20;
+				if(distanceBetweenPoints > MAX_DIST_BETWEEN_WAYPOINTS){
+                    int numberOfWaypoints = ceil(distanceBetweenPoints / MAX_DIST_BETWEEN_WAYPOINTS);
+					for(int counter = 1 ; counter < numberOfWaypoints; counter++){
+						temp_wp.x_lat =  localCopy.path[i-1].latitude + (localCopy.path[i].latitude - localCopy.path[i-1].latitude) / numberOfWaypoints * counter ;
+               		 	temp_wp.y_long = localCopy.path[i-1].longitude + (localCopy.path[i].longitude - localCopy.path[i-1].longitude) / numberOfWaypoints * counter;
+                		temp_wp.z_alt = this->missionHeight;
 
+                        std::cout << "Pushing Back: " << temp_wp << std::endl;
 						mission_srv_temp.request.waypoints.push_back(temp_wp);
 					}
 				}
 
-                temp_wp.x_lat = data->path[i].latitude;
-                temp_wp.y_long = data->path[i].longitude;
+                temp_wp.x_lat = localCopy.path[i].latitude;
+                temp_wp.y_long = localCopy.path[i].longitude;
                 temp_wp.z_alt = this->missionHeight;
 
+                std::cout << "Pushing Back: " << temp_wp << std::endl;
                 mission_srv_temp.request.waypoints.push_back(temp_wp);
             }
-			if(calc_dist_between_waypoints(data->path[data->path.size()-2].latitude,data->path[data->path.size()-1].latitude,data->path[data->path.size()-2].longitude,data->path[data->path.size()-1].longitude)>500){
-				temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
-       		 	temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
-        		temp_wp.z_alt = this->missionHeight;
-				mission_srv_temp.request.waypoints.push_back(temp_wp);
-			}
-
 
             temp_wp.x_lat = data->path[data->path.size() - 1].latitude;
             temp_wp.y_long = data->path[data->path.size() - 1].longitude;
             temp_wp.z_alt = this->missionHeight;
             temp_wp.command = 21;
 
+            std::cout << "Pushing Back: " << temp_wp << std::endl;
             mission_srv_temp.request.waypoints.push_back(temp_wp);
 
             std::unique_lock<std::mutex> lock(this->mission_m);
             this->mission_srv = mission_srv_temp;
 
-            this->path_cv.notify_one();
+            this->received_mission = true;
 
         }
         else{
@@ -234,9 +240,10 @@ bool drone_handler::run_state_machine()
     switch(this->state){
         case IDLE:{
             /* IDLE STATE */
-            std::unique_lock<std::mutex> lock(this->path_m);
-            this->path_cv.wait(lock);
-            this->state = SEND_MISSION;
+            std::unique_lock<std::mutex> lock(this->mission_m);
+            if(this->received_mission){
+                this->state = SEND_MISSION;
+            }
             break;}
 
         case FAILED:
@@ -249,7 +256,6 @@ bool drone_handler::run_state_machine()
             /* SEND MISSION TO DRONE */
             std::cout << "Sending Mission" << std::endl;
             std::unique_lock<std::mutex> lock(this->mission_m);
-            this->received_mission = true;
             this->mission_push_client.call(this->mission_srv);
             this->state = this->mission_srv.response.success ? ARM : FAILED;
             if(this->state == FAILED) std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Sending mission to drone failed" << std::endl;
@@ -331,10 +337,11 @@ bool drone_handler::run_state_machine()
             break;
         case MISSION_DONE:{
             /* WAIT FOR RESTART */
-            std::unique_lock<std::mutex> lock(this->reset_m);
-            this->reset_cv.wait(lock);
-            this->received_mission = false;
-            this->state = IDLE;
+            if(this->reset){
+                this->received_mission = false;
+                this->state = IDLE;
+                this->reset = false;
+            }
             break;}
 
         case SOFT_ABORT_RTL:

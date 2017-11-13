@@ -126,12 +126,9 @@ class drone_handler
 
         mavros_msgs::WaypointPush mission_srv;
         std::mutex mission_m;
-
-        std::condition_variable path_cv;
         std::mutex path_m;
 
-        std::condition_variable reset_cv;
-        std::mutex reset_m;
+        bool reset = false;
 };
 
 // NAMESPACE END
