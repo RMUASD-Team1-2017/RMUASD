@@ -2,9 +2,11 @@
 import rospy
 
 from std_msgs.msg import String
+#from aed_gcs_logic import *
+from aed_gcs_logic.srv import HealthCheckService, HealthCheckServiceRequest
 from std_msgs.msg import Int8
 from std_msgs.msg import Float32
-import pyowm
+import pyowm     ## pip install git+https://github.com/csparpa/pyowm.git@develop
 
 owm = pyowm.OWM('ca3bb59d639ee6edca97b28794d28c7e')
 
@@ -14,6 +16,23 @@ class risk_analyzer:
     def __init__(self):
         #self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Int8, queue_size=1)	    	# using int metric
         self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Float32, queue_size=1)		# using float metric
+        #s = rospy.Service('risk_assessment/risk_metric', RiskAssesmentService, analyze)
+        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
+        rospy.wait_for_service('drone/Health_check_service')
+
+
+    def BatteryAndGPStatus(self):
+        print "Battery and GPS status "
+        try:
+            request1 = HealthCheckServiceRequest()
+            response1 = self.health_check_service(request1)
+            print response1.flight
+            #add_two_ints = rospy.ServiceProxy('add_two_ints', AddTwoInts)
+            return response1.flight
+        except rospy.ServiceException as e:
+            print "Service call failed :"
+            traceback.print_exc()
+
 
     def analyze(self):
         #print "Analyzing..."
@@ -59,12 +78,19 @@ class risk_analyzer:
 
         # compute final risk metric:
         print 'For location ' + str(latitude) + ',' + str(longitude) + ':'
-        #print 'Current wind speed is: ' + str(current_wind_speed)
-        #print 'Current rain amount is: ' + str(current_rain_intensity)
-        #print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'
+        print 'Current wind speed is: ' + str(current_wind_speed)
+        print 'Current rain amount is: ' + str(current_rain_intensity)
+        print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'  # lower percentage value, is better.
         risk_metric = weather_conditions + obstacle_conditions						# this should be normalised
         print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
+
+        if  self.BatteryAndGPStatus():
+            print "Battery and GPS condition is good"
+        else:
+            print "Battery and GPS condition is bad"
+            risk_metric = 1000000   # is set high, becasue either battery or GPS or both have some problems.
         self.risk_metric_pub.publish(risk_metric)
+        #return risk_metric
 
 
 if __name__ == "__main__":
