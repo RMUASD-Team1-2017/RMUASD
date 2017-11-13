@@ -31,7 +31,7 @@ def __main__():
     parser.add_argument('--mavbaud', nargs='?', default=921600, type=int)
     parser.add_argument('--droneid', nargs='?', default=1, type=int)
     parser.add_argument('--loglevel', nargs='?', default="INFO", type=str)
-    parser.add_argument('--gpsport', nargs='?', default="/dev/ttyACM0", type=str)
+    parser.add_argument('--gpsport', nargs='?', default="/dev/ttyGPS", type=str)
     parser.add_argument('--gpsbaud', nargs='?', default=115200, type=int)
     parser.add_argument("--ignoregps", action='store_true')
     parser.add_argument('--simufile', nargs='?', default=None, type=str)
