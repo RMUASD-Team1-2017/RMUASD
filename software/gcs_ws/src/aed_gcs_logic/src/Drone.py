@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #This class contains a simple representation of a drone, with status, id, etc.
 import datetime
+from std_msgs.msg import String
 from sensor_msgs.msg import NavSatFix
 import rospy
 import threading
