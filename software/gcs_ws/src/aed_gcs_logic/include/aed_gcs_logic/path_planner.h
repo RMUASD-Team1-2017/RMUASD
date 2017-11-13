@@ -10,10 +10,19 @@
 #include <2D.hpp>
 #endif
 
-struct Coord{
+struct UTM{
+    double x;
+    double y;
+};
+
+struct GeoCoord{
     double latitude;
     double longitude;
-    double altitude;
+};
+
+struct Coord{
+    UTM utm;
+    GeoCoord geo;
 };
 
 // Node inside the graph
@@ -60,6 +69,9 @@ class path_planner
         Coord target;
 
     private:
+
+        UTM geo2utm(GeoCoord &geo);
+        void generateUTMCoords();
 
         bool outOfBounds(Node *node1, Node *node2);
         int getIndex(Coord coord);
