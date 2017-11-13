@@ -22,7 +22,7 @@ class Mission:
 
 class Drone:
     def __init__(self, drone_id):
-        self.location = {"location" : None, "update_time" : None}
+        self.location = {"location" : None, "update_time" : None, "update_time" : None}
         self.drone_id = drone_id
         self.state = "Idle"
         self.mission = None
@@ -58,7 +58,7 @@ class Drone:
                 info.state = self.state
                 info.serial = self.drone_id
                 info.current_time = self.location["update_time"]
-                if self.mission and self.mission.goal:
+                if self.mission and self.mission.goal and self.location["update_time"]:
                     info.mission_id = self.mission.mission_id
                     info.destination = self.mission.goal
                 self.status_publish.publish(info)
