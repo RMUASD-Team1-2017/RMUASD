@@ -11,7 +11,7 @@
 using namespace std;
 int BatCondi = 0;
 int GPSCondition = 0;
-float MinCellVoltage = 12.01;
+float MinCellVoltage = 11.5;
 
 void printBatteryInformation(sensor_msgs::BatteryState batteryState){
   std::cout << "Voltage: \t" << batteryState.voltage << std::endl;

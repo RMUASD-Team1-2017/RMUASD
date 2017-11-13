@@ -30,9 +30,12 @@ class Drone:
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
         self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
-        #rospy.wait_for_service('drone/get_readyness')
+        rospy.wait_for_service('drone/get_readyness')
         self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
         rospy.wait_for_service('drone/Health_check_service')
+
+        self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
+
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
         self.status_publisher_thread = threading.Thread(target = self.status_publisher)
@@ -46,6 +49,13 @@ class Drone:
             self.state = "On Mission"
             self.publish_sem.release()
             return True
+
+
+    def risk_metric_callback(self, data):
+        print "Recieved risk metric"
+
+        self.current_risk_metric = data.data
+
 
     def unset_mission(self, mission):
         with self.lock:
@@ -79,7 +89,7 @@ class Drone:
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):
-        if rospy.get_param('/ignore_onboard', False) is True or True:   # remember to remove or True
+        if rospy.get_param('/ignore_onboard', False) is True:# or True:   # remember to remove or True
             return True
         try:
             request = OnboardStatusRequest()
@@ -98,6 +108,16 @@ class Drone:
             print response1.flight
             #add_two_ints = rospy.ServiceProxy('add_two_ints', AddTwoInts)
             return response1.flight
+        except rospy.ServiceException as e:
+            print "Service call failed :"
+            traceback.print_exc()
+
+
+    def RiskAssesment(self):
+        print "Risk Assesment"
+        print self.risk_metric_sub
+        try:
+            return self.risk_metric_sub
         except rospy.ServiceException as e:
             print "Service call failed :"
             traceback.print_exc()
