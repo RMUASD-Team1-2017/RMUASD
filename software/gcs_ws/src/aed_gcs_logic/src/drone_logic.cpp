@@ -19,6 +19,8 @@ drone_handler::drone_handler()
     this->restart_server = n.advertiseService("drone_logic/restart", &drone_handler::restart_callback, this);
     this->param_set_client = n.serviceClient<mavros_msgs::ParamSet>("mavros/param/set");
     this->mission_push_client = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
+    this->mission_pull_client = n.serviceClient<mavros_msgs::WaypointPull>("mavros/mission/pull");
+    this->mission_clear_client = n.serviceClient<mavros_msgs::WaypointClear>("mavros/mission/clear");
     this->arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
     this->set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
     this->state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 1, &drone_handler::current_state_callback, this);
@@ -216,6 +218,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
             std::unique_lock<std::mutex> lock(this->mission_m);
             this->mission_srv = mission_srv_temp;
 
+            this->timeMissionReceived = ros::Time::now().toSec();
             this->received_mission = true;
 
         }
@@ -225,7 +228,6 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
 
     }
     else{
-        std::cout << "Drone already received mission..." << std::endl;
         std::cout << "Ignoring..." << std::endl;
     }
 }
@@ -244,7 +246,7 @@ bool drone_handler::run_state_machine()
             /* IDLE STATE */
             std::unique_lock<std::mutex> lock(this->mission_m);
             if(this->received_mission){
-                this->state = SEND_MISSION;
+                this->state = CLEAR_MISSION;
             }
             break;}
 
@@ -253,35 +255,75 @@ bool drone_handler::run_state_machine()
             this->state = MISSION_DONE;
             break;
 
-		case SEND_MISSION:
-          {
+        case CLEAR_MISSION:{
+            std::cout << "Clearing mission" << std::endl;
+            //Check whether there is any mission on the drone now.
+            mavros_msgs::WaypointPull pull;
+            this->mission_pull_client.call(pull);
+
+            // If no, send the misison.
+            if(pull.response.wp_received == 0){
+                this->state = SEND_MISSION;
+            }
+            else{
+                // Clear waypoints
+                mavros_msgs::WaypointClear clear;
+                this->mission_clear_client.call(clear);
+            }
+
+            // Check timer
+            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
+                std::cout << "Timeout at Clearing mission" << std::endl;
+                this->state = FAILED;
+            }
+            break;}
+
+		case SEND_MISSION:{
             /* SEND MISSION TO DRONE */
             std::cout << "Sending Mission" << std::endl;
-            std::unique_lock<std::mutex> lock(this->mission_m);
-            this->mission_push_client.call(this->mission_srv);
-            this->state = this->mission_srv.response.success ? ARM : FAILED;
-            if(this->state == FAILED) std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Sending mission to drone failed" << std::endl;
-            ros::Duration(3).sleep();
-            break;
-          }
+
+            // Check whether mission is there or not.
+            mavros_msgs::WaypointPull pull;
+            this->mission_pull_client.call(pull);
+
+            // If no, send the misison.
+            if(pull.response.wp_received == this->mission_srv.request.waypoints.size()){
+                this->state = ARM;
+            }
+            else{
+                std::unique_lock<std::mutex> lock(this->mission_m);
+                this->mission_push_client.call(this->mission_srv);
+            }
+
+            // Check timer
+            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
+                std::cout << "Timeout at Sending Mission" << std::endl;
+                this->state = FAILED;
+            }
+            break;}
+
 
         case ARM:
             /* ARMED STATE */
             std::cout << "Trying to Arm" << std::endl;
-
             set_arm(true);
             this->arm_time = ros::Time::now();
             this->state = WAITING_STATE;
-            ros::Duration(3).sleep();
             break;
 
 		case WAITING_STATE:
             /* WATING STATE */
 			// wait until the arm is registered
+            // Check timer
+            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
+                std::cout << "Timeout at Arm" << std::endl;
+                this->state = FAILED;
+            }
+
 			if(this->armed){   // if armed go to next state.
                 this->state = AUTO_MISSION;
             }
-			else if(ros::Time::now() - arm_time > ros::Duration(5.0)){
+			else if(ros::Time::now() - arm_time > ros::Duration(1.0)){
 				this->state = ARM;
             }
             break;
@@ -290,15 +332,22 @@ bool drone_handler::run_state_machine()
         case AUTO_MISSION:
             /* AUTO MISSION */
             std::cout << "Setting mode to AUTO.MISSION" << std::endl;
-            while (!set_mode("AUTO.MISSION")){
-                std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Setting mode to AUTO.MISSION failed" << std::endl;
-                ros::Duration(2).sleep();
+
+            if(this->mode == "AUTO.MISSION"){
+                this->state = START_MISSION;
+                this->start_height = this->altitude;
+                this->start_time = ros::Time::now();
+                std::cout << "Mission Started" << std::endl;
+            }
+            else{
+                set_mode("AUTO.MISSION");
+            }
+
+            // Check timer
+            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
+                std::cout << "Timeout at Setting to mission mode" << std::endl;
                 this->state = FAILED;
             }
-            this->state = START_MISSION;
-            this->start_height = this->altitude;
-            this->start_time = ros::Time::now();
-            std::cout << "Mission Started" << std::endl;
             break;
 
 		case START_MISSION:
@@ -308,10 +357,10 @@ bool drone_handler::run_state_machine()
                 this->state = ON_MISSION; // the drone is in the air
                 std::cout << "On Mission" << std::endl;
             }
-            else if(ros::Time::now() - start_time > ros::Duration(10.0))
+            else if(ros::Time::now() - start_time > ros::Duration(5.0))
             {
-              std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Switching to failed mode, the drone did not reach an altitude of 5 meters within 10 seconds." << std::endl;
-		      this->state = FAILED; // if the drone is not in the air after 10 seconds, it failed.
+                std::cout << "Timeout for altitude check" << std::endl;
+                this->state = FAILED; // if the drone is not in the air after 10 seconds, it failed.
 	        }
             break;
 
@@ -341,6 +390,7 @@ bool drone_handler::run_state_machine()
         case MISSION_DONE:{
             /* WAIT FOR RESTART */
             if(this->reset){
+                std::cout << "Restarting..." << std::endl;
                 this->received_mission = false;
                 this->state = IDLE;
                 this->reset = false;
@@ -348,40 +398,39 @@ bool drone_handler::run_state_machine()
             break;}
 
         case SOFT_ABORT_RTL:
-            while (!set_mode("AUTO.RTL")){
-                this->state = FAILED;
-                ros::Duration(1).sleep();
-                std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Failed switching to RTL mode" << std::endl;
+            if(this->mode == "AUTO.RTL"){
+                this->state = WAIT_FOR_CONTINUE;
             }
-            this->state = WAIT_FOR_CONTINUE;
+            else{
+                set_mode("AUTO.RTL");
+            }
             break;
 
         case SOFT_ABORT_LAND:
-            while (!set_mode("AUTO.LAND")){
-                this->state = FAILED;
-                ros::Duration(1).sleep();
-                std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Failed switching to LAND mode" << std::endl;
+            if(this->mode == "AUTO.LAND"){
+                this->state = WAIT_FOR_CONTINUE;
             }
-            this->state = WAIT_FOR_CONTINUE;
+            else{
+                set_mode("AUTO.LAND");
+            }
             break;
 
         case HARD_ABORT:
-            this->state = WAIT_FOR_CONTINUE;
-            break;// Hard abort is not enabled (for safety reasons)
-            while (!set_arm(false)){
-                this->state = FAILED;
-                ros::Duration(1).sleep();
-                std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Failed to disarm the drone" << std::endl;
-            }
+            // NOT IMPLEMENTED NOW, BUT SHOULD DISARM MIDAIR.
+            // WE WILL NOT IMPLEMENT THIS HERE FOR SAFETY REASONS.
             this->state = WAIT_FOR_CONTINUE;
             break;
 
         case WAIT_FOR_CONTINUE:
             if(abortType == CONTINUE){
-                this->abortType = NOTHING;
-                this->state = set_mode("AUTO.MISSION") ? ON_MISSION : FAILED;
-                if(this->state == FAILED) std::cout << "Failed switching to mission mode" << std::endl;
-
+                if(this->mode == "AUTO.MISSION"){
+                    std::cout << "Continuing on mission" std::endl;
+                    this->abortType = NOTHING;
+                    this->state = ON_MISSION;
+                }
+                else{
+                    set_mode("AUTO.MISSION");
+                }
             }
             else if(!armed){
                 this->abortType = NOTHING;
