@@ -42,7 +42,7 @@ class DroneController:
             if voltage < MIN_VOLTAGE:
                 logging.warning("Battery voltage is too low, trying to land immediately!")
                 self.drone_controller.land()
-            with self.lock:
+            with lock:
                 self.drone_controller.last_communication = datetime.datetime.now()
 
         @self.vehicle.on_message('HOME_POSITION')
