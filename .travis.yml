@@ -20,12 +20,20 @@ deploy:
     script: "./deploy.sh $build_type"
     on:
       all_branches: true
+env:
+  - test_stage=gcs_failure_test
+  - test_stage=oes_failure_test
+  - test_stage=normal_operation_test
+  - test_stage=webapp_unit_test
+  
+
 
 
 stages:
   - build
   - test
-#  - deploy
+  - name: deploy
+    if: branch = master
 
 jobs:
   include:
@@ -41,5 +49,21 @@ jobs:
     - stage: build
       script: docker-compose build $build_type
       env: build_type=groundcontrol
-  
-
+    - stage: test
+      script:
+        - ./pull_image webapp
+        - ./pull_image drone
+        - ./pull_image gazebo
+        - ./pull_image groundcontrol
+        - ./tests/${test_stage}.sh
+    - stage: deploy
+      script: 
+        - ./pull_image webapp
+        - ./pull_image drone 
+        - ./pull_image gazebo
+        - ./pull_image groundcontrol
+      deploy:
+         - provider: script
+           script: "./deploy_latest.sh"
+           on:
+             branch: master
