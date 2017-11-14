@@ -42,7 +42,7 @@ class GPSMonitor:
         logging.info("GPS Monitor enforcement now active!")
 
         while True:
-            time.sleep(1)
+            time.sleep(2)
             isNominal = True
             try:
                 current_time = datetime.datetime.now()
