@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 #This class contains a simple representation of a drone, with status, id, etc.
 import datetime
-from std_msgs.msg import String
 from sensor_msgs.msg import NavSatFix
 import rospy
 import threading
 from ros_rabbitmq_bridge.msg import userinfo
-from aed_gcs_logic.srv import mission_request, OnboardStatus, OnboardStatusRequest,HealthCheckService, HealthCheckServiceRequest
-# HealthCheckServiceRequest is declered by ros.
+from aed_gcs_logic.srv import mission_request, OnboardStatus, OnboardStatusRequest
 POSITION_INTERVAL = datetime.timedelta(milliseconds = 500) #We only update the position if it is this time since we did it last
 import traceback
 import json
@@ -28,26 +26,15 @@ class Drone:
         self.drone_id = drone_id
         self.state = "Idle"
         self.mission = None
-        print " wait "
-        rospy.wait_for_service('drone/get_readyness')
-        self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
-
-
-        #self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
-        #rospy.wait_for_service('drone/Health_check_service')
-        print " drone.py "
-
-        self.publish_sem = threading.Semaphore(0)
-        self.lock = threading.RLock()
-        self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
-        self.last_pos_update = datetime.datetime.min
-
+        self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
+        self.publish_sem = threading.Semaphore(0)
+        self.lock = threading.RLock()
         self.status_publisher_thread = threading.Thread(target = self.status_publisher)
         self.status_publisher_thread.daemon = True
         self.status_publisher_thread.start()
-
+        self.last_pos_update = datetime.datetime.min
 
     def set_mission(self, mission):
         with self.lock:
@@ -55,13 +42,6 @@ class Drone:
             self.state = "On Mission"
             self.publish_sem.release()
             return True
-
-
-    def risk_metric_callback(self, data):
-        print "Recieved risk metric"
-
-        self.current_risk_metric = data.data
-
 
     def unset_mission(self, mission):
         with self.lock:
@@ -95,7 +75,7 @@ class Drone:
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):
-        if rospy.get_param('/ignore_onboard', False) is True:# or True:   # remember to remove or True
+        if rospy.get_param('/ignore_onboard', False) is True:
             return True
         try:
             request = OnboardStatusRequest()
@@ -106,24 +86,3 @@ class Drone:
                 print("Drone not ready, response was {}".format(response))
             except:
                 traceback.print_exc()
-    def BatteryAndGPStatus(self):
-        print "Battery and GPS status "
-        try:
-            request1 = HealthCheckServiceRequest()
-            response1 = self.health_check_service(request1)
-            print response1.flight
-            #add_two_ints = rospy.ServiceProxy('add_two_ints', AddTwoInts)
-            return response1.flight
-        except rospy.ServiceException as e:
-            print "Service call failed :"
-            traceback.print_exc()
-
-
-    def RiskAssesment(self):
-        print "Risk Assesment"
-        print self.risk_metric_sub
-        try:
-            return self.risk_metric_sub
-        except rospy.ServiceException as e:
-            print "Service call failed :"
-            traceback.print_exc()
