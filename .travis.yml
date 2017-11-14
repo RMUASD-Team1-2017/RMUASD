@@ -7,30 +7,38 @@ python:
 services:
   - docker
 
-
-env:
-  - DOCKER_COMPOSE_VERSION=1.15.0
-
+  
 install:
   - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/1.15.0/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - pip install -r tests/Tools/requirements.txt
 
-script:
-  #Build the docker image
-- docker-compose build
-  #Run individual unit tests (only webui for now)
-- docker run --rm stefanrvo/rmuasdweb:latest test
-  #Run full system unit test
-- ./tests/run_system_test.sh
-deploy:
-  - provider: script
-    script: "./deploy_latest.sh"
-    on:
-      branch: master
-  - provider: script
-    script: "./deploy.sh"
-    on:
-      all_branches: true
+stages:
+  - build
+#  - test
+#  - deploy
+
+jobs:
+  include:
+    - stage: build
+      script: 
+        - docker-compose build $build_type
+      env: 
+        - build_type=webapp
+        - build_type=drone
+        - build_type=groundcontrol
+        - build_type=gazebo
+
+#    - stage: build
+#      script: docker-compose build $build_type
+#      env: build_type=drone
+#    - stage: build
+#      script: docker-compose build $build_type
+#      env: build_type=gazebo
+#    - stage: build
+#      script: docker-compose build $build_type
+#      env: build_type=groundcontrol
+    
+    
