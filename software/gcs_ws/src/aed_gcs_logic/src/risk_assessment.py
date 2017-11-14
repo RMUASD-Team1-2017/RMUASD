@@ -57,6 +57,7 @@ class risk_analyzer:
         weather_conditions = 0
         wind_conditions = 0
         rain_conditions = 0
+        gps_and_battery_condition = 0
         max_operating_wind_speed = 20 												# the maximum wind speed that the drone can fly in
         max_operating_rain_intensity = 13   										# the maximum amount it can be raining and fly the drone. Units are ml?
 
@@ -72,7 +73,8 @@ class risk_analyzer:
         	print "*** WARNING: TOO RAINY TO FLY ***"
         	weather_conditions = 1000000
         if not self.BatteryAndGPStatus():
-            print " GPS and Battery error "
+            print "*** GPS and Battery error ***"
+            gps_and_battery_condition = 100000
 
 
         #include misc. factors
@@ -85,7 +87,7 @@ class risk_analyzer:
         print 'Current wind speed is: ' + str(current_wind_speed)
         print 'Current rain amount is: ' + str(current_rain_intensity)
         print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'  # lower percentage value, is better.
-        risk_metric = weather_conditions + obstacle_conditions						# this should be normalised
+        risk_metric = weather_conditions + obstacle_conditions + gps_and_battery_condition					# this should be normalised
         print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
 
         if  self.BatteryAndGPStatus():

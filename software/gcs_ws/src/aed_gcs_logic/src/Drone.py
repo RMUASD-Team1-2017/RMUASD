@@ -28,13 +28,14 @@ class Drone:
         self.drone_id = drone_id
         self.state = "Idle"
         self.mission = None
+        print " wait "
         rospy.wait_for_service('drone/get_readyness')
         self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
 
 
         #self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
         #rospy.wait_for_service('drone/Health_check_service')
-
+        print " drone.py "
 
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()

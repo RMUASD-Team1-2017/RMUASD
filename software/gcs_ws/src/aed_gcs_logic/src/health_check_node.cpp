@@ -71,22 +71,21 @@ int batteryFLy(sensor_msgs::BatteryState batteryState){
   if (batteryState.present){
     //std::cout << "Battery is present!" << std::endl;
 
-    if (batteryState.power_supply_health == 1) {  // 0 is used for test, when there are no connection to the battery. otherwise it is 1.
+    //if (batteryState.power_supply_health == 1) {  // 0 is used for test, when there are no connection to the battery. otherwise it is 1.
       //std::cout<<"Battery condition is good!"<<std::endl;
-      if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_FULL){//) { // two is choosen as test value. the right values are 3 and 4
+    /*  if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_FULL){//) { // two is choosen as test value. the right values are 3 and 4
       //  std::cout<<"The battery isfully charged!"<<std::endl;
         BatteryStat = 1;
-      }
-      else if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN) {
-        std::cout<<"The battery power supply status is unknown!"<<std::endl;
+      }*/
+    /*  else if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN) {
+        //std::cout<<"The battery power supply status is unknown!"<<std::endl;
         BatteryStat = 0;
-      }
-      else {
-      //  for (int i = 0; i < sizeof(batteryState.cell_voltage) / sizeof(float) / 2; i++){
+      }*/
+      //else {
+
 
           if (batteryState.voltage >= MinCellVoltage) {  // should be 4.2 in real life, the 4V is only for test.
-            //std::cout << "Cell " << i << ": " << batteryState.cell_voltage[i] << std::endl;
-          //  std::cout << "battery " << ": " << MinCellVoltage << std::endl;
+
             BatteryStat = 1;
           }
           else {
@@ -94,15 +93,14 @@ int batteryFLy(sensor_msgs::BatteryState batteryState){
              BatteryStat=0;
              return BatteryStat;
           }
-        //std::cout<<"The Battery is not fully charged"<<std::endl, BatteryStat=0;
-      //  }
-      }
-    }
-    else if (batteryState.power_supply_health == sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN) {
-      std::cout<<"The battery supply health status is unknown!"<<std::endl;
-      BatteryStat = 0;
-    }
-    else std::cout<<"Battery is not in good condition! "<<batteryState.power_supply_health<<std::endl, BatteryStat=0;
+
+    //  }
+      //}
+  //  else if (batteryState.power_supply_health == sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN) {
+    //  std::cout<<"The battery supply health status is unknown!"<<std::endl;
+  //    BatteryStat = 0;
+  //  }
+    //else std::cout<<"Battery is not in good condition! "<<batteryState.power_supply_health<<std::endl, BatteryStat=0;
 
 
   }
@@ -167,7 +165,7 @@ void batteryStateSub(const sensor_msgs::BatteryState::ConstPtr &msg){
   batteryState = *msg;
   //printBatteryInformation(batteryState);
   BatCondi = batteryFLy(batteryState);
-  std::cout<<"BatCondis "<<BatCondi<<std::endl;
+  //std::cout<<"BatCondis "<<BatCondi<<std::endl;
 }
 
 nav_msgs::Odometry localGpsState;
