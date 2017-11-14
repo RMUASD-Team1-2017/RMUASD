@@ -15,30 +15,31 @@ install:
   - sudo mv docker-compose /usr/local/bin
   - pip install -r tests/Tools/requirements.txt
 
+deploy:
+  - provider: script
+    script: "./deploy.sh $build_type"
+    on:
+      all_branches: true
+
+
 stages:
   - build
-#  - test
+  - test
 #  - deploy
 
 jobs:
   include:
     - stage: build
-      script: 
-        - docker-compose build $build_type
-      env: 
-        - build_type=webapp
-        - build_type=drone
-        - build_type=groundcontrol
-        - build_type=gazebo
+      script: docker-compose build $build_type
+      env: build_type=webapp
+    - stage: build
+      script: docker-compose build $build_type
+      env: build_type=drone
+    - stage: build
+      script: docker-compose build $build_type
+      env: build_type=gazebo
+    - stage: build
+      script: docker-compose build $build_type
+      env: build_type=groundcontrol
+  
 
-#    - stage: build
-#      script: docker-compose build $build_type
-#      env: build_type=drone
-#    - stage: build
-#      script: docker-compose build $build_type
-#      env: build_type=gazebo
-#    - stage: build
-#      script: docker-compose build $build_type
-#      env: build_type=groundcontrol
-    
-    
