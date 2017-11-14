@@ -17,8 +17,9 @@ class risk_analyzer:
         #self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Int8, queue_size=1)	    	# using int metric
         self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Float32, queue_size=1)		# using float metric
         #s = rospy.Service('risk_assessment/risk_metric', RiskAssesmentService, analyze)
-        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
         rospy.wait_for_service('drone/Health_check_service')
+        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
+
 
 
     def BatteryAndGPStatus(self):
@@ -70,6 +71,9 @@ class risk_analyzer:
         if current_rain_intensity > max_operating_rain_intensity:
         	print "*** WARNING: TOO RAINY TO FLY ***"
         	weather_conditions = 1000000
+        if not self.BatteryAndGPStatus():
+            print " GPS and Battery error "
+
 
         #include misc. factors
         number_of_golfers = 0
