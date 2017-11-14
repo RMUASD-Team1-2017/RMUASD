@@ -24,7 +24,7 @@ class mission_handler:
         self.velocity_gps = rospy.Subscriber("/mavros/local_position/velocity", TwistStamped, self.twist_request_callback, queue_size=10)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
 
-
+        print " hej "
         self.gps_velocity = 0
         self.velocityx = 0
         self.velocityy = 0
@@ -41,12 +41,15 @@ class mission_handler:
 
     def mission_request_callback(self, data):
         mission = Mission(data.mission_id, data.destination)
+        print " mission request callback "
         if not self.drone.mission:
             #print("Drone not in mission")
             if not self.drone.rpcIsDroneReady():
                 print("Drone OES is not ready for mission")
                 return
             bat_and_gps_status = self.drone.RiskAssesment()
+            print bat_and_gps_status
+            print " bat and gps status"
             print("Drone is not in mission")
             if  not bat_and_gps_status:
                 print("Drone Battery and GPS is not working, or the weather is bad")

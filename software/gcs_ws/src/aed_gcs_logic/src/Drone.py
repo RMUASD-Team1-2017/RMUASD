@@ -28,21 +28,26 @@ class Drone:
         self.drone_id = drone_id
         self.state = "Idle"
         self.mission = None
-        self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
-        self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
-        self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
+        print " wait "
         rospy.wait_for_service('drone/get_readyness')
-        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
-        rospy.wait_for_service('drone/Health_check_service')
+        self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
 
-        self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
+
+        #self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
+        #rospy.wait_for_service('drone/Health_check_service')
+        print " drone.py "
 
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
+        self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
+        self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
+        self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
+        self.last_pos_update = datetime.datetime.min
+
         self.status_publisher_thread = threading.Thread(target = self.status_publisher)
         self.status_publisher_thread.daemon = True
         self.status_publisher_thread.start()
-        self.last_pos_update = datetime.datetime.min
+
 
     def set_mission(self, mission):
         with self.lock:
