@@ -6,7 +6,6 @@ python:
 
 services:
   - docker
-
   
 install:
   - sudo rm /usr/local/bin/docker-compose
@@ -25,10 +24,13 @@ env:
   - test_stage=oes_failure_test
   - test_stage=normal_operation_test
   - test_stage=webapp_unit_test
-  
 
-
-
+script:
+  - ./pull_image.sh webapp
+  - ./pull_image.sh drone
+  - ./pull_image.sh gazebo
+  - ./pull_image.sh groundcontrol
+  - ./tests/${test_stage}.sh
 stages:
   - build
   - test
@@ -40,30 +42,21 @@ jobs:
     - stage: build
       script: docker-compose build $build_type
       env: build_type=webapp
-    - stage: build
-      script: docker-compose build $build_type
+    - script: docker-compose build $build_type
       env: build_type=drone
-    - stage: build
-      script: docker-compose build $build_type
+    - script: docker-compose build $build_type
       env: build_type=gazebo
-    - stage: build
-      script: docker-compose build $build_type
+    - script: docker-compose build $build_type
       env: build_type=groundcontrol
-    - stage: test
-      script:
-        - ./pull_image webapp
-        - ./pull_image drone
-        - ./pull_image gazebo
-        - ./pull_image groundcontrol
-        - ./tests/${test_stage}.sh
     - stage: deploy
-      script: 
-        - ./pull_image webapp
-        - ./pull_image drone 
-        - ./pull_image gazebo
-        - ./pull_image groundcontrol
+      script: skip
       deploy:
          - provider: script
-           script: "./deploy_latest.sh"
+           script:
+             - ./pull_image.sh webapp
+             - ./pull_image.sh drone
+             - ./pull_image.sh gazebo
+             - ./pull_image.sh groundcontrol
+             - "./deploy_latest.sh"
            on:
              branch: master
