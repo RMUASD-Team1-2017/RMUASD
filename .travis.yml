@@ -53,6 +53,7 @@ jobs:
       env: build_type=drone
     - stage: deploy
       script: skip
+      install: skip
       deploy:
          - provider: script
            script:
@@ -61,5 +62,3 @@ jobs:
              - ./pull_image.sh gazebo
              - ./pull_image.sh groundcontrol
              - "./deploy_latest.sh"
-           on:
-             branch: master
