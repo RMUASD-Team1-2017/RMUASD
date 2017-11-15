@@ -14,11 +14,6 @@ install:
   - sudo mv docker-compose /usr/local/bin
   - pip install -r tests/Tools/requirements.txt
 
-deploy:
-  - provider: script
-    script: "./deploy.sh $build_type"
-    on:
-      all_branches: true
 env:
   - test_stage=gcs_failure_test
   - test_stage=oes_failure_test
@@ -40,16 +35,23 @@ stages:
 jobs:
   include:
     - stage: build
-      script: docker-compose build $build_type
+      script:
+        - docker-compose build $build_type
+        - ./deploy.sh $build_type
       env: build_type=webapp
-    - script: docker-compose build $build_type
+    - script:
+        - docker-compose build $build_type
+        - ./deploy.sh $build_type
       env: build_type=drone
-    - script: docker-compose build $build_type
+    - script:
+        - docker-compose build $build_type
+        - ./deploy.sh $build_type
       env: build_type=gazebo
-    - script: docker-compose build $build_type
+    - script:
+        - docker-compose build $build_type
+        - ./deploy.sh $build_type
       env: build_type=groundcontrol
     - stage: test
-      deploy: skip
     - stage: deploy
       script: skip
       deploy:
