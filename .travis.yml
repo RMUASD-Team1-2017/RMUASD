@@ -48,6 +48,8 @@ jobs:
       env: build_type=gazebo
     - script: docker-compose build $build_type
       env: build_type=groundcontrol
+    - stage: test
+      deploy: skip
     - stage: deploy
       script: skip
       deploy:
