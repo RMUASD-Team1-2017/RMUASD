@@ -14,9 +14,8 @@ error_handler() {
 	docker stop simulation webui drone gcs
 	docker rm simulation webui drone gcs
 }
-set -e
 trap 'error_handler $LINENO' ERR
-export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-$DIR/normal_operation_test.sh
-$DIR/gcs_failure_test.sh
-$DIR/oes_failure_test.sh
+set -e
+#$DIR/normal_operation_test.sh
+#$DIR/gcs_failure_test.sh
+#$DIR/oes_failure_test.sh
