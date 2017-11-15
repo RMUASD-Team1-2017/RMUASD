@@ -29,8 +29,8 @@ script:
 stages:
   - build
   - test
-  - name: deploy
-    if: branch = master
+#  - name: deploy
+#    if: branch = master
 
 jobs:
   include:
@@ -54,11 +54,11 @@ jobs:
     - stage: deploy
       script: skip
       install: skip
-      deploy:
-         - provider: script
-           script:
-             - ./pull_image.sh webapp
-             - ./pull_image.sh drone
-             - ./pull_image.sh gazebo
-             - ./pull_image.sh groundcontrol
-             - "./deploy_latest.sh"
+#      deploy:
+#         - provider: script
+#           script:
+#             - ./pull_image.sh webapp
+#             - ./pull_image.sh drone
+#             - ./pull_image.sh gazebo
+#             - ./pull_image.sh groundcontrol
+#             - "./deploy_latest.sh"
