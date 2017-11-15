@@ -51,9 +51,9 @@ jobs:
         - docker-compose build $build_type
         - ./deploy.sh $build_type
       env: build_type=drone
-    - stage: deploy
-      script: skip
-      install: skip
+#    - stage: deploy
+#      script: skip
+#      install: skip
 #      deploy:
 #         - provider: script
 #           script:
