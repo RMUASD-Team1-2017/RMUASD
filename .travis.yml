@@ -38,20 +38,19 @@ jobs:
       script:
         - docker-compose build $build_type
         - ./deploy.sh $build_type
-      env: build_type=webapp
-    - script:
-        - docker-compose build $build_type
-        - ./deploy.sh $build_type
-      env: build_type=drone
-    - script:
-        - docker-compose build $build_type
-        - ./deploy.sh $build_type
       env: build_type=gazebo
     - script:
         - docker-compose build $build_type
         - ./deploy.sh $build_type
       env: build_type=groundcontrol
-    - stage: test
+    - script:
+        - docker-compose build $build_type
+        - ./deploy.sh $build_type
+      env: build_type=webapp
+    - script:
+        - docker-compose build $build_type
+        - ./deploy.sh $build_type
+      env: build_type=drone
     - stage: deploy
       script: skip
       deploy:
