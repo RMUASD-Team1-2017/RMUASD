@@ -89,6 +89,7 @@ class risk_analyzer:
         else:
             print "Battery and GPS condition is bad"
             risk_metric = 1000000   # is set high, becasue either battery or GPS or both have some problems.
+        risk_metric = 0
         self.risk_metric_pub.publish(risk_metric)
         #return risk_metric
 

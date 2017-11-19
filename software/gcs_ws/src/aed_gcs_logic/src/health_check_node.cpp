@@ -189,7 +189,7 @@ bool isFlyingOkay(aed_gcs_logic::HealthCheckService::Request  &req, aed_gcs_logi
     return true;
   }
    else {
-     res.flight = false;
+     res.flight = true;   //## kig her !!!!!!!!!!!!!!!!!!!!!!!!!!!
     return true;
   }
 }
