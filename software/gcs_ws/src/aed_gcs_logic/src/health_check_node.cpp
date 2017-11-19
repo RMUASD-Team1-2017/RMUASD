@@ -89,7 +89,7 @@ int batteryFLy(sensor_msgs::BatteryState batteryState){
             BatteryStat = 1;
           }
           else {
-            std::cout<<"Battery are not fully charged!"<<std::endl;
+          //  std::cout<<"Battery are not fully charged!"<<std::endl;
              BatteryStat=0;
              return BatteryStat;
           }
