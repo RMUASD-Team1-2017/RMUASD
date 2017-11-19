@@ -292,11 +292,11 @@ bool drone_handler::run_state_machine()
 		case START_MISSION:
             /* START MISSION */
             this->current_height = this->altitude;
-            if(this->start_height + 2 < this->current_height){  // when the drone is 2 meters over its start position, it is assumed, that the mission is started succesfully.
+            if(this->start_height + 2 < this->current_height){  // when the drone is 2 meters above its start position, it is assumed, that the mission is started succesfully.
                 this->state = ON_MISSION; // the drone is in the air
                 std::cout << "On Mission" << std::endl;
             }
-            else if(ros::Time::now() - start_time > ros::Duration(10.0))
+            else if(ros::Time::now() - start_time > ros::Duration(60.0))
             {
               std::cout << "line " << __LINE__ << " in function " << __func__ << ": " << "Switching to failed mode, the drone did not reach an altitude of 5 meters within 10 seconds." << std::endl;
 		      this->state = FAILED; // if the drone is not in the air after 10 seconds, it failed.

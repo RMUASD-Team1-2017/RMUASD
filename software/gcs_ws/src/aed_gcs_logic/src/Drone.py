@@ -39,7 +39,7 @@ class Drone:
 
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
-        self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
+        #self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
         self.last_pos_update = datetime.datetime.min
@@ -108,6 +108,10 @@ class Drone:
                 traceback.print_exc()
     def BatteryAndGPStatus(self):
         print "Battery and GPS status "
+
+        if rospy.get_param('/ignore_weather_and_GPS', False) is True:# or True:
+            return True
+
         try:
             request1 = HealthCheckServiceRequest()
             response1 = self.health_check_service(request1)
@@ -119,11 +123,11 @@ class Drone:
             traceback.print_exc()
 
 
-    def RiskAssesment(self):
-        print "Risk Assesment"
-        print self.risk_metric_sub
-        try:
-            return self.risk_metric_sub
-        except rospy.ServiceException as e:
-            print "Service call failed :"
-            traceback.print_exc()
+#    def RiskAssesment(self):
+#        print "Risk Assesment"
+#        print self.risk_metric_sub
+#        try:
+#            return self.risk_metric_sub
+#        except rospy.ServiceException as e:
+#            print "Service call failed :"
+#            traceback.print_exc()

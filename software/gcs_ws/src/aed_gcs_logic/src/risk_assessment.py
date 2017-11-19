@@ -23,7 +23,7 @@ class risk_analyzer:
 
 
     def BatteryAndGPStatus(self):
-        print "Battery and GPS status "
+        #print "Battery and GPS status "
         try:
             request1 = HealthCheckServiceRequest()
             response1 = self.health_check_service(request1)
@@ -83,17 +83,17 @@ class risk_analyzer:
         obstacle_conditions = number_of_golfers + number_of_other_obstacles
 
         # compute final risk metric:
-        print 'For location ' + str(latitude) + ',' + str(longitude) + ':'
-        print 'Current wind speed is: ' + str(current_wind_speed)
-        print 'Current rain amount is: ' + str(current_rain_intensity)
-        print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'  # lower percentage value, is better.
+    #    print 'For location ' + str(latitude) + ',' + str(longitude) + ':'
+    #    print 'Current wind speed is: ' + str(current_wind_speed)
+    #    print 'Current rain amount is: ' + str(current_rain_intensity)
+    #    print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'  # lower percentage value, is better.
         risk_metric = weather_conditions + obstacle_conditions + gps_and_battery_condition					# this should be normalised
-        print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
+    #    print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
 
         if  self.BatteryAndGPStatus():
-            print "Battery and GPS condition is good"
+            #print "Battery and GPS condition is good"
         else:
-            print "Battery and GPS condition is bad"
+            #print "Battery and GPS condition is bad"
             risk_metric = 1000000   # is set high, becasue either battery or GPS or both have some problems.
         self.risk_metric_pub.publish(risk_metric)
         #return risk_metric
