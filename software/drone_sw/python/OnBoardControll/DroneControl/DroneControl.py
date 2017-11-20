@@ -11,20 +11,26 @@ import datetime
 MAV_MODE_AUTO   = 4
 BATTERY_CELLS = 3
 MIN_VOLTAGE = 3500 * BATTERY_CELLS
+
 from LEDControl.LEDControl import led as debug_led
+from gpioControl.gpioControl import GPIO
+LOW_ABORT_PIN = 39 #pin 17
+HIGH_ABORT_PIN = 49 #pin 15
+
 
 from GeoFenceChecker.GeoFenceChecker import fencechecker
+
 class DroneController:
-    def __init__(self, port, baud, connectstring):
+    def __init__(self, port, baud, connectstring, real_hard_abort = False):
         print(port, baud)
         if connectstring:
             self.vehicle = connect(connectstring, rate = 1, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
         else:
             self.vehicle = connect(port, rate = 1, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
         print("Connected")
-        print("Listing parameters")
-        #If the used serial port actually disapears, there will be no way to recover, but this can only happen for non-usb serial ports, so it should not really matter
-        print("Listed parameters")
+        self.abort_pins = { "1" : GPIO(pin = HIGH_ABORT_PIN, direction = "out"),
+                            "0" : GPIO(pin = LOW_ABORT_PIN,  direction = "out") }
+        self.real_hard_abort = real_hard_abort
         self.home_set = False
         self.vehicle.drone_controller = self #Hack to access this class from the vehicle in the quite strange decorator functions
         lock = threading.RLock()
@@ -85,14 +91,14 @@ class DroneController:
 
     def hardabort(self):
         with self.lock:
-            # In testing, we do not do this...
-            #self.vehicle.armed = False
-            logging.warning("Recieved a hard abort command, but this is not enabled ATM!!")
+            if self.real_hard_abort:
+                for pintype in self.abort_pins.keys():
+                    self.abort_pins[pintype].set(state = pintype)
+                self.vehicle.armed = False
+                logging.warning("Motor shutdown performed!")
 
-    def powercut(self):
-        with self.lock:
-            #Cut the power for the drone
-            logging.warning("Recieved a power cut command, but this is not implemented ATM!!")
+            else:
+                logging.warning("Recieved a hard abort command, but this is not enabled ATM!!")
 
     def land(self):
         with self.lock:
