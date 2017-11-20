@@ -23,12 +23,8 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
         geofence_file,        // geofence
         landing_spots_file         // landing spots
     );
-    Coord start;
-    start.geo.latitude = req.start.latitude;
-    start.geo.longitude = req.start.longitude;
-    Coord goal;
-    goal.geo.latitude = req.end.latitude;
-    goal.geo.longitude = req.end.longitude;
+    Coord start(req.start.latitude, req.start.longitude);
+    Coord goal(req.end.latitude, req.end.longitude);
     Coord landingPos = planner.getNearestLandingSpot(goal);
 
     res.goal.latitude = landingPos.geo.latitude;
