@@ -23,7 +23,7 @@ class risk_analyzer:
 
 
     def BatteryAndGPStatus(self):
-        print "Battery and GPS status "
+        #print "Battery and GPS status "
         if rospy.get_param('/ignore_weather_and_GPS', False) is True or True:
                 return True
 
@@ -88,11 +88,12 @@ class risk_analyzer:
         risk_metric = weather_conditions + obstacle_conditions						# this should be normalised
         #print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
 
-        if  self.BatteryAndGPStatus():
-            print "Battery and GPS condition is good"
-        else:
+        if  not self.BatteryAndGPStatus():
+            risk_metric = 1000000
             print "Battery and GPS condition is bad"
-            risk_metric = 1000000   # is set high, becasue either battery or GPS or both have some problems.
+        #else:
+        #    print "Battery and GPS condition is bad"
+        #    risk_metric = 1000000   # is set high, becasue either battery or GPS or both have some problems.
         #risk_metric = 0
         self.risk_metric_pub.publish(risk_metric)
         #return risk_metric

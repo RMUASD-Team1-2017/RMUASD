@@ -59,7 +59,7 @@ class Drone:
 
 
     def risk_metric_callback(self, data):
-        print "Recieved risk metric"
+        #print "Recieved risk metric"
 
         self.current_risk_metric = data.data
 
