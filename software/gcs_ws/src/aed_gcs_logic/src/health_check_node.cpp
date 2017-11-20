@@ -1,17 +1,9 @@
 #include <sensor_msgs/BatteryState.h>
-#include <mavros_msgs/BatteryStatus.h>
 #include <sensor_msgs/NavSatFix.h>
-#include <aed_gcs_logic/HealthCheckService.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
-#include "std_msgs/String.h"
-
-//sysstatus  kan give batteri spaending   men vil den ikke blive merge med batterystate.   Der staar at batteryStatus er udfaset
 
 using namespace std;
-int BatCondi = 0;
-int GPSCondition = 0;
-float MinCellVoltage = 11.5;
 
 void printBatteryInformation(sensor_msgs::BatteryState batteryState){
   std::cout << "Voltage: \t" << batteryState.voltage << std::endl;
@@ -141,11 +133,8 @@ void printGlobalGpsState(sensor_msgs::NavSatFix globalGpsState){
 // state subscriber
 sensor_msgs::BatteryState batteryState;
 void batteryStateSub(const sensor_msgs::BatteryState::ConstPtr &msg){
-//void batteryStateSub(const mavros_msgs::BatteryStatus::ConstPtr &msg){
-  batteryState = *msg;
-  //printBatteryInformation(batteryState);
-  BatCondi = batteryFLy(batteryState);
-  //std::cout<<"BatCondis "<<BatCondi<<std::endl;
+	batteryState = *msg;
+  printBatteryInformation(batteryState);
 }
 
 nav_msgs::Odometry localGpsState;
@@ -156,6 +145,7 @@ void localGpsStateSub(const nav_msgs::Odometry::ConstPtr &msg){
 sensor_msgs::NavSatFix globalGpsState;
 void globalGpsStateSub(const sensor_msgs::NavSatFix::ConstPtr &msg){
 	globalGpsState = *msg;
+
   //printGlobalGpsState(globalGpsState);
   GPSCondition = GPSstate(globalGpsState);
   //std::cout<<"GPS condition "<<GPSCondition<<std::endl;
@@ -172,25 +162,25 @@ bool isFlyingOkay(aed_gcs_logic::HealthCheckService::Request  &req, aed_gcs_logi
      res.flight = false;   //## Look here, it should be False !!!!!!!!!!!!!!!!!!!!!!!!!!!
     return true;
   }
+
 }
-
-
-
 
 int main(int argc, char **argv){
 
 	// Init ros node
-	//ros::init(argc, argv, "Health_check_node");
-  ros::init(argc, argv, "Health_check_server");
+	ros::init(argc, argv, "Health_check_node");
 	ros::NodeHandle nh;
 	ros::Rate rate(20);
 
 	// Setup ros subscribtions
-	ros::Subscriber mavrosBatteryStateSub = nh.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, batteryStateSub);
+	ros::Subscriber mavrosBatteryStateSub = nh.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 10, batteryStateSub);
+	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 10, globalGpsStateSub);
+	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10, localGpsStateSub);
 
-	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 1, globalGpsStateSub);
+
 	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 1, localGpsStateSub);
   ros::ServiceServer service = nh.advertiseService("drone/Health_check_service", isFlyingOkay);
+
 
 	// Save time stamp
 	ros::Time last = ros::Time::now();

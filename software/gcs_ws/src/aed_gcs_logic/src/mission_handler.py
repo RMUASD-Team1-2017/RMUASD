@@ -8,7 +8,6 @@ from ros_rabbitmq_bridge.msg import mission_request
 from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import NavSatFix
 import math
-
 from  geopy.distance import vincenty    # pip install geopy
 
 #gps_velocity = 1
@@ -17,13 +16,12 @@ class mission_handler:
     """Path Planner class"""
 
     def __init__(self):
-        #self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
+        self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
         self.drone = Drone(drone_id = int(rospy.get_param('/drone_id', 1)) )
         self.current_risk_metric = 0
         self.mission_request_sub = rospy.Subscriber("drone/missionrequest", mission_request, self.mission_request_callback, queue_size=10)
         self.velocity_gps = rospy.Subscriber("/mavros/local_position/velocity", TwistStamped, self.twist_request_callback, queue_size=10)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
-
 
         self.gps_velocity = 0
         self.velocityx = 0
@@ -41,12 +39,11 @@ class mission_handler:
 
     def mission_request_callback(self, data):
         mission = Mission(data.mission_id, data.destination)
-        print " mission request callback "
         if not self.drone.mission:
-            #print("Drone not in mission")
             if not self.drone.rpcIsDroneReady():
                 print("Drone OES is not ready for mission")
                 return
+
             bat_and_gps_status = self.drone.RiskAssesment()   # it is a float32 between 0 an 100. or in special cases 100000
             print bat_and_gps_status
             print " bat and gps status"
@@ -60,8 +57,8 @@ class mission_handler:
             
             if self.drone.set_mission(mission):
                 mission.plan(self.drone.location["location"])   # don't outcomment !!!!!
-                print("Mission was set!")
 
+                print("Mission was set!")
             else:
                 print("Drone rejected mission")
         else:

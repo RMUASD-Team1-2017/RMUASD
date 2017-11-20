@@ -3,7 +3,7 @@
 version: '3.3'
 services:
   webapp:
-    image: stefanrvo/rmuasdweb:latest
+    image: stefanrvo/rmuasd_webapp:latest
     build:
       context: ./software/WebUI
       dockerfile: Dockerfile
@@ -35,7 +35,7 @@ services:
       - rmuasd_network
 
   gazebo:
-    image: stefanrvo/rmuasd_simulation:latest
+    image: stefanrvo/rmuasd_gazebo:latest
     build:
       context: ./simulation/
       dockerfile: Dockerfile

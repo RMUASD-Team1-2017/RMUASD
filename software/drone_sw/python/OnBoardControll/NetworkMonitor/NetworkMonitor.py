@@ -11,17 +11,19 @@ class NetworkMonitor:
         self.last_connect = datetime.datetime.now() #Pretend we had connectivity at startup
         self.lock = threading.RLock()
         for host in hosts:
-            self.test_connection(host, port, check_interval)
-    def test_connection(self, host, port, interval):
+            self.test_connection(host, port, check_interval, skip_test = True)
+    def test_connection(self, host, port, interval, skip_test = False):
         timer = threading.Timer(interval, self.test_connection, args = (host, port, interval))
         timer.daemon = True
         timer.start()
+        if skip_test: return
         try:
             socket.create_connection((host, port))
             with self.lock:
                 self.last_connect = datetime.datetime.now()
         except socket.error:
             logging.warning("Could not establish a connection to {} at port {}".format(host, port))
+
     def get_last_connection(self):
         with self.lock:
             return self.last_connect

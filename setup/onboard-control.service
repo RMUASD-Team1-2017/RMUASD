@@ -7,7 +7,7 @@ Description=Onboard Control Service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python2 /home/root/OnBoardControll/main.py --loglevel DEBUG
+ExecStart=/usr/bin/python2 /home/root/OnBoardControll/main.py --loglevel DEBUG --ledmode DEBUG
 Restart=always
 RestartSec=5
 WorkingDirectory=/home/root/OnBoardControll

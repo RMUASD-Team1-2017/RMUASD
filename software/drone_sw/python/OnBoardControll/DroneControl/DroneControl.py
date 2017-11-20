@@ -18,9 +18,9 @@ class DroneController:
     def __init__(self, port, baud, connectstring):
         print(port, baud)
         if connectstring:
-            self.vehicle = connect(connectstring, rate = 2, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
+            self.vehicle = connect(connectstring, rate = 1, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
         else:
-            self.vehicle = connect(port, rate = 2, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
+            self.vehicle = connect(port, rate = 1, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
         print("Connected")
         print("Listing parameters")
         #If the used serial port actually disapears, there will be no way to recover, but this can only happen for non-usb serial ports, so it should not really matter
@@ -34,11 +34,6 @@ class DroneController:
         self.last_communication = datetime.datetime.now()
         self.battery = 0
 
-        @self.vehicle.on_message('*')
-        def listener(self, name, message):
-            with lock:
-                self.drone_controller.last_communication = datetime.datetime.now()
-
         @self.vehicle.on_message('SYS_STATUS')
         def listener(self, name, message):
             voltage = message.to_dict()["voltage_battery"]
@@ -47,6 +42,8 @@ class DroneController:
             if voltage < MIN_VOLTAGE:
                 logging.warning("Battery voltage is too low, trying to land immediately!")
                 self.drone_controller.land()
+            with lock:
+                self.drone_controller.last_communication = datetime.datetime.now()
 
         @self.vehicle.on_message('HOME_POSITION')
         def listener(self, name, home_position):
