@@ -21,14 +21,16 @@ struct GeoCoord{
 };
 
 struct Coord{
+    Coord(double latitude, double longitude);
     UTM utm;
     GeoCoord geo;
 };
 
 // Node inside the graph
 struct Node{
-    Node(Coord _coord, int _id){
-        coord = _coord;
+    Node(Coord _coord, int _id)
+    : coord(_coord), id(_id)
+    {
         id = _id;
         cameFrom = nullptr;
         gScore = std::numeric_limits<double>::max();
@@ -66,11 +68,9 @@ class path_planner
         std::vector<Node> nodes;
         std::vector<Coord> landingspot;
         std::vector<Node*> path;
-        Coord target;
 
     private:
 
-        UTM geo2utm(GeoCoord &geo);
         void generateUTMCoords();
 
         bool outOfBounds(Node *node1, Node *node2);
