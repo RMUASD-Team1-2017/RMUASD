@@ -6,4 +6,5 @@ sensor_msgs/NavSatFix position
 sensor_msgs/NavSatFix destination
 
 sensor_msgs/NavSatFix waypoint
+sensor_msgs/NavSatFix[] path
 string state
