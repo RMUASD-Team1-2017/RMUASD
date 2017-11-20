@@ -14,7 +14,7 @@ MIN_VOLTAGE = 3500 * BATTERY_CELLS
 
 from LEDControl.LEDControl import led as debug_led
 from gpioControl.gpioControl import GPIO
-LOW_ABORT_PIN = 39 #pin 17
+LOW_MOTOR_PIN = 39 #pin 17
 HIGH_MOTOR_PIN = 49 #pin 15
 
 
@@ -24,18 +24,18 @@ class DroneController:
     def __init__(self, port, baud, connectstring, real_hard_abort = False):
         print(port, baud)
         if connectstring:
-            self.vehicle = connect(connectstring, rate = 1, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
+            self.vehicle = connect(connectstring, rate = 1, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
         else:
-            self.vehicle = connect(port, rate = 1, baud = baud, wait_ready = True, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
+            self.vehicle = connect(port, rate = 1, baud = baud, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
         print("Connected")
+        lock = threading.RLock()
+        self.lock = lock
         self.motor_enable_pins = { True : GPIO(pin = HIGH_MOTOR_PIN, direction = "out"),
                                    False : GPIO(pin = LOW_MOTOR_PIN,  direction = "out") }
         self.enable_motors()
         self.real_hard_abort = real_hard_abort
         self.home_set = False
         self.vehicle.drone_controller = self #Hack to access this class from the vehicle in the quite strange decorator functions
-        lock = threading.RLock()
-        self.lock = lock
         self.location = None
         self.last_fix = None
         self.last_communication = datetime.datetime.now()
@@ -144,12 +144,12 @@ class DroneController:
 
     def enable_motors(self):
         with self.lock:
-            for pintype in self.abort_pins.keys():
-                self.abort_pins[pintype].set(state = pintype)
+            for pintype in self.motor_enable_pins.keys():
+                self.motor_enable_pins[pintype].set(state = pintype)
     def disable_motors(self):
         with self.lock:
-            for pintype in self.abort_pins.keys():
-                self.abort_pins[pintype].set(state = not pintype)
+            for pintype in self.motor_enable_pins.keys():
+                self.motor_enable_pins[pintype].set(state = not pintype)
 
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):
