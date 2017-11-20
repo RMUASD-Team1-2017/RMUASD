@@ -24,7 +24,7 @@ class mission_handler:
         self.velocity_gps = rospy.Subscriber("/mavros/local_position/velocity", TwistStamped, self.twist_request_callback, queue_size=10)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
 
-        print " hej "
+
         self.gps_velocity = 0
         self.velocityx = 0
         self.velocityy = 0
@@ -56,9 +56,9 @@ class mission_handler:
                 return
 
             print("Drone Battery and GPS is working, and the weather is god")
-            print  self.drone.set_mission(mission)
+            #print  self.drone.set_mission(mission) # don't call two times !!!!
             if self.drone.set_mission(mission):
-                #mission.plan(self.drone.location["location"])
+                mission.plan(self.drone.location["location"])   # don't outcomment !!!!!
                 print("Mission was set!")
 
             else:

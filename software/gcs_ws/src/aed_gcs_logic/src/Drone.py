@@ -33,11 +33,6 @@ class Drone:
         rospy.wait_for_service('drone/get_readyness')
         self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
 
-        #rospy.wait_for_service('drone/Health_check_service')
-        #self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
-
-        print " drone.py "
-
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
         self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", Float32, self.risk_metric_callback)
@@ -96,7 +91,7 @@ class Drone:
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):
-        if rospy.get_param('/ignore_onboard', False) is True or True:   # remember to remove or True
+        if rospy.get_param('/ignore_onboard', False) is True or True:   # remember to remove or True both in risk assesment node, ans link monitoring node.
             return True
         try:
             request = OnboardStatusRequest()
@@ -107,22 +102,6 @@ class Drone:
                 print("Drone not ready, response was {}".format(response))
             except:
                 traceback.print_exc()
-
-    #def BatteryAndGPStatus(self):
-    #    print "Battery and GPS status "
-
-    #    if rospy.get_param('/ignore_weather_and_GPS', False) is True or True:
-    #        return True
-
-    #    try:
-    #        request1 = HealthCheckServiceRequest()
-    #        response1 = self.health_check_service(request1)
-    #        print response1.flight
-    #        #add_two_ints = rospy.ServiceProxy('add_two_ints', AddTwoInts)
-    #        return response1.flight
-    #    except rospy.ServiceException as e:
-    #        print "Service call failed :"
-    #        traceback.print_exc()
 
 
     def RiskAssesment(self):

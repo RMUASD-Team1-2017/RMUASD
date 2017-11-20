@@ -169,7 +169,7 @@ bool isFlyingOkay(aed_gcs_logic::HealthCheckService::Request  &req, aed_gcs_logi
     return true;
   }
    else {
-     res.flight = true;   //## kig her !!!!!!!!!!!!!!!!!!!!!!!!!!!
+     res.flight = false;   //## kig her !!!!!!!!!!!!!!!!!!!!!!!!!!!
     return true;
   }
 }
@@ -191,12 +191,6 @@ int main(int argc, char **argv){
 	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 1, globalGpsStateSub);
 	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 1, localGpsStateSub);
   ros::ServiceServer service = nh.advertiseService("drone/Health_check_service", isFlyingOkay);
-  //std::cout<<"BatCondi "<<BatCondi<<std::endl;
-	// Setup ros publisher
-//	ros::Publisher localPosPub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
-
-	// Setup ros service clients
-//	ros::ServiceClient armingClient = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
 
 	// Save time stamp
 	ros::Time last = ros::Time::now();
