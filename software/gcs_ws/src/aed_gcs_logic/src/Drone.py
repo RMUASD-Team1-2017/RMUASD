@@ -17,7 +17,11 @@ class Mission:
         self.goal = None
 
     def plan(self, start_pos):
-        self.goal = self.plan_path(start_pos, self.destination).goal
+        self.waypoints = self.plan_path(start_pos, self.destination).path
+        if len(self.waypoints):
+            self.goal = self.waypoints[-1]
+        else:
+            print("The pathplanner returned an empty path! It may be retarded...")
 
 
 class Drone:
@@ -61,6 +65,7 @@ class Drone:
                 if self.mission and self.mission.goal and self.location["update_time"]:
                     info.mission_id = self.mission.mission_id
                     info.destination = self.mission.goal
+                    info.path = self.mission.waypoints
                 self.status_publish.publish(info)
 
     def position_callback(self, data):
