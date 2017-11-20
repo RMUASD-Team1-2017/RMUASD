@@ -2,6 +2,7 @@
 #This class contains a simple representation of a drone, with status, id, etc.
 import datetime
 from std_msgs.msg import String
+from std_msgs.msg import Float32
 from sensor_msgs.msg import NavSatFix
 import rospy
 import threading
@@ -32,14 +33,14 @@ class Drone:
         rospy.wait_for_service('drone/get_readyness')
         self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
 
-        rospy.wait_for_service('drone/Health_check_service')
-        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
+        #rospy.wait_for_service('drone/Health_check_service')
+        #self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
 
         print " drone.py "
 
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
-        #self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", Float32, self.risk_metric_callback)
+        self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", Float32, self.risk_metric_callback)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
         self.last_pos_update = datetime.datetime.min
@@ -106,28 +107,29 @@ class Drone:
                 print("Drone not ready, response was {}".format(response))
             except:
                 traceback.print_exc()
-    def BatteryAndGPStatus(self):
-        print "Battery and GPS status "
 
-        if rospy.get_param('/ignore_weather_and_GPS', False) is True or True:
-            return True
+    #def BatteryAndGPStatus(self):
+    #    print "Battery and GPS status "
 
+    #    if rospy.get_param('/ignore_weather_and_GPS', False) is True or True:
+    #        return True
+
+    #    try:
+    #        request1 = HealthCheckServiceRequest()
+    #        response1 = self.health_check_service(request1)
+    #        print response1.flight
+    #        #add_two_ints = rospy.ServiceProxy('add_two_ints', AddTwoInts)
+    #        return response1.flight
+    #    except rospy.ServiceException as e:
+    #        print "Service call failed :"
+    #        traceback.print_exc()
+
+
+    def RiskAssesment(self):
+        print "Risk Assesment"
+        print self.risk_metric_sub
         try:
-            request1 = HealthCheckServiceRequest()
-            response1 = self.health_check_service(request1)
-            print response1.flight
-            #add_two_ints = rospy.ServiceProxy('add_two_ints', AddTwoInts)
-            return response1.flight
+            return self.risk_metric_sub
         except rospy.ServiceException as e:
             print "Service call failed :"
             traceback.print_exc()
-
-
-#    def RiskAssesment(self):
-#        print "Risk Assesment"
-#        print self.risk_metric_sub
-#        try:
-#            return self.risk_metric_sub
-#        except rospy.ServiceException as e:
-#            print "Service call failed :"
-#            traceback.print_exc()

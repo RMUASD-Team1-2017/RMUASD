@@ -71,18 +71,6 @@ int batteryFLy(sensor_msgs::BatteryState batteryState){
   if (batteryState.present){
     //std::cout << "Battery is present!" << std::endl;
 
-    //if (batteryState.power_supply_health == 1) {  // 0 is used for test, when there are no connection to the battery. otherwise it is 1.
-      //std::cout<<"Battery condition is good!"<<std::endl;
-    /*  if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_FULL){//) { // two is choosen as test value. the right values are 3 and 4
-      //  std::cout<<"The battery isfully charged!"<<std::endl;
-        BatteryStat = 1;
-      }*/
-    /*  else if (batteryState.power_supply_status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN) {
-        //std::cout<<"The battery power supply status is unknown!"<<std::endl;
-        BatteryStat = 0;
-      }*/
-      //else {
-
 
           if (batteryState.voltage >= MinCellVoltage) {  // should be 4.2 in real life, the 4V is only for test.
 
@@ -93,14 +81,6 @@ int batteryFLy(sensor_msgs::BatteryState batteryState){
              BatteryStat=0;
              return BatteryStat;
           }
-
-    //  }
-      //}
-  //  else if (batteryState.power_supply_health == sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN) {
-    //  std::cout<<"The battery supply health status is unknown!"<<std::endl;
-  //    BatteryStat = 0;
-  //  }
-    //else std::cout<<"Battery is not in good condition! "<<batteryState.power_supply_health<<std::endl, BatteryStat=0;
 
 
   }

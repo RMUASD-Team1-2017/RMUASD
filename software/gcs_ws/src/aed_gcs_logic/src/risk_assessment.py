@@ -17,12 +17,16 @@ class risk_analyzer:
         #self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Int8, queue_size=1)	    	# using int metric
         self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Float32, queue_size=1)		# using float metric
         #s = rospy.Service('risk_assessment/risk_metric', RiskAssesmentService, analyze)
-        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
         rospy.wait_for_service('drone/Health_check_service')
+        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
+
 
 
     def BatteryAndGPStatus(self):
         print "Battery and GPS status "
+        if rospy.get_param('/ignore_weather_and_GPS', False) is True or True:
+                return True
+
         try:
             request1 = HealthCheckServiceRequest()
             response1 = self.health_check_service(request1)
@@ -85,11 +89,11 @@ class risk_analyzer:
         #print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
 
         if  self.BatteryAndGPStatus():
-            #print "Battery and GPS condition is good"
+            print "Battery and GPS condition is good"
         else:
-            #print "Battery and GPS condition is bad"
+            print "Battery and GPS condition is bad"
             risk_metric = 1000000   # is set high, becasue either battery or GPS or both have some problems.
-        risk_metric = 0
+        #risk_metric = 0
         self.risk_metric_pub.publish(risk_metric)
         #return risk_metric
 
