@@ -47,13 +47,13 @@ class mission_handler:
             if not self.drone.rpcIsDroneReady():
                 print("Drone OES is not ready for mission")
                 return
-        #    bat_and_gps_status = self.drone.RiskAssesment()
-        #    print bat_and_gps_status
-        #    print " bat and gps status"
+            bat_and_gps_status = self.drone.RiskAssesment()
+            print bat_and_gps_status
+            print " bat and gps status"
         #    print("Drone is not in mission")
-        #    if  not bat_and_gps_status:
-        #        print("Drone Battery and GPS is not working, or the weather is bad")
-        #        return
+            if  not bat_and_gps_status:
+                print("Drone Battery and GPS is not working, or the weather is bad")
+                return
 
             print("Drone Battery and GPS is working, and the weather is god")
             print  self.drone.set_mission(mission)
