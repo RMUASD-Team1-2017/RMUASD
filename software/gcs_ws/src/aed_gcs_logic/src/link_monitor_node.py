@@ -58,7 +58,7 @@ class link_monitor:
         timer_thread = threading.Timer(1.0, self.gsm_check) #Call ourself in 1 second
         timer_thread.daemon = True
         timer_thread.start()
-        if rospy.get_param('/ignore_onboard', False) is True:
+        if rospy.get_param('/ignore_onboard', False) is True or True:
             return
         req = srv.AbortRequestRequest()
         req.abort_type = srv.AbortRequestRequest.TEST_SOFT_ABORT_RTL

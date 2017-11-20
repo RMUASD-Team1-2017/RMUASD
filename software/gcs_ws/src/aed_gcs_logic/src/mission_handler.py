@@ -47,13 +47,13 @@ class mission_handler:
             if not self.drone.rpcIsDroneReady():
                 print("Drone OES is not ready for mission")
                 return
-            bat_and_gps_status = self.drone.RiskAssesment()
-            print bat_and_gps_status
+            #bat_and_gps_status = self.drone.RiskAssesment()
+            #print bat_and_gps_status
             print " bat and gps status"
         #    print("Drone is not in mission")
-            if  not bat_and_gps_status:
-                print("Drone Battery and GPS is not working, or the weather is bad")
-                return
+        #    if  not bat_and_gps_status:
+        #        print("Drone Battery and GPS is not working, or the weather is bad")
+        #        return
 
             print("Drone Battery and GPS is working, and the weather is god")
             print  self.drone.set_mission(mission)
@@ -76,17 +76,13 @@ class mission_handler:
         self.latitude = data.latitude
         self.longitude = data.longitude
         self.altitude = data.altitude
-        #print ' heejj ',data.latitude
+
     #    velocity_gps = rospy.Subscriber("global_position/raw/gps_vel", Twist, self.Twist_request_callback, queue_size=1)
 
     def calc_velocity(self):
         self.velocity = math.sqrt((self.velocityx * self.velocityx) + (self.velocityy * self.velocityy) + (self.velocityz * self.velocityz))
 
-        #print ' x ' ,self.velocityx
-        #print ' y ' ,self.velocityy
-        #print ' z ' ,self.velocityz
-        #self.velocity = (5 * 5) + (4 * 4) + (3 * 3)
-        #self.velocity = 5
+
         return self.velocity
         #return self.velocity
 

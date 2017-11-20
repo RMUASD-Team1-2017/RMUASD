@@ -39,7 +39,7 @@ class Drone:
 
         self.publish_sem = threading.Semaphore(0)
         self.lock = threading.RLock()
-        #self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", String, self.risk_metric_callback)
+        #self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", Float32, self.risk_metric_callback)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
         self.last_pos_update = datetime.datetime.min
