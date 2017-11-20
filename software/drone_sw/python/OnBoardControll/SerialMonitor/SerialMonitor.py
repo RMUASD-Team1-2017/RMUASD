@@ -10,6 +10,7 @@ from LEDControl.LEDControl import led as debug_led
 class SerialMonitor:
     def __init__(self, port, baud):
         self.run_thread = None
+        self.port = port
         self.last_communication = datetime.datetime.now()
         self.lock = threading.RLock()
         self.serial = serial.Serial(port, baud, timeout = 1)
@@ -21,6 +22,8 @@ class SerialMonitor:
         while True:
             try:
                 time.sleep(1)
+                byte_cnt = len(self.serial.read(100000))
+                logging.debug("Read {} bytes from serial port {}".format(byte_cnt, self.port))
                 if len(self.serial.read()):
                     with self.lock:
                         self.last_communication = datetime.datetime.now()
