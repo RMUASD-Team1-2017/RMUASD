@@ -95,7 +95,7 @@ class Drone:
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):
-        if rospy.get_param('/ignore_onboard', False) is True:# or True:   # remember to remove or True
+        if rospy.get_param('/ignore_onboard', False) is True or True:   # remember to remove or True
             return True
         try:
             request = OnboardStatusRequest()
@@ -109,7 +109,7 @@ class Drone:
     def BatteryAndGPStatus(self):
         print "Battery and GPS status "
 
-        if rospy.get_param('/ignore_weather_and_GPS', False) is True:# or True:
+        if rospy.get_param('/ignore_weather_and_GPS', False) is True or True:
             return True
 
         try:
