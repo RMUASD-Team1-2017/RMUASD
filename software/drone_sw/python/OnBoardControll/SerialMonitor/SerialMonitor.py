@@ -21,7 +21,7 @@ class SerialMonitor:
         while True:
             try:
                 time.sleep(1)
-                if len(self.serial.read(1000)):
+                if len(self.serial.read()):
                     with self.lock:
                         self.last_communication = datetime.datetime.now()
 

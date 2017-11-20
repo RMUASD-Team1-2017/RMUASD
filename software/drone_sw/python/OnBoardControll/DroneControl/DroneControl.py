@@ -27,7 +27,7 @@ class DroneController:
             self.vehicle = connect(connectstring, rate = 1, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
         else:
             self.vehicle = connect(port, rate = 1, baud = baud, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
-        print("Connected")
+        logging.info("Connected")
         lock = threading.RLock()
         self.lock = lock
         self.motor_enable_pins = { True : GPIO(pin = HIGH_MOTOR_PIN, direction = "out"),
