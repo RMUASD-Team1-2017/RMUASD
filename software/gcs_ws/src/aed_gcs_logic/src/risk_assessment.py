@@ -77,17 +77,17 @@ class risk_analyzer:
         obstacle_conditions = number_of_golfers + number_of_other_obstacles
 
         # compute final risk metric:
-        print 'For location ' + str(latitude) + ',' + str(longitude) + ':'
-        print 'Current wind speed is: ' + str(current_wind_speed)
-        print 'Current rain amount is: ' + str(current_rain_intensity)
-        print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'  # lower percentage value, is better.
+        #print 'For location ' + str(latitude) + ',' + str(longitude) + ':'
+        #print 'Current wind speed is: ' + str(current_wind_speed)
+        #print 'Current rain amount is: ' + str(current_rain_intensity)
+        #print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'  # lower percentage value, is better.
         risk_metric = weather_conditions + obstacle_conditions						# this should be normalised
-        print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
+        #print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
 
         if  self.BatteryAndGPStatus():
-            print "Battery and GPS condition is good"
+            #print "Battery and GPS condition is good"
         else:
-            print "Battery and GPS condition is bad"
+            #print "Battery and GPS condition is bad"
             risk_metric = 1000000   # is set high, becasue either battery or GPS or both have some problems.
         risk_metric = 0
         self.risk_metric_pub.publish(risk_metric)
