@@ -47,11 +47,13 @@ class mission_handler:
             if not self.drone.rpcIsDroneReady():
                 print("Drone OES is not ready for mission")
                 return
-            bat_and_gps_status = self.drone.RiskAssesment()
+            bat_and_gps_status = self.drone.RiskAssesment()   # it is a float32 between 0 an 100. or in special cases 100000
             print bat_and_gps_status
             print " bat and gps status"
             print("Drone is not in mission")
-            if  not bat_and_gps_status:
+            #if rospy.get_param('/ignore_weather_and_GPS', False) is True or True :
+            #        return True
+            if  bat_and_gps_status > 100 :
                 print("Drone Battery and GPS is not working, or the weather is bad")
                 return
 

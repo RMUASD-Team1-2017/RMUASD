@@ -91,7 +91,7 @@ class Drone:
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):
-        if rospy.get_param('/ignore_onboard', False) is True or True:   # remember to remove or True both in risk assesment node, ans link monitoring node.
+        if rospy.get_param('/ignore_onboard', False) is True:   # remember to remove "or True" both in risk assesment node, ans link monitoring node.
             return True
         try:
             request = OnboardStatusRequest()
@@ -106,7 +106,7 @@ class Drone:
 
     def RiskAssesment(self):
         print "Risk Assesment"
-        print self.risk_metric_sub
+        #print self.risk_metric_sub
         try:
             return self.risk_metric_sub
         except rospy.ServiceException as e:
