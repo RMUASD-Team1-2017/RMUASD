@@ -33,7 +33,7 @@ class Drone:
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
         self.status_publish = rospy.Publisher("drone/status", userinfo, queue_size=10)
         self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
-        
+
         self.risk_metric_sub = rospy.Subscriber("/risk_assessment/risk_metric", Float32, self.risk_metric_callback)
 
         self.publish_sem = threading.Semaphore(0)
@@ -89,12 +89,8 @@ class Drone:
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):
-<<<<<<< HEAD
-        if rospy.get_param('/ignore_onboard', False) is True:   # remember to remove "or True" both in risk assesment node, ans link monitoring node.
-=======
 
-        if rospy.get_param('/ignore_onboard', False) is True:
->>>>>>> 4ca738675d731420ff25309223fb974817958084
+        if rospy.get_param('/ignore_onboard', False) is True:   # remember to remove "or True" both in risk assesment node, ans link monitoring node.
             return True
         try:
             request = OnboardStatusRequest()
@@ -114,4 +110,3 @@ class Drone:
         except rospy.ServiceException as e:
             print "Service call failed :"
             traceback.print_exc()
-

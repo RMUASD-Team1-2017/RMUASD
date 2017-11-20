@@ -1,8 +1,13 @@
 #include <sensor_msgs/BatteryState.h>
+#include <mavros_msgs/BatteryStatus.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <aed_gcs_logic/HealthCheckService.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
-
+#include "std_msgs/String.h"
+int BatCondi = 0;
+int GPSCondition = 0;
+float MinCellVoltage = 11.5;
 using namespace std;
 
 void printBatteryInformation(sensor_msgs::BatteryState batteryState){
@@ -175,7 +180,7 @@ int main(int argc, char **argv){
 	// Setup ros subscribtions
 	ros::Subscriber mavrosBatteryStateSub = nh.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 10, batteryStateSub);
 	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 10, globalGpsStateSub);
-	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10, localGpsStateSub);
+	//ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10, localGpsStateSub);
 
 
 	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 1, localGpsStateSub);

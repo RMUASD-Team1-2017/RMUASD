@@ -187,12 +187,12 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
 
                 mission_srv_temp.request.waypoints.push_back(temp_wp);
             }
-			if(calc_dist_between_waypoints(data->path[data->path.size()-2].latitude,data->path[data->path.size()-1].latitude,data->path[data->path.size()-2].longitude,data->path[data->path.size()-1].longitude)>500){
-				temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
-       		 	temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
-        		temp_wp.z_alt = 20;
-				mission_srv_temp.request.waypoints.push_back(temp_wp);
-			}
+			         if(calc_dist_between_waypoints(data->path[data->path.size()-2].latitude,data->path[data->path.size()-1].latitude,data->path[data->path.size()-2].longitude,data->path[data->path.size()-1].longitude)>500){
+				             temp_wp.x_lat =  data->path[data->path.size()-2].latitude + ((data->path[data->path.size()-1].latitude - data->path[data->path.size()-2].latitude)/2);
+       		 	         temp_wp.y_long = data->path[data->path.size()-2].longitude + ((data->path[data->path.size()-1].longitude - data->path[data->path.size()-2].longitude)/2);
+        		         temp_wp.z_alt = 20;
+                     mission_srv_temp.request.waypoints.push_back(temp_wp);
+			               }
 
 
             temp_wp.x_lat = data->path[data->path.size() - 1].latitude;
