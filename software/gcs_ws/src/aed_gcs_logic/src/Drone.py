@@ -32,9 +32,9 @@ class Drone:
         rospy.wait_for_service('drone/get_readyness')
         self.drone_ready_service = rospy.ServiceProxy("drone/get_readyness", OnboardStatus)
 
+        rospy.wait_for_service('drone/Health_check_service')
+        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
 
-        #self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
-        #rospy.wait_for_service('drone/Health_check_service')
         print " drone.py "
 
         self.publish_sem = threading.Semaphore(0)
