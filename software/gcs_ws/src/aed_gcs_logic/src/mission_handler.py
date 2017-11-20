@@ -51,12 +51,10 @@ class mission_handler:
             print bat_and_gps_status
             print " bat and gps status"
             print("Drone is not in mission")
-            #if rospy.get_param('/ignore_weather_and_GPS', False) is True or True :
-            #        return True
-            #print bat_and_gps_status
-            #if  bat_and_gps_status > 100 :
-            #    print("Drone Battery and GPS is not working, or the weather is bad")
-            #    return
+            if rospy.get_param('/ignore_weather_and_GPS', False) is False:  # if set to False 
+                if  bat_and_gps_status > 100 :
+                    print("Drone Battery and GPS is not working, or the weather is bad")
+                    return
 
             print("Drone Battery and GPS is working, and the weather is god")
             #print  self.drone.set_mission(mission) # don't call two times !!!!
