@@ -1,8 +1,13 @@
 #include <sensor_msgs/BatteryState.h>
+#include <mavros_msgs/BatteryStatus.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <aed_gcs_logic/HealthCheckService.h>
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
-
+#include "std_msgs/String.h"
+int BatCondi = 0;
+int GPSCondition = 0;
+float MinCellVoltage = 11.5;
 using namespace std;
 
 void printBatteryInformation(sensor_msgs::BatteryState batteryState){
@@ -57,6 +62,59 @@ void printBatteryInformation(sensor_msgs::BatteryState batteryState){
   std::cout << "Serial number" << batteryState.serial_number << std::endl;
 }
 
+
+int batteryFLy(sensor_msgs::BatteryState batteryState){
+  int BatteryStat = 0;
+  if (batteryState.present){
+    //std::cout << "Battery is present!" << std::endl;
+
+
+          if (batteryState.voltage >= MinCellVoltage) {  // should be 4.2 in real life, the 4V is only for test.
+
+            BatteryStat = 1;
+          }
+          else {
+          //  std::cout<<"Battery are not fully charged!"<<std::endl;
+             BatteryStat=0;
+             return BatteryStat;
+          }
+
+
+  }
+  else std::cout << "Battery is not present!" << std::endl, BatteryStat=0;
+
+  //std::cout<<" stat! "<<BatteryStat<<std::endl;
+  //std::cout << "Location: " << batteryState.location << std::endl;
+  return BatteryStat;
+}
+
+int GPSstate(sensor_msgs::NavSatFix globalGpsState){
+  int GPSConnection = 0;
+  if (globalGpsState.status.status == sensor_msgs::NavSatStatus::STATUS_NO_FIX) {
+    GPSConnection = 0;
+    std::cout << "There are No GPS fix! " << std::endl;
+  }
+  else {
+
+    if (globalGpsState.status.status == sensor_msgs::NavSatStatus::STATUS_SBAS_FIX) {
+      GPSConnection = 1;
+      std::cout << "There are SBAS fix " << std::endl;
+    }
+    else if (globalGpsState.status.status == sensor_msgs::NavSatStatus::STATUS_GBAS_FIX) {
+      GPSConnection = 1;
+      std::cout << "There are GBAS fix " << std::endl;
+    }
+    else {
+      //std::cout << "There are GPS fix "  << std::endl;
+      GPSConnection = 1;
+    }
+
+  }
+  return GPSConnection;
+
+}
+
+
 void printGlobalGpsState(sensor_msgs::NavSatFix globalGpsState){
   std::cout << "GPS status: ";
   switch (globalGpsState.status.status){
@@ -92,7 +150,24 @@ void localGpsStateSub(const nav_msgs::Odometry::ConstPtr &msg){
 sensor_msgs::NavSatFix globalGpsState;
 void globalGpsStateSub(const sensor_msgs::NavSatFix::ConstPtr &msg){
 	globalGpsState = *msg;
-  printGlobalGpsState(globalGpsState);
+
+  //printGlobalGpsState(globalGpsState);
+  GPSCondition = GPSstate(globalGpsState);
+  //std::cout<<"GPS condition "<<GPSCondition<<std::endl;
+}
+
+bool isFlyingOkay(aed_gcs_logic::HealthCheckService::Request  &req, aed_gcs_logic::HealthCheckService::Response &res){
+
+
+  if (BatCondi == 1 && GPSCondition == 1) {
+    res.flight = true;
+    return true;
+  }
+   else {
+     res.flight = false;   //## Look here, it should be False !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    return true;
+  }
+
 }
 
 int main(int argc, char **argv){
@@ -105,13 +180,12 @@ int main(int argc, char **argv){
 	// Setup ros subscribtions
 	ros::Subscriber mavrosBatteryStateSub = nh.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 10, batteryStateSub);
 	ros::Subscriber mavrosGlobalGpsStateSub = nh.subscribe<sensor_msgs::NavSatFix>("/mavros/global_position/global", 10, globalGpsStateSub);
-	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10, localGpsStateSub);
+	//ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10, localGpsStateSub);
 
-	// Setup ros publisher
-//	ros::Publisher localPosPub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
 
-	// Setup ros service clients
-//	ros::ServiceClient armingClient = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+	ros::Subscriber mavrosLocalGpsStateSub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 1, localGpsStateSub);
+  ros::ServiceServer service = nh.advertiseService("drone/Health_check_service", isFlyingOkay);
+
 
 	// Save time stamp
 	ros::Time last = ros::Time::now();
