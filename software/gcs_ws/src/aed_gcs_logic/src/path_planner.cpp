@@ -13,7 +13,18 @@
 #include <2D.hpp>
 #endif
 
-path_planner::path_planner(std::string geo_fence, std::string inner_geofence, std::string landingspotFile){
+
+Coord::Coord(double _latitude, double _longitude)
+{
+  this->geo.latitude = _latitude;
+  this->geo.longitude = _longitude;
+  GeographicLib::GeoCoords geoCoords(this->geo.latitude, this->geo.longitude);
+  this->utm.x = geoCoords.Easting();
+  this->utm.y = geoCoords.Northing();
+}
+
+path_planner::path_planner(std::string geo_fence, std::string inner_geofence, std::string landingspotFile)
+{
     loadMap(geo_fence);
     loadGeofence(inner_geofence);
     loadLandingSpots(landingspotFile);
@@ -51,19 +62,6 @@ void path_planner::printList(std::vector<Node> &list){
     for (int i = 0; i < list.size(); i++) printNode(&list[i]);
 }
 
-UTM path_planner::geo2utm(GeoCoord &geo){
-    GeographicLib::GeoCoords geoCoords(geo.latitude, geo.longitude);
-    UTM utm;
-    utm.x = geoCoords.Easting();
-    utm.y = geoCoords.Northing();
-    return utm;
-}
-
-void path_planner::generateUTMCoords(){
-    for (int i = 0; i < geofence.size(); i++){
-        geofence[i].first.utm = geo2utm(geofence[i].first.geo);
-    }
-}
 
 // Load comma-seperated file into list of nodes for the geofence
 void path_planner::loadGeofence(std::string fileName){
@@ -76,19 +74,15 @@ void path_planner::loadGeofence(std::string fileName){
 
     file >> j;
 
-    Coord prev;
+    Coord prev = Coord(0,0);
 
     for (int i = 0; i < j["polygon"].size(); i++){
-        Coord tempCoord;
-        tempCoord.geo.latitude = j["polygon"][i][0];
-        tempCoord.geo.longitude = j["polygon"][i][1];
+        Coord tempCoord(j["polygon"][i][0], j["polygon"][i][1]); //lat, lon
         if (i) geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
         prev = tempCoord;
     }
 
-    Coord tempCoord;
-    tempCoord.geo.latitude = j["polygon"][0][0];
-    tempCoord.geo.longitude = j["polygon"][0][1];
+    Coord tempCoord(j["polygon"][0][0], j["polygon"][0][1]); //lat, lon
     geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
 }
 
@@ -104,10 +98,8 @@ void path_planner::loadMap(std::string fileName){
     file >> j;
 
     for (int i = 0; i < j["polygon"].size(); i++){
-        Coord tempCoord;
-        tempCoord.geo.latitude = j["polygon"][i][0];
-        tempCoord.geo.longitude = j["polygon"][i][1];
-        nodes.push_back(Node(tempCoord, i));
+      Coord tempCoord(j["polygon"][i][0], j["polygon"][i][1]); //lat, lon
+      nodes.push_back(Node(tempCoord, i));
     }
 
     for (int i = 1; i < nodes.size(); i++){
@@ -129,9 +121,7 @@ void path_planner::loadLandingSpots(std::string fileName){
 
     for (int i = 0; i < j["points"].size(); i++){
         std::cout << i << ", " << j["points"].size() << std::endl;
-        Coord tempCoord;
-        tempCoord.geo.latitude = j["points"][i][0];
-        tempCoord.geo.longitude = j["points"][i][1];
+        Coord tempCoord(j["points"][i][0], j["points"][i][1]); //lat, lon
         landingspot.push_back(tempCoord);
     }
 }
@@ -262,9 +252,6 @@ std::vector<Node*> path_planner::reconstruc_path(Node *current){
 // The standard A* algorithm
 std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
 
-    startCoord.utm = geo2utm(startCoord.geo);
-    goalCoord.utm = geo2utm(goalCoord.geo);
-
     nodes.push_back(Node(startCoord, -1));
     Node *start = &nodes.back();
 
@@ -307,8 +294,8 @@ std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
 }
 
 Coord path_planner::getNearestLandingSpot(Coord goal){
-    target = goal;
-    Coord nearest;
+    __attribute__((unused)) Coord target = goal;
+    Coord nearest(0, 0);
     double distance = std::numeric_limits<double>::max();
     for (int i = 0; i < landingspot.size(); i++){
         if (dist(&goal, &landingspot[i]) < distance){

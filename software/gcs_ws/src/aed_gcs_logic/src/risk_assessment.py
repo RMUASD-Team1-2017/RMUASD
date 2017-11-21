@@ -23,6 +23,7 @@ class risk_analyzer:
 
     def BatteryAndGPStatus(self):
         #print "Battery and GPS status "
+
         if rospy.get_param('/ignore_weather_and_GPS', False) is True:
                 return True
 

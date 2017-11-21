@@ -21,7 +21,11 @@ class Mission:
         self.goal = None
 
     def plan(self, start_pos):
-        self.goal = self.plan_path(start_pos, self.destination).goal
+        self.waypoints = self.plan_path(start_pos, self.destination).path
+        if len(self.waypoints):
+            self.goal = self.waypoints[-1]
+        else:
+            print("The pathplanner returned an empty path! It may be retarded...")
 
 
 class Drone:
@@ -75,6 +79,7 @@ class Drone:
                 if self.mission and self.mission.goal and self.location["update_time"]:
                     info.mission_id = self.mission.mission_id
                     info.destination = self.mission.goal
+                    info.path = self.mission.waypoints
                 self.status_publish.publish(info)
 
     def position_callback(self, data):
@@ -89,6 +94,7 @@ class Drone:
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):
+
 
         if rospy.get_param('/ignore_onboard', False) is True:   # remember to remove "or True" both in risk assesment node, ans link monitoring node.
             return True

@@ -23,16 +23,11 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
         geofence_file,        // geofence
         landing_spots_file         // landing spots
     );
-    Coord start;
-    start.geo.latitude = req.start.latitude;
-    start.geo.longitude = req.start.longitude;
-    Coord goal;
-    goal.geo.latitude = req.end.latitude;
-    goal.geo.longitude = req.end.longitude;
+    Coord start(req.start.latitude, req.start.longitude);
+    Coord goal(req.end.latitude, req.end.longitude);
     Coord landingPos = planner.getNearestLandingSpot(goal);
 
-    res.goal.latitude = landingPos.geo.latitude;
-    res.goal.longitude = landingPos.geo.longitude;
+    Coord redirectedGoal(landingPos.geo.latitude, landingPos.geo.longitude);
 
     std::vector<Node*> waypoints = planner.aStar(start, landingPos);
 
@@ -45,6 +40,7 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
         node.latitude = waypoints[i]->coord.geo.latitude;
         node.longitude = waypoints[i]->coord.geo.longitude;
         path.path.push_back(node);
+        res.path.push_back(node);
     }
 
     std::cout << std::endl;
@@ -57,8 +53,8 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     std::cout << "\tLongtitude: " << req.end.longitude << std::endl;
     std::cout << std::endl;
     std::cout << "Redirected goal position:" << std::endl;
-    std::cout << "\tLatitude:   " << res.goal.latitude << std::endl;
-    std::cout << "\tLongtitude: " << res.goal.longitude << std::endl;
+    std::cout << "\tLatitude:   " << redirectedGoal.geo.latitude << std::endl;
+    std::cout << "\tLongtitude: " << redirectedGoal.geo.longitude << std::endl;
     std::cout << std::endl;
     std::cout << "The path consists of " << waypoints.size() << " waypoints:" << std::endl;
 
@@ -70,7 +66,6 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
         std::cout << "\tLongtitude: " << waypoints[i]->coord.geo.longitude << std::endl;
     }
     std::cout << std::endl;
-
     pub.publish(path);
     return true;
 }

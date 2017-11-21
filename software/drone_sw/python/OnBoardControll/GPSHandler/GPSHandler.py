@@ -13,6 +13,7 @@ class GPSHandler:
         self.run_thread = None
         self.last_fix = None
         self.location = None
+        self.port = port
         self.lock = threading.RLock()
         print(port, baud, simulation_filepath)
         if simulation_filepath:
@@ -50,7 +51,7 @@ class GPSHandler:
                         from RMQHandler.DroneProducer import droneproducer
                         droneproducer.publish_external_gps(info = info, location = self.location)
             except:
-                logging.exception("Got exception in GPS Handler")
+                logging.exception("Got exception in GPS Handler, port {}".format(self.port))
     def serial_get_line(self):
         return self.serial.readline()
 
