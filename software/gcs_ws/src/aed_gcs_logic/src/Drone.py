@@ -90,7 +90,7 @@ class Drone:
 
     def rpcIsDroneReady(self):
 
-        if rospy.get_param('/ignore_onboard', False) is True or True:   # remember to remove "or True" both in risk assesment node, ans link monitoring node.
+        if rospy.get_param('/ignore_onboard', False) is True:   # remember to remove "or True" both in risk assesment node, ans link monitoring node.
             return True
         try:
             request = OnboardStatusRequest()
