@@ -7,12 +7,24 @@
 #include <exception>
 #include "aed_gcs_logic/json.hpp"
 #include "aed_gcs_logic/path_planner.h"
+#include <GeographicLib/GeoCoords.hpp>
 
 #ifdef SDL
 #include <2D.hpp>
 #endif
 
-path_planner::path_planner(std::string geo_fence, std::string inner_geofence, std::string landingspotFile){
+
+Coord::Coord(double _latitude, double _longitude)
+{
+  this->geo.latitude = _latitude;
+  this->geo.longitude = _longitude;
+  GeographicLib::GeoCoords geoCoords(this->geo.latitude, this->geo.longitude);
+  this->utm.x = geoCoords.Easting();
+  this->utm.y = geoCoords.Northing();
+}
+
+path_planner::path_planner(std::string geo_fence, std::string inner_geofence, std::string landingspotFile)
+{
     loadMap(geo_fence);
     loadGeofence(inner_geofence);
     loadLandingSpots(landingspotFile);
@@ -21,7 +33,8 @@ path_planner::path_planner(std::string geo_fence, std::string inner_geofence, st
 // Debugging function for printing all specs of a node
 void path_planner::printNode(Node *node){
     std::cout << "Id: " << node->id << "\t";
-    std::cout << "Coord: " << node->coord.latitude << ", " << node->coord.longitude << "\t";
+    std::cout << "Geo coord: " << node->coord.geo.latitude << ", " << node->coord.geo.longitude << "\t";
+    std::cout << "UTM coord: " << node->coord.utm.x << ", " << node->coord.utm.y << "\t";
     if (node->cameFrom == NULL) std::cout << "From: Unknown!" << "\t";
     else std::cout << "From: " << node->cameFrom->id << "\t";
     std::cout << "G Score: " << node->gScore << "\t";
@@ -35,7 +48,7 @@ void path_planner::printNode(Node *node){
 
 // Debugging function for printing all specs of a coord
 void path_planner::printCoord(Coord coord){
-    std::cout << "Coord: " << coord.latitude << ", " << coord.longitude << std::endl;
+    std::cout << "Coord: " << coord.geo.latitude << ", " << coord.geo.longitude << std::endl;
     std::cout << std::endl;
 }
 
@@ -49,6 +62,7 @@ void path_planner::printList(std::vector<Node> &list){
     for (int i = 0; i < list.size(); i++) printNode(&list[i]);
 }
 
+
 // Load comma-seperated file into list of nodes for the geofence
 void path_planner::loadGeofence(std::string fileName){
     geofence = std::vector<std::pair<Coord, Coord>>();
@@ -60,21 +74,15 @@ void path_planner::loadGeofence(std::string fileName){
 
     file >> j;
 
-    Coord prev;
+    Coord prev = Coord(0,0);
 
     for (int i = 0; i < j["polygon"].size(); i++){
-        Coord tempCoord;
-        tempCoord.latitude = j["polygon"][i][0];
-        tempCoord.longitude = j["polygon"][i][1];
-        tempCoord.altitude = 0;
+        Coord tempCoord(j["polygon"][i][0], j["polygon"][i][1]); //lat, lon
         if (i) geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
         prev = tempCoord;
     }
 
-    Coord tempCoord;
-    tempCoord.latitude = j["polygon"][0][0];
-    tempCoord.longitude = j["polygon"][0][1];
-    tempCoord.altitude = 0;
+    Coord tempCoord(j["polygon"][0][0], j["polygon"][0][1]); //lat, lon
     geofence.push_back(std::pair<Coord, Coord>(prev, tempCoord));
 }
 
@@ -90,11 +98,8 @@ void path_planner::loadMap(std::string fileName){
     file >> j;
 
     for (int i = 0; i < j["polygon"].size(); i++){
-        Coord tempCoord;
-        tempCoord.latitude = j["polygon"][i][0];
-        tempCoord.longitude = j["polygon"][i][1];
-        tempCoord.altitude = 0;
-        nodes.push_back(Node(tempCoord, i));
+      Coord tempCoord(j["polygon"][i][0], j["polygon"][i][1]); //lat, lon
+      nodes.push_back(Node(tempCoord, i));
     }
 
     for (int i = 1; i < nodes.size(); i++){
@@ -116,23 +121,20 @@ void path_planner::loadLandingSpots(std::string fileName){
 
     for (int i = 0; i < j["points"].size(); i++){
         std::cout << i << ", " << j["points"].size() << std::endl;
-        Coord tempCoord;
-        tempCoord.latitude = j["points"][i][0];
-        tempCoord.longitude = j["points"][i][1];
-        tempCoord.altitude = j["points"][i][2];
+        Coord tempCoord(j["points"][i][0], j["points"][i][1]); //lat, lon
         landingspot.push_back(tempCoord);
     }
 }
 
 bool path_planner::intersection(std::pair<Coord, Coord> l1, std::pair<Coord, Coord> l2){
-    double x1 = l1.first.latitude;
-    double y1 = l1.first.longitude;
-    double x2 = l1.second.latitude;
-    double y2 = l1.second.longitude;
-    double x3 = l2.first.latitude;
-    double y3 = l2.first.longitude;
-    double x4 = l2.second.latitude;
-    double y4 = l2.second.longitude;
+    double x1 = l1.first.geo.latitude;
+    double y1 = l1.first.geo.longitude;
+    double x2 = l1.second.geo.latitude;
+    double y2 = l1.second.geo.longitude;
+    double x3 = l2.first.geo.latitude;
+    double y3 = l2.first.geo.longitude;
+    double x4 = l2.second.geo.latitude;
+    double y4 = l2.second.geo.longitude;
     double ta =
         ((y3 - y4) * (x1 - x3) + (x4 - x3) * (y1 - y3)) /
         ((x4 - x3) * (y1 - y2) - (x1 - x2) * (y4 - y3));
@@ -143,14 +145,14 @@ bool path_planner::intersection(std::pair<Coord, Coord> l1, std::pair<Coord, Coo
 }
 
 double path_planner::getAngle(Coord c1, Coord c2){
-    double x = c2.longitude - c1.longitude;
-    double y = c2.latitude - c1.latitude;
+    double x = c2.geo.longitude - c1.geo.longitude;
+    double y = c2.geo.latitude - c1.geo.latitude;
     return atan2(y, x);
 }
 
 int path_planner::getIndex(Coord coord){
     for (int i = 0; i < geofence.size(); i++){
-        if (coord.latitude == geofence[i].first.latitude && coord.longitude == geofence[i].first.longitude) return i;
+        if (coord.geo.latitude == geofence[i].first.geo.latitude && coord.geo.longitude == geofence[i].first.geo.longitude) return i;
     }
     return -1;
 }
@@ -229,12 +231,12 @@ bool path_planner::inList(std::vector<Node*> &list, Node *node){
 
 // Return euclidean distance between two nodes
 double path_planner::dist(Node *start, Node *goal){
-    return sqrt(pow(start->coord.latitude - goal->coord.latitude, 2) + pow(start->coord.longitude - goal->coord.longitude, 2));
+    return sqrt(pow(start->coord.utm.x - goal->coord.utm.x, 2) + pow(start->coord.utm.y - goal->coord.utm.y, 2));
 }
 
 // Return euclidean distance between two nodes
 double path_planner::dist(Coord *start, Coord *goal){
-    return sqrt(pow(start->latitude - goal->latitude, 2) + pow(start->longitude - goal->longitude, 2));
+    return sqrt(pow(start->utm.x - goal->utm.x, 2) + pow(start->utm.y - goal->utm.y, 2));
 }
 
 // Recunstruct path after A*-algorithm
@@ -253,6 +255,7 @@ std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
     nodes.push_back(Node(startCoord, -1));
     Node *start = &nodes.back();
 
+
     nodes.push_back(Node(goalCoord, -2));
     Node *goal = &nodes.back();
 
@@ -262,6 +265,8 @@ std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
     std::vector<Node*> openSet = {start};
     start->gScore = 0;
     start->fScore = dist(start, goal);
+
+
 
     while (openSet.size()){
 
@@ -289,8 +294,8 @@ std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
 }
 
 Coord path_planner::getNearestLandingSpot(Coord goal){
-    target = goal;
-    Coord nearest;
+    __attribute__((unused)) Coord target = goal;
+    Coord nearest(0, 0);
     double distance = std::numeric_limits<double>::max();
     for (int i = 0; i < landingspot.size(); i++){
         if (dist(&goal, &landingspot[i]) < distance){
@@ -310,10 +315,10 @@ void path_planner::draw(int size){
     double maxY = std::numeric_limits<double>::min();
 
     for (int i = 0; i < nodes.size(); i++){
-        minX = std::min(minX, nodes[i].coord.longitude);
-        maxX = std::max(maxX, nodes[i].coord.longitude);
-        minY = std::min(minY, nodes[i].coord.latitude);
-        maxY = std::max(maxY, nodes[i].coord.latitude);
+        minX = std::min(minX, nodes[i].coord.geo.longitude);
+        maxX = std::max(maxX, nodes[i].coord.geo.longitude);
+        minY = std::min(minY, nodes[i].coord.geo.latitude);
+        maxY = std::max(maxY, nodes[i].coord.geo.latitude);
     }
 
     double scale = size * 0.9 / std::max(maxX - minX, maxY - minY);
@@ -328,18 +333,18 @@ void path_planner::draw(int size){
     window->background(Black);
     Vector offset(size / 20, size / 20);
 
-    Vector v1 = (Vector(target.longitude, target.latitude) + scaleOffset) * scale + offset;
+    Vector v1 = (Vector(target.geo.longitude, target.geo.latitude) + scaleOffset) * scale + offset;
     window->circle(Vector(v1.x, height - v1.y), 10, Black, Cyan);
 
     for (int i = 0; i < landingspot.size(); i++){
-        Vector v1 = (Vector(landingspot[i].longitude, landingspot[i].latitude) + scaleOffset) * scale + offset;
+        Vector v1 = (Vector(landingspot[i].geo.longitude, landingspot[i].geo.latitude) + scaleOffset) * scale + offset;
         window->circle(Vector(v1.x, height - v1.y), 10, Black, Yellow);
     }
 
     for (int i = 0; i < nodes.size(); i++){
-        Vector v1 = Vector(nodes[i].coord.longitude, nodes[i].coord.latitude);
+        Vector v1 = Vector(nodes[i].coord.geo.longitude, nodes[i].coord.geo.latitude);
         for (int j = 0; j < nodes[i].link.size(); j++){
-            Vector v2 = Vector(nodes[i].link[j]->coord.longitude, nodes[i].link[j]->coord.latitude);
+            Vector v2 = Vector(nodes[i].link[j]->coord.geo.longitude, nodes[i].link[j]->coord.geo.latitude);
             Vector v3 = (v1 + scaleOffset) * scale + offset;
             Vector v4 = (v2 + scaleOffset) * scale + offset;
             if (v3.y < 0 || v4.y < 0);// std::cout << "Error " << i << ", " << j << std::endl;
@@ -348,23 +353,23 @@ void path_planner::draw(int size){
     }
 
     for (int i = 0; i < geofence.size(); i++){
-        Vector v1 = Vector(geofence[i].first.longitude, geofence[i].first.latitude);
-        Vector v2 = Vector(geofence[i].second.longitude, geofence[i].second.latitude);
+        Vector v1 = Vector(geofence[i].first.geo.longitude, geofence[i].first.geo.latitude);
+        Vector v2 = Vector(geofence[i].second.geo.longitude, geofence[i].second.geo.latitude);
         Vector v3 = (v1 + scaleOffset) * scale + offset;
         Vector v4 = (v2 + scaleOffset) * scale + offset;
         window->line(Vector(v3.x, height - v3.y), Vector(v4.x, height - v4.y), Red);
     }
 
     for (int i = 1; i < path.size(); i++){
-        Vector v1 = Vector(path[i - 1]->coord.longitude, path[i - 1]->coord.latitude);
-        Vector v2 = Vector(path[i]->coord.longitude, path[i]->coord.latitude);
+        Vector v1 = Vector(path[i - 1]->coord.geo.longitude, path[i - 1]->coord.geo.latitude);
+        Vector v2 = Vector(path[i]->coord.geo.longitude, path[i]->coord.geo.latitude);
         Vector v3 = (v1 + scaleOffset) * scale + offset;
         Vector v4 = (v2 + scaleOffset) * scale + offset;
         window->line(Vector(v3.x, height - v3.y), Vector(v4.x, height - v4.y), Blue);
     }
 
     for (int i = 0; i < nodes.size(); i++){
-        Vector v1 = (Vector(nodes[i].coord.longitude, nodes[i].coord.latitude) + scaleOffset) * scale + offset;
+        Vector v1 = (Vector(nodes[i].coord.geo.longitude, nodes[i].coord.geo.latitude) + scaleOffset) * scale + offset;
         window->text(Vector(v1.x, height - v1.y), nodes[i].id, White);
     }
 

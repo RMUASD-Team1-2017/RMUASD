@@ -78,6 +78,7 @@ add_dependencies(health_check_node ${PROJECT_NAME}_generate_messages_cpp)
 add_executable(path_planner_node src/path_planner_node.cpp src/path_planner.cpp)
 target_link_libraries(path_planner_node
     ${catkin_LIBRARIES}
+    ${GeographicLib_LIBRARIES}
 )
 add_dependencies(path_planner_node ${PROJECT_NAME}_generate_messages_cpp)
 

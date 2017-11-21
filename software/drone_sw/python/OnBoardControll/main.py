@@ -1,7 +1,37 @@
 #!/usr/bin/env python
 #Python service running on the drone can do soft (RTL) and hard (motor shutdown) abort,
 #And send requested telemetry
+
 from __future__ import print_function
+##Profiling start
+# import yappi
+# import atexit
+# yappi.set_clock_type('wall')
+# yappi.start()
+# @atexit.register
+# def finish_yappi():
+#     print('[YAPPI STOP]')
+#     yappi.stop()
+#
+#     print('[YAPPI WRITE]')
+#     stats = yappi.get_func_stats()
+#     for stat_type in ['pstat', 'callgrind', 'ystat']:
+#       print('writing /tmp/pants.{}'.format(stat_type))
+#       stats.save('/tmp/pants.{}'.format(stat_type), type=stat_type)
+#
+#     print('\n[YAPPI FUNC_STATS]')
+#     print('writing /tmp/pants.func_stats')
+#     with open('/tmp/pants.func_stats', 'wb') as fh:
+#       stats.print_all(out=fh)
+#
+#     print('\n[YAPPI THREAD_STATS]')
+#     print('writing /tmp/pants.thread_stats')
+#     tstats = yappi.get_thread_stats()
+#     with open('/tmp/pants.thread_stats', 'wb') as fh:
+#       tstats.print_all(out=fh)
+
+##profiling end
+
 
 import kombu
 
@@ -28,10 +58,10 @@ def __main__():
     parser.add_argument('--rmqpass', nargs='?', default="drone", type=str)
     parser.add_argument('--rmqhost', nargs='?', default="drone.stefanrvo.dk", type=str)
     parser.add_argument('--mavport', nargs='?', default='/dev/ttyLP2', type=str)
-    parser.add_argument('--mavbaud', nargs='?', default=921600, type=int)
+    parser.add_argument('--mavbaud', nargs='?', default=115200, type=int)
     parser.add_argument('--droneid', nargs='?', default=1, type=int)
     parser.add_argument('--loglevel', nargs='?', default="INFO", type=str)
-    parser.add_argument('--gpsport', nargs='?', default="/dev/ttyACM0", type=str)
+    parser.add_argument('--gpsport', nargs='?', default="/dev/ttyGPS", type=str)
     parser.add_argument('--gpsbaud', nargs='?', default=115200, type=int)
     parser.add_argument("--ignoregps", action='store_true')
     parser.add_argument('--simufile', nargs='?', default=None, type=str)
@@ -40,6 +70,7 @@ def __main__():
     parser.add_argument('--connectstring', nargs='?', default="", type=str)
     parser.add_argument('--syslog', nargs='?', default=1, type=int)
     parser.add_argument('--ledmode', nargs='?', default="BLINK", type=str)
+    parser.add_argument('--real_hard_abort', action='store_true')
     args = parser.parse_args()
     debug_led.initialise(args.ledmode)
 
@@ -51,7 +82,7 @@ def __main__():
 
     #Setup mavlink connection
     logging.info("Establishing mavlink connection")
-    drone = DroneController(port = args.mavport, baud = args.mavbaud, connectstring = args.connectstring)
+    drone = DroneController(port = args.mavport, baud = args.mavbaud, connectstring = args.connectstring, real_hard_abort = args.real_hard_abort)
     logging.info("Established mavlink connection")
     if not args.ignoregps:
         gps_handler = GPSHandler(args.gpsport, args.gpsbaud, args.simufile)
