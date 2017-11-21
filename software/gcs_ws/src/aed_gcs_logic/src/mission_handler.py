@@ -8,6 +8,7 @@ from ros_rabbitmq_bridge.msg import mission_request
 from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import NavSatFix
 import math
+from std_msgs.msg import Float32
 from  geopy.distance import vincenty    # pip install geopy
 
 #gps_velocity = 1
@@ -22,6 +23,8 @@ class mission_handler:
         self.mission_request_sub = rospy.Subscriber("drone/missionrequest", mission_request, self.mission_request_callback, queue_size=10)
         self.velocity_gps = rospy.Subscriber("/mavros/local_position/velocity", TwistStamped, self.twist_request_callback, queue_size=10)
         self.position_sub = rospy.Subscriber("mavros/global_position/global", NavSatFix, self.position_callback, queue_size=10)
+        self.velocity_publish = rospy.Publisher('/VelocityPub',Float32 , queue_size=1)
+        #self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Float32, queue_size=1)
 
         self.gps_velocity = 0
         self.velocityx = 0
@@ -97,7 +100,7 @@ class mission_handler:
         if self.velocity > 0:
             time = self.distance/self.velocity
             time_min = time/60
-
+        self.risk_metric_pub.publish(time_min)
         return time_min
 
 
