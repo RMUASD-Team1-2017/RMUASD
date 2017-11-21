@@ -5,11 +5,11 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "control_logic_node");
     ros::NodeHandle n;
-    ros::Rate rate(5.0);
+    ros::Rate rate(1.0);
 
     drone_handler handler;
 
-    bool drone_ready = (handler.wait_for_connection() && handler.setup()) ? true : false;
+    bool drone_ready = (handler.wait_for_connection() /*&& handler.setup()*/) ? true : false;
 
     if(drone_ready){
         std::cout << "Drone Ready!" << std::endl << "Starting control..." << std::endl;

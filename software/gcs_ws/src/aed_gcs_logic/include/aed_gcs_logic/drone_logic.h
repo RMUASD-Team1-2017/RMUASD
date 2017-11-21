@@ -50,7 +50,7 @@ using namespace GeographicLib;
 
 // Time between multiple service/topic calls/pubs
 #define MAVROS_WAIT_TIME         0.01 // [s]
-#define ALLOWED_START_TIME       20 // [s]
+#define ALLOWED_START_TIME       60 // [s]
 
 enum droneState {
     IDLE = 1,

@@ -154,7 +154,7 @@ void drone_handler::mission_callback(const aed_gcs_logic::waypoints::ConstPtr& d
     double timeSinceLastGPS = ros::Time::now().toSec() - this->timeFromLastPosition;
     std::cout << "Time since last GPS: " << timeSinceLastGPS << std::endl;
 
-    if(!this->received_mission && timeSinceLastGPS < 2){
+    if(!this->received_mission && timeSinceLastGPS < 10){
         if(data->path.size() >= 1){
             mavros_msgs::WaypointPush mission_srv_temp;
             mavros_msgs::Waypoint temp_wp;
@@ -424,7 +424,7 @@ bool drone_handler::run_state_machine()
         case WAIT_FOR_CONTINUE:
             if(abortType == CONTINUE){
                 if(this->mode == "AUTO.MISSION"){
-                    std::cout << "Continuing on mission" std::endl;
+                    std::cout << "Continuing on mission" << std::endl;
                     this->abortType = NOTHING;
                     this->state = ON_MISSION;
                 }
