@@ -1,6 +1,11 @@
  <launch>
     <!-- Do we want to ignore the opinion of the OES? -->
+
     <param name="/ignore_onboard" type="bool" value="false" />
+	<param name="/ignore_weather_and_GPS" type="bool" value="false" />
+
+
+
     <!-- Paths to fence files and landing spots -->
     <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/polygon_fence.fence" />
     <param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/polygon_inner_fence.fence" />

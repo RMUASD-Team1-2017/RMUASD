@@ -15,6 +15,29 @@ class risk_analyzer:
         #self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Int8, queue_size=1)	    	# using int metric
         self.risk_metric_pub = rospy.Publisher('/risk_assessment/risk_metric', Float32, queue_size=1)		# using float metric
 
+        #s = rospy.Service('risk_assessment/risk_metric', RiskAssesmentService, analyze)
+        rospy.wait_for_service('drone/Health_check_service')
+        self.health_check_service = rospy.ServiceProxy("drone/Health_check_service", HealthCheckService)
+
+
+
+    def BatteryAndGPStatus(self):
+        #print "Battery and GPS status "
+        if rospy.get_param('/ignore_weather_and_GPS', False) is True or True:
+                return True
+
+        try:
+            request1 = HealthCheckServiceRequest()
+            response1 = self.health_check_service(request1)
+            print response1.flight
+            #add_two_ints = rospy.ServiceProxy('add_two_ints', AddTwoInts)
+            return response1.flight
+        except rospy.ServiceException as e:
+            print "Service call failed :"
+            traceback.print_exc()
+
+
+
     def analyze(self):
         #print "Analyzing..."
 
@@ -58,12 +81,19 @@ class risk_analyzer:
         obstacle_conditions = number_of_golfers + number_of_other_obstacles
 
         # compute final risk metric:
+
         print 'For location ' + str(latitude) + ',' + str(longitude) + ':'
         #print 'Current wind speed is: ' + str(current_wind_speed)
         #print 'Current rain amount is: ' + str(current_rain_intensity)
         #print 'Current weather conditions are ' + str(weather_conditions) + '%' + ' ideal'
         risk_metric = weather_conditions + obstacle_conditions						# this should be normalised
         print 'Risk metric is ' + str(risk_metric) + '%' + ' ideal'
+
+        if  not self.BatteryAndGPStatus():
+            risk_metric = 1000000
+            print "Battery and GPS condition is bad"
+
+
         self.risk_metric_pub.publish(risk_metric)
 
 
