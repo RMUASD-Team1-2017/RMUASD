@@ -353,7 +353,8 @@ bool drone_handler::run_state_machine()
 		case START_MISSION:
             /* START MISSION */
             this->current_height = this->altitude;
-            if(this->start_height + 2 < this->current_height){  // when the drone is 2 meters over its start position, it is assumed, that the mission is started succesfully.
+            //std::cout << "I am here " << std::endl;
+            if(this->start_height + 2 < this->current_height){  // when the drone is 2 meters above its start position, it is assumed, that the mission is started succesfully.
                 this->state = ON_MISSION; // the drone is in the air
                 std::cout << "On Mission" << std::endl;
             }
