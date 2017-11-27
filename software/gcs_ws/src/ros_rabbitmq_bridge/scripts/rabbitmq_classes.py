@@ -20,6 +20,9 @@ import uuid
 import threading
 import traceback
 
+
+MAX_HEARTBEAT_AGE = datetime.timedelta(seconds = 5)
+
 class ros_to_rabbitmq_bridge:
     def __init__(self, rabbitmq_host, bridge_settings):
         #Bridge settings is a list of dicts with the following content:
@@ -142,6 +145,25 @@ class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
         message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], body)
         settings["publisher"].publish(message)
         ch.basic_ack(delivery_tag = method.delivery_tag)
+
+    @classmethod
+    def heartbeat_callback(self, *args, **kwargs):
+        if len(args) != 4:
+            return
+        ch = args[0]
+        method = args[1]
+        body = args[3]
+        data = json.loads(body)
+        time = datetime.datetime.strptime(data["time"], "%Y/%m/%d_%H:%M:%S")
+        heartbeat_age = abs(datetime.datetime.now() - time)
+        if heartbeat_age > datetime.datetime.now() - time:
+            print("Heartbeat from OES was too old. Age was: {}".format(heartbeat_age))
+        else:
+            settings = kwargs["settings"]
+            message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], "{}")
+            settings["publisher"].publish(message)
+        ch.basic_ack(delivery_tag = method.delivery_tag)
+
 
     @classmethod
     def navsatfix_callback(self, *args, **kwargs):
