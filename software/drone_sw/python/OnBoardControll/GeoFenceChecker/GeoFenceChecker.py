@@ -8,12 +8,10 @@ import logging
 from pyproj import Proj
 projection = Proj(init="epsg:7419") #EPSG:7416 / ETRS89 / UTM zone 32N (http://spatialreference.org/ref/epsg/7416/)
 from threading import RLock
-RTL_DISTANCE = 1
-LAND_DISTANCE = 20
-HARD_ABORT_DISTANCE = 40
-RTL_HEIGHT = 50
-LAND_HEIGHT = 80
-HARD_ABORT_HEIGHT = 100
+LAND_DISTANCE = 1
+HARD_ABORT_DISTANCE = 100
+LAND_HEIGHT = 100
+HARD_ABORT_HEIGHT = 150
 
 class GeoFence:
     def __init__(self, fencefile):
@@ -60,7 +58,7 @@ class GeoFenceChecker:
             distance = self.fence.getDistance(gpsposition)
             logging.debug("Geofence distance is {}".format(distance))
             altitude = gpsposition["alt"]
-            if distance == 0.0 and altitude < RTL_HEIGHT:
+            if distance == 0.0 and altitude < LAND_HEIGHT:
                 self.within_fence = True
                 return
 
@@ -68,8 +66,6 @@ class GeoFenceChecker:
                 self.drone.hardabort()
             elif distance >= LAND_DISTANCE or altitude >= LAND_HEIGHT:
                 self.drone.land()
-            elif distance >= RTL_DISTANCE or altitude >= RTL_HEIGHT:
-                self.drone.softabort()
             self.within_fence = False
 
 
