@@ -17,6 +17,7 @@ MODE_DEBUG = 0x21
 import serbus
 import time
 import threading
+from gpioControl.gpioControl import GPIO
 
 DEBUGCOLORS = { "GPS_INTERNAL_FIX" : (OUTER_RING, 'r'),
                 "GPS_EXTERNAL_FIX" : (OUTER_RING, 'g'),
@@ -27,6 +28,11 @@ DEBUGCOLORS = { "GPS_INTERNAL_FIX" : (OUTER_RING, 'r'),
                 "GCS_GSM"          : (INNER_RING, 'g'),
                 "RESERVED_1"       : (INNER_RING, 'b'), #GSM PPP interface up.
               }
+# SIRENPIN = 0
+
+
+# class SirenControl:
+#     def __init__(self, mode = "OFF"):
 
 
 class LEDControl:
