@@ -28,17 +28,25 @@ DEBUGCOLORS = { "GPS_INTERNAL_FIX" : (OUTER_RING, 'r'),
                 "GCS_GSM"          : (INNER_RING, 'g'),
                 "RESERVED_1"       : (INNER_RING, 'b'), #GSM PPP interface up.
               }
-# SIRENPIN = 0
+SIRENPIN = 46
 
 
-# class SirenControl:
-#     def __init__(self, mode = "OFF"):
-
+class SirenControl:
+    def __init__(self, mode = "OFF"):
+        self.mode = mode
+        self.pin = GPIO(pin = SIRENPIN, direction = "out")
+        self.on()
+    def on(self):
+        if self.mode == "ON":
+            self.pin.set(state = True)
+    def off(self):
+        self.pin.set(state = False)
 
 class LEDControl:
     def __init__(self) :
         self.initialised = False
         self.lock = threading.RLock()
+        self.siren = None
 
     def initialise(self, ledmode = MODE_BLINK):
         with self.lock:
@@ -51,10 +59,14 @@ class LEDControl:
             if not ledmode in [MODE_OFF, MODE_BLINK, MODE_ROTATE, MODE_DEBUG, "DUMMY"]:
                 raise Exception("An invalid mode was selected for LED_Control")
             self.ledmode = ledmode
+            if ledmode in [MODE_BLINK, MODE_ROTATE]:
+                self.siren = SirenControl(mode = "ON")
+
             if not self.ledmode == "DUMMY":
                 self.i2cbus = serbus.I2CDev(I2C_DEV_NUM)
                 self.i2cbus.open()
                 self.i2cbus.write(I2C_ADDRESS, [self.ledmode, 0x00, 0x00, 0x00])
+
             self.initialised = True
 
     def __readColor(self, ring):
