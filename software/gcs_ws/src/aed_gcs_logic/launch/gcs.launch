@@ -8,9 +8,15 @@
 
 
     <!-- Paths to fence files and landing spots -->
-    <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield.fence" />
-    <param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield_inner.fence" />
-    <param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield.rally" />
+    <!-- Model airfield -->
+    <!-- param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield.fence" / -->
+    <!-- param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield_inner.fence" / -->
+    <!-- param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield.rally" / -->
+    <!-- Golf course -->
+    <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/polygon_fence.fence" />
+    <param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/polygon_inner_fence.fence" />
+    <param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/testrally.rally" />
+	
 
     <!-- rabbitMQ bridge node -->
     <node pkg="ros_rabbitmq_bridge" type="rabbitmq_bridge.py" name="rabbitmq_bridge" output="screen">
