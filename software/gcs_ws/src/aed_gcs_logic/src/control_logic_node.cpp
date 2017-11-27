@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "control_logic_node");
     ros::NodeHandle n;
-    ros::Rate rate(1.0);
+    ros::Rate rate(0.5);
 
     drone_handler handler;
 

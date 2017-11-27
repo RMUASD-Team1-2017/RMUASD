@@ -29,8 +29,8 @@ class link_monitor:
         self.lastHeartbeatMavros = rospy.get_rostime().secs
         self.lastHeartbeatGSM = rospy.get_rostime().secs
 
-        self.acceptedDowntimeMavros = 20 # Seconds
-        self.acceptedDowntimeGSM = 20 # Seconds
+        self.acceptedDowntimeMavros = 10 # Seconds
+        self.acceptedDowntimeGSM = 10 # Seconds
 
     def mavros_heartbeat_callback(self, data):
         if data.connected == True :
@@ -61,7 +61,7 @@ class link_monitor:
         if rospy.get_param('/ignore_onboard', False) is True or True :
             return
         req = srv.AbortRequestRequest()
-        req.abort_type = srv.AbortRequestRequest.TEST_SOFT_ABORT_RTL
+        req.abort_type = srv.AbortRequestRequest.SOFT_ABORT_LAND
         timeDiff = rospy.get_rostime().secs - self.lastHeartbeatGSM
         if timeDiff > self.acceptedDowntimeGSM:
             self.link_monitor_GSM.publish(True)

@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     rospy.init_node('rabbitmq_bridge', anonymous=True)
     heartbeat_pulbisher = rospy.Publisher("gcs/heartbeat", Empty, queue_size=10)
-    heartbeat_thread(heartbeat_pulbisher, 1.0)
+    heartbeat_thread(heartbeat_pulbisher, 2.0)
     readyness_servicehandler = ServiceHandler()
 
     ros_to_rabbit_settings = [

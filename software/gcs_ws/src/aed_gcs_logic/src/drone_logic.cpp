@@ -288,11 +288,13 @@ bool drone_handler::run_state_machine()
 
             // If no, send the misison.
             if(pull.response.wp_received == this->mission_srv.request.waypoints.size()){
-                this->state = ARM;
+                std::cout << "Setting mode to AUTO.MISSION" << std::endl;
+                this->state = AUTO_MISSION;
             }
             else{
                 std::unique_lock<std::mutex> lock(this->mission_m);
                 this->mission_push_client.call(this->mission_srv);
+                this->state = AUTO_MISSION;
             }
 
             // Check timer
@@ -321,8 +323,8 @@ bool drone_handler::run_state_machine()
             }
 
 			if(this->armed){   // if armed go to next state.
-                std::cout << "Setting mode to AUTO.MISSION" << std::endl;
-                this->state = AUTO_MISSION;
+                std::cout << "Mission Started" << std::endl;
+                this->state = START_MISSION;
             }
 			else if(ros::Time::now() - arm_time > ros::Duration(1.0)){
 				this->state = ARM;
@@ -334,10 +336,9 @@ bool drone_handler::run_state_machine()
             /* AUTO MISSION */
 
             if(this->mode == "AUTO.MISSION"){
-                this->state = START_MISSION;
+                this->state = ARM;
                 this->start_height = this->altitude;
                 this->start_time = ros::Time::now();
-                std::cout << "Mission Started" << std::endl;
             }
             else{
                 set_mode("AUTO.MISSION");
