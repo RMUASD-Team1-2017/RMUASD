@@ -10,10 +10,10 @@ import datetime
 from pyproj import Proj
 import numpy
 projection = Proj(init="epsg:7419") #EPSG:7416 / ETRS89 / UTM zone 32N (http://spatialreference.org/ref/epsg/7416/)
-FIX_LOST_AGE = datetime.timedelta(seconds = 5)
+FIX_LOST_AGE = datetime.timedelta(seconds = 4)
 
-FAILURE_DEVIATION_BASE = 15 #We never fail if gps difference is below 15 meters
-FAILURE_DEVIATION_DELAY = 10 #We allow 10 extra meters of deviation per second
+FAILURE_DEVIATION_BASE = 25 #We never fail if gps difference is below 15 meters
+FAILURE_DEVIATION_DELAY = 15 #We allow 10 extra meters of deviation per second
 # All differences is betwee max and min
 from LEDControl.LEDControl import led as debug_led
 class GPSMonitor:
