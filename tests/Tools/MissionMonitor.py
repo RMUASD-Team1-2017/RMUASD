@@ -52,6 +52,7 @@ def monitor_progress(args, url, drone, goal_precision, goal_height, deadline):
             if args.return_when_landed and current_location["altitude"] - start_location["altitude"] < goal_height:
                 if args.print_goal:
                     print("{},{},{}".format(current_location["latitude"], current_location["longitude"], current_location["altitude"]))
+                logging.info("test {},  {}".format(current_location["altitude"], start_location["altitude"] ))
                 sys.stdout.flush()
                 sys.exit(0)
             if (current_distance < goal_precision and current_location["altitude"] - start_location["altitude"] < goal_height) \
