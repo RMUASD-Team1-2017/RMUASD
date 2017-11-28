@@ -246,6 +246,7 @@ bool drone_handler::run_state_machine()
             /* IDLE STATE */
             std::unique_lock<std::mutex> lock(this->mission_m);
             if(this->received_mission){
+                std::cout << "Clearing mission" << std::endl;
                 this->state = CLEAR_MISSION;
             }
             break;}
@@ -256,13 +257,13 @@ bool drone_handler::run_state_machine()
             break;
 
         case CLEAR_MISSION:{
-            std::cout << "Clearing mission" << std::endl;
             //Check whether there is any mission on the drone now.
             mavros_msgs::WaypointPull pull;
             this->mission_pull_client.call(pull);
 
             // If no, send the misison.
             if(pull.response.wp_received == 0){
+                std::cout << "Sending Mission" << std::endl;
                 this->state = SEND_MISSION;
             }
             else{
@@ -280,7 +281,6 @@ bool drone_handler::run_state_machine()
 
 		case SEND_MISSION:{
             /* SEND MISSION TO DRONE */
-            std::cout << "Sending Mission" << std::endl;
 
             // Check whether mission is there or not.
             mavros_msgs::WaypointPull pull;
@@ -288,11 +288,13 @@ bool drone_handler::run_state_machine()
 
             // If no, send the misison.
             if(pull.response.wp_received == this->mission_srv.request.waypoints.size()){
-                this->state = ARM;
+                std::cout << "Setting mode to AUTO.MISSION" << std::endl;
+                this->state = AUTO_MISSION;
             }
             else{
                 std::unique_lock<std::mutex> lock(this->mission_m);
                 this->mission_push_client.call(this->mission_srv);
+                this->state = AUTO_MISSION;
             }
 
             // Check timer
@@ -321,7 +323,8 @@ bool drone_handler::run_state_machine()
             }
 
 			if(this->armed){   // if armed go to next state.
-                this->state = AUTO_MISSION;
+                std::cout << "Mission Started" << std::endl;
+                this->state = START_MISSION;
             }
 			else if(ros::Time::now() - arm_time > ros::Duration(1.0)){
 				this->state = ARM;
@@ -331,13 +334,11 @@ bool drone_handler::run_state_machine()
 
         case AUTO_MISSION:
             /* AUTO MISSION */
-            std::cout << "Setting mode to AUTO.MISSION" << std::endl;
 
             if(this->mode == "AUTO.MISSION"){
-                this->state = START_MISSION;
+                this->state = ARM;
                 this->start_height = this->altitude;
                 this->start_time = ros::Time::now();
-                std::cout << "Mission Started" << std::endl;
             }
             else{
                 set_mode("AUTO.MISSION");
@@ -435,6 +436,7 @@ bool drone_handler::run_state_machine()
             }
             else if(!armed){
                 this->abortType = NOTHING;
+                std::cout << "Mission arborted!" << std::endl;
                 this->state = MISSION_DONE;
             }
             break;
