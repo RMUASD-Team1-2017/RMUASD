@@ -1,6 +1,6 @@
  <launch>
     <!-- Do we want to ignore the opinion of the OES? -->
-    <param name="/ignore_onboard" type="bool" value="true" />
+    <param name="/ignore_onboard" type="bool" value="false" />
     <param name="/ignore_weather_and_GPS" type="bool" value="true" />
 
 
