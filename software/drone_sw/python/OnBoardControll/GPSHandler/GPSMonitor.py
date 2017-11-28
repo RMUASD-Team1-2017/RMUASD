@@ -14,6 +14,7 @@ FIX_LOST_AGE = datetime.timedelta(seconds = 4)
 
 FAILURE_DEVIATION_BASE = 25 #We never fail if gps difference is below 15 meters
 FAILURE_DEVIATION_DELAY = 15 #We allow 10 extra meters of deviation per second
+FAILURE_DEVIATION_MAX = 75 #Max difference no matter fix time
 # All differences is betwee max and min
 from LEDControl.LEDControl import led as debug_led
 class GPSMonitor:
@@ -70,7 +71,7 @@ class GPSMonitor:
                 p1, p2, distance = self.find_furthest_points(locations)
                 time_diff = abs(p1[1] - p2[1])
                 #Test if distance is withing limits
-                if distance > FAILURE_DEVIATION_BASE + FAILURE_DEVIATION_DELAY * time_diff.total_seconds():
+                if distance > FAILURE_DEVIATION_BASE + FAILURE_DEVIATION_DELAY * time_diff.total_seconds() or distance > FAILURE_DEVIATION_MAX:
                     logging.error("GPS deviation was {} meters, which is outside limits. Aborting!".format(distance))
                     self.abort_function()
                     isNominal = False
