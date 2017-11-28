@@ -294,7 +294,6 @@ bool drone_handler::run_state_machine()
             else{
                 std::unique_lock<std::mutex> lock(this->mission_m);
                 this->mission_push_client.call(this->mission_srv);
-                this->state = AUTO_MISSION;
             }
 
             // Check timer
