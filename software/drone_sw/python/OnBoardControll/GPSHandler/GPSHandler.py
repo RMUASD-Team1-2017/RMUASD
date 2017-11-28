@@ -66,4 +66,4 @@ class GPSHandler:
 
     def get_last_fix(self):
         with self.lock:
-            return "WARNING", self.location, self.last_fix
+            return "FAIL", self.location, self.last_fix

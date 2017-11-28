@@ -66,6 +66,8 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
         std::cout << "\tLongtitude: " << waypoints[i]->coord.geo.longitude << std::endl;
     }
     std::cout << std::endl;
+    
+    path.path.erase(path.path.begin());
     pub.publish(path);
     return true;
 }

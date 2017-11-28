@@ -65,8 +65,6 @@ def __main__():
     parser.add_argument('--gpsbaud', nargs='?', default=115200, type=int)
     parser.add_argument("--ignoregps", action='store_true')
     parser.add_argument('--simufile', nargs='?', default=None, type=str)
-    parser.add_argument('--gcsport', nargs='?', default="/dev/ttyLP1", type=str)
-    parser.add_argument('--gcsbaud', nargs='?', default=57600, type=int)
     parser.add_argument('--connectstring', nargs='?', default="", type=str)
     parser.add_argument('--syslog', nargs='?', default=1, type=int)
     parser.add_argument('--ledmode', nargs='?', default="BLINK", type=str)
@@ -87,16 +85,15 @@ def __main__():
     if not args.ignoregps:
         gps_handler = GPSHandler(args.gpsport, args.gpsbaud, args.simufile)
         gps_handler.start_handler()
-        gps_monitor = GPSMonitor([drone.get_last_fix, gps_handler.get_last_fix], drone.softabort)
+        gps_monitor = GPSMonitor([drone.get_last_fix, gps_handler.get_last_fix], drone.land)
         gps_monitor.start_monitor()
     else: #We fake and use the onboard gps two times.
-        gps_monitor = GPSMonitor([drone.get_last_fix, drone.get_last_fix], drone.softabort)
+        gps_monitor = GPSMonitor([drone.get_last_fix, drone.get_last_fix], drone.land)
         gps_monitor.start_monitor()
 
 
     connection_monitor = ConnectionMonitor( gcs_network_check = DroneConsumer.get_last_gcs_heartbeat,
                                             network_check = network_monitor.get_last_connection,
-                                            telemetry_gcs_check = SerialMonitor(args.gcsport, args.gcsbaud).get_last_communication,
                                             telemetry_oes_check =  drone.get_last_communication,
                                             drone = drone
                                             )

@@ -5,6 +5,7 @@
 #include "mavros_msgs/Waypoint.h"
 #include "mavros_msgs/WaypointPush.h"
 #include "mavros_msgs/WaypointPull.h"
+#include "mavros_msgs/WaypointClear.h"
 #include "mavros_msgs/CommandCode.h"
 #include "mavros_msgs/CommandBool.h"
 #include "mavros_msgs/SetMode.h"
@@ -47,6 +48,10 @@ using namespace GeographicLib;
 #define TYPE_HARD_ABORT          3
 #define CONTINUE                 4
 
+// Time between multiple service/topic calls/pubs
+#define MAVROS_WAIT_TIME         0.01 // [s]
+#define ALLOWED_START_TIME       60 // [s]
+
 enum droneState {
     IDLE = 1,
     FAILED = 2,
@@ -61,7 +66,8 @@ enum droneState {
     WAIT_FOR_CONTINUE = 11,
 	WAITING_STATE = 12,
     AUTO_MISSION = 13,
-    WAIT_FOR_MAVROS = 14
+    WAIT_FOR_MAVROS = 14,
+    CLEAR_MISSION = 15
 };
 
 
@@ -81,6 +87,8 @@ class drone_handler
         ros::ServiceServer restart_server;
         ros::ServiceClient param_set_client; // = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
         ros::ServiceClient mission_push_client; // = n.serviceClient<mavros_msgs::WaypointPush>("mavros/mission/push");
+        ros::ServiceClient mission_pull_client; // = n.serviceClient<mavros_msgs::WaypointPull>("mavros/mission/pull");
+        ros::ServiceClient mission_clear_client; // = n.serviceClient<mavros_msgs::WaypointPull>("mavros/mission/pull");
         ros::ServiceClient arming_client; // n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
         ros::ServiceClient set_mode_client; // n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
         ros::Subscriber state_sub; // n.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
@@ -108,9 +116,12 @@ class drone_handler
         bool connected;
         bool armed;
         bool mavrosConnection;
+        double timeMissionReceived;
+        double timeFromLastPosition;
 		double latitude;
 		double longitude;
 		double altitude;
+        const double missionHeight = 10; // Meters
 
         std::string mode;
         double current_height = 0;
@@ -124,12 +135,9 @@ class drone_handler
 
         mavros_msgs::WaypointPush mission_srv;
         std::mutex mission_m;
-
-        std::condition_variable path_cv;
         std::mutex path_m;
 
-        std::condition_variable reset_cv;
-        std::mutex reset_m;
+        bool reset = false;
 };
 
 // NAMESPACE END

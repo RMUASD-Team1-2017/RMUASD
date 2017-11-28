@@ -1,0 +1,8 @@
+<launch>
+    <node pkg="mavros" type="mavros_node" name="mavros" clear_params="true" respawn="true">
+            <param name="fcu_url" value="udp://:14540@127.0.0.1:14557" /> # Simulation
+            <param name="gcs_url" value="" />
+            <param name="target_system_id" value="1" />
+            <param name="target_component_id" value="1" />
+    </node>
+</launch>

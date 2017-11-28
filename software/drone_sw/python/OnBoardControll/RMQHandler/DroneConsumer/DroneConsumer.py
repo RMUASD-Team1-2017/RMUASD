@@ -6,6 +6,8 @@ import datetime
 import threading
 from GeoFenceChecker.GeoFenceChecker import fencechecker
 
+MAX_HEARTBEAT_AGE = datetime.timedelta(seconds = 5)
+
 class DroneAbortWorker(ConsumerProducerMixin):
     def __init__(self, connection, drone_id, drone, gps_monitor, connection_monitor):
         self.drone_id = drone_id
@@ -84,8 +86,12 @@ class DroneAbortWorker(ConsumerProducerMixin):
     def GCSHeartbeatCallback(self, body, message):
         drone_id, data, time = self.extract_common_data(body, message)
         logging.debug("Recieved GCS heartbeat")
-        with self.heartbeat_lock:
-            self.last_gcs_heartbeat = datetime.datetime.now()
+        heartbeat_age = abs(datetime.datetime.now() - time)
+        if heartbeat_age > datetime.datetime.now() - time:
+            logging.warning("Discarding GCS heartbeat because it was too old. Age was: {}".format(heartbeat_age))
+        else:
+            with self.heartbeat_lock:
+                self.last_gcs_heartbeat = datetime.datetime.now()
         message.ack()
 
     def rpc_is_ready(self, body, message):

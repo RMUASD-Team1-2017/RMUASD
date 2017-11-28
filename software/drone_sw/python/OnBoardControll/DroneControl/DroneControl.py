@@ -27,6 +27,7 @@ class DroneController:
             self.vehicle = connect(connectstring, rate = 1, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
         else:
             self.vehicle = connect(port, rate = 1, baud = baud, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10) #Ten year timeout, we want to continue trying to reconnect no matter what
+        self.setup_parameters()
         logging.info("Connected")
         lock = threading.RLock()
         self.lock = lock
@@ -151,6 +152,9 @@ class DroneController:
             for pintype in self.motor_enable_pins.keys():
                 self.motor_enable_pins[pintype].set(state = not pintype)
 
+
+    def setup_parameters(self):
+        self.vehicle.parameters['NAV_DLL_ACT'] = 0
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):
     """
