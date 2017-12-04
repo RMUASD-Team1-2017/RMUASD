@@ -156,7 +156,7 @@ class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
         data = json.loads(body)
         time = datetime.datetime.strptime(data["time"], "%Y/%m/%d_%H:%M:%S")
         heartbeat_age = abs(datetime.datetime.now() - time)
-        if heartbeat_age > datetime.datetime.now() - time:
+        if heartbeat_age > MAX_HEARTBEAT_AGE:
             print("Heartbeat from OES was too old. Age was: {}".format(heartbeat_age))
         else:
             settings = kwargs["settings"]

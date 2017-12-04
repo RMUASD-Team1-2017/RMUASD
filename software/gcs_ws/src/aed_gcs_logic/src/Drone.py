@@ -101,6 +101,7 @@ class Drone:
         try:
             request = OnboardStatusRequest()
             response = self.drone_ready_service(request)
+            print("Drone response: {}".format(response))
             return json.loads(response.response.data)["ready"]
         except Exception as e:
             try:
