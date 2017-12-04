@@ -24,7 +24,7 @@ class DroneProducer:
 
     def publish_onboard_gps(self, info, location):
         #Publish the info about the delution, sattelites etc, as well as the location
-        time_str = datetime.datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
+        time_str = datetime.datetime.utcnow().strftime("%Y/%m/%d_%H:%M:%S")
         data = {"time" : time_str}
         data["info"] = info
         data["location"] = location
@@ -34,7 +34,7 @@ class DroneProducer:
 
     def publish_external_gps(self, info, location):
         #Publish the info about the delution, sattelites etc, as well as the location
-        time_str = datetime.datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
+        time_str = datetime.datetime.utcnow().strftime("%Y/%m/%d_%H:%M:%S")
         data = {"time" : time_str}
         data["info"] = info
         data["location"] = location
@@ -69,7 +69,7 @@ class DroneProducer:
         timer = threading.Timer(2.0, self.heartbeat)
         timer.daemon = True
         timer.start() #Call ourself in 1 second
-        time_str = datetime.datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
+        time_str = datetime.datetime.utcnow().strftime("%Y/%m/%d_%H:%M:%S")
         data = {"time" : time_str}
         logging.debug("Publishing heartbeat")
 

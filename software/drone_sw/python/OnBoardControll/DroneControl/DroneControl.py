@@ -39,7 +39,7 @@ class DroneController:
         self.vehicle.drone_controller = self #Hack to access this class from the vehicle in the quite strange decorator functions
         self.location = None
         self.last_fix = None
-        self.last_communication = datetime.datetime.now()
+        self.last_communication = datetime.datetime.utcnow()
         self.battery = 0
 
         @self.vehicle.on_message('SYS_STATUS')
@@ -51,7 +51,7 @@ class DroneController:
                 logging.warning("Battery voltage is too low, trying to land immediately!")
                 self.drone_controller.land()
             with lock:
-                self.drone_controller.last_communication = datetime.datetime.now()
+                self.drone_controller.last_communication = datetime.datetime.utcnow()
 
         @self.vehicle.on_message('HOME_POSITION')
         def listener(self, name, home_position):
@@ -65,7 +65,7 @@ class DroneController:
                 self.drone_controller.location = {"lat" : self.location.global_relative_frame.lat, "lon" : self.location.global_relative_frame.lon, "alt" : self.location.global_relative_frame.alt}
                 if not None in self.drone_controller.location.values():
                     got_fix = True
-                    self.drone_controller.last_fix = datetime.datetime.now()
+                    self.drone_controller.last_fix = datetime.datetime.utcnow()
 
             debug_led.setDebugColor(debug_type = "GPS_INTERNAL_FIX", status = got_fix)
 

@@ -68,7 +68,7 @@ class ros_to_rabbitmq_bridge:
         #Simple sends a json message containing the current time
         settings = args[0]
         channel = args[1]
-        time_str = datetime.datetime.now().strftime("%Y/%m/%d_%H:%M:%S")
+        time_str = datetime.datetime.utcnow().strftime("%Y/%m/%d_%H:%M:%S")
         data = {"time" : time_str}
         channel.basic_publish(exchange=settings["exchange"], routing_key=settings["routing_key"], body=json.dumps(data))
 
@@ -94,8 +94,8 @@ class ServiceHandler:
                                     correlation_id = corr_id,
                                     ),
             )
-            start_wait = datetime.datetime.now()
-            while datetime.datetime.now() < start_wait + datetime.timedelta(seconds=10):
+            start_wait = datetime.datetime.utcnow()
+            while datetime.datetime.utcnow() < start_wait + datetime.timedelta(seconds=10):
                 with self.lock:
                     response = self.responses[corr_id]
                 if response is not None:
@@ -155,7 +155,7 @@ class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
         body = args[3]
         data = json.loads(body)
         time = datetime.datetime.strptime(data["time"], "%Y/%m/%d_%H:%M:%S")
-        heartbeat_age = abs(datetime.datetime.now() - time)
+        heartbeat_age = abs(datetime.datetime.utcnow() - time)
         if heartbeat_age > MAX_HEARTBEAT_AGE:
             print("Heartbeat from OES was too old. Age was: {}".format(heartbeat_age))
         else:

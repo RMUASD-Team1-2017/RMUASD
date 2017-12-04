@@ -63,9 +63,12 @@ class LEDControl:
                 self.siren = SirenControl(mode = "ON")
 
             if not self.ledmode == "DUMMY":
-                self.i2cbus = serbus.I2CDev(I2C_DEV_NUM)
-                self.i2cbus.open()
-                self.i2cbus.write(I2C_ADDRESS, [self.ledmode, 0x00, 0x00, 0x00])
+                try:
+                    self.i2cbus = serbus.I2CDev(I2C_DEV_NUM)
+                    self.i2cbus.open()
+                    self.i2cbus.write(I2C_ADDRESS, [self.ledmode, 0x00, 0x00, 0x00])
+                except IOError:
+                    logging.exception("Exception when trying to change LED colors")
 
             self.initialised = True
 
@@ -77,13 +80,11 @@ class LEDControl:
         if not self.initialised or self.ledmode == "DUMMY" or not ring in [OUTER_RING, MIDDLE_RING, INNER_RING]:
             return
         with self.lock:
-            i = 0
-            while i < 10:
-                try:
-                    self.i2cbus.write(I2C_ADDRESS, [ring] + color)
-                    return
-                except IOError:
-                    time.sleep(0.01)
+            try:
+                self.i2cbus.write(I2C_ADDRESS, [ring] + color)
+                return
+            except IOError:
+                logging.exception("Exception when trying to change LED colors")
 
     def setColorComponent(self, ring, component, value): #Change the color of a single component (e.g., r, g, b)
         if not component.lower() in ['r', 'g', 'b']:
@@ -98,13 +99,11 @@ class LEDControl:
         elif component.lower() == 'b':
             component = 0x03
         with self.lock:
-            i = 0
-            while i < 10:
-                try:
-                    self.i2cbus.write(I2C_ADDRESS, [ring, component, value])
-                    return
-                except IOError:
-                    time.sleep(0.01)
+            try:
+                self.i2cbus.write(I2C_ADDRESS, [ring, component, value])
+                return
+            except IOError:
+                logging.exception("Exception when trying to change LED colors")
 
     def setDebugColor(self, debug_type, status):
         if not debug_type in DEBUGCOLORS.keys():

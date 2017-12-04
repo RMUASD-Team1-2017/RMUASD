@@ -87,10 +87,10 @@ class Drone:
         diff = now - data.header.stamp
         with self.lock:
             self.location["location"] = data
-            time = datetime.datetime.now() + datetime.timedelta(seconds = diff.to_sec())
+            time = datetime.datetime.utcnow() + datetime.timedelta(seconds = diff.to_sec())
             self.location["update_time"] = time.strftime("%Y/%m/%d_%H:%M:%S")
-            if self.last_pos_update < datetime.datetime.now() - POSITION_INTERVAL:
-                self.last_pos_update = datetime.datetime.now()
+            if self.last_pos_update < datetime.datetime.utcnow() - POSITION_INTERVAL:
+                self.last_pos_update = datetime.datetime.utcnow()
                 self.publish_sem.release()
 
     def rpcIsDroneReady(self):

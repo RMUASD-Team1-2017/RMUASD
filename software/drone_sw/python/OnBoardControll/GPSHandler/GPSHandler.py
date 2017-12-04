@@ -36,7 +36,7 @@ class GPSHandler:
                     msg = pynmea2.parse(line)
                     if msg.is_valid:
                         with self.lock:
-                            self.last_fix = datetime.datetime.now()
+                            self.last_fix = datetime.datetime.utcnow()
                             self.location =  {"lat" : msg.latitude, "lon" : msg.longitude, "alt" : msg.altitude}
                             logging.debug("Got external GPS location: {}".format(self.location))
                         debug_led.setDebugColor(debug_type = "GPS_EXTERNAL_FIX", status = True)

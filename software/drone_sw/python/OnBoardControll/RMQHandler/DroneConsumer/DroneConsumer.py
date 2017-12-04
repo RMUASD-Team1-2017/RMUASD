@@ -16,7 +16,7 @@ class DroneAbortWorker(ConsumerProducerMixin):
         self.gps_monitor = gps_monitor
         self.connection_monitor = connection_monitor
         self.heartbeat_lock = threading.RLock()
-        self.last_gcs_heartbeat = datetime.datetime.now()
+        self.last_gcs_heartbeat = datetime.datetime.utcnow()
         self.droneAbortExchange = kombu.Exchange(name="droneabort", type="topic", durable = False)
         self.droneActionExchange = kombu.Exchange(name="droneaction", type="topic", durable = False)
         self.droneExchange = kombu.Exchange(name="drone", type="topic", durable = False)
@@ -86,12 +86,12 @@ class DroneAbortWorker(ConsumerProducerMixin):
     def GCSHeartbeatCallback(self, body, message):
         drone_id, data, time = self.extract_common_data(body, message)
         logging.debug("Recieved GCS heartbeat")
-        heartbeat_age = abs(datetime.datetime.now() - time)
-        if heartbeat_age > datetime.datetime.now() - time:
+        heartbeat_age = abs(datetime.datetime.utcnow() - time)
+        if heartbeat_age > datetime.datetime.utcnow() - time:
             logging.warning("Discarding GCS heartbeat because it was too old. Age was: {}".format(heartbeat_age))
         else:
             with self.heartbeat_lock:
-                self.last_gcs_heartbeat = datetime.datetime.now()
+                self.last_gcs_heartbeat = datetime.datetime.utcnow()
         message.ack()
 
     def rpc_is_ready(self, body, message):
