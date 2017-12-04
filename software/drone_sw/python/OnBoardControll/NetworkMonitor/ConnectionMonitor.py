@@ -30,8 +30,8 @@ class ConnectionMonitor:
         while True:
             try:
                 time.sleep(2)
-                gcs_network_lost = gcs_network_check() < datetime.datetime.now() - GCS_NETWORK_LOSS_TIMEOUT
-                telem_fligt_control_lost = telemetry_oes_check() < datetime.datetime.now() - TELEMETRY_LOSS_TIMEOUT
+                gcs_network_lost = gcs_network_check() < datetime.datetime.utcnow() - GCS_NETWORK_LOSS_TIMEOUT
+                telem_fligt_control_lost = telemetry_oes_check() < datetime.datetime.utcnow() - TELEMETRY_LOSS_TIMEOUT
                 self.hasGCS_GSM = not gcs_network_lost
                 self.hasTELEM = not telem_fligt_control_lost
                 debug_led.setDebugColor(debug_type = "TELEM2", status = self.hasTELEM)

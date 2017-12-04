@@ -8,7 +8,7 @@ from LEDControl.LEDControl import led as debug_led
 
 class NetworkMonitor:
     def __init__(self, hosts = ["8.8.8.8", "8.8.4.4", "ns1.stefanrvo.dk"], port = 53, check_interval = 1):
-        self.last_connect = datetime.datetime.now() #Pretend we had connectivity at startup
+        self.last_connect = datetime.datetime.utcnow() #Pretend we had connectivity at startup
         self.lock = threading.RLock()
         for host in hosts:
             self.test_connection(host, port, check_interval, skip_test = True)
@@ -20,7 +20,7 @@ class NetworkMonitor:
         try:
             socket.create_connection((host, port))
             with self.lock:
-                self.last_connect = datetime.datetime.now()
+                self.last_connect = datetime.datetime.utcnow()
         except socket.error:
             logging.warning("Could not establish a connection to {} at port {}".format(host, port))
 

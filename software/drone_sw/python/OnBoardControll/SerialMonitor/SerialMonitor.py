@@ -11,7 +11,7 @@ class SerialMonitor:
     def __init__(self, port, baud):
         self.run_thread = None
         self.port = port
-        self.last_communication = datetime.datetime.now()
+        self.last_communication = datetime.datetime.utcnow()
         self.lock = threading.RLock()
         self.serial = serial.Serial(port, baud, timeout = 1)
         self.run_thread = threading.Thread(target = self.handler_thread)
@@ -26,7 +26,7 @@ class SerialMonitor:
                 logging.debug("Read {} bytes from serial port {}".format(byte_cnt, self.port))
                 if len(self.serial.read()):
                     with self.lock:
-                        self.last_communication = datetime.datetime.now()
+                        self.last_communication = datetime.datetime.utcnow()
 
             except:
                 logging.exception("Got exception in serial monitor.")

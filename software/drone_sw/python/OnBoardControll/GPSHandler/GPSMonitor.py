@@ -37,7 +37,7 @@ class GPSMonitor:
         self.run_thread.start()
 
     def monitor(self):
-        start_time = datetime.datetime.now()
+        start_time = datetime.datetime.utcnow()
         logging.info("GPS Monitoring starting. Waiting 10 seconds untill enforcement, to ensure that the GPS lock stabilizes")
         time.sleep(10)
         logging.info("GPS Monitor enforcement now active!")
@@ -46,7 +46,7 @@ class GPSMonitor:
             time.sleep(2)
             isNominal = True
             try:
-                current_time = datetime.datetime.now()
+                current_time = datetime.datetime.utcnow()
                 locations = [] #List of tuples with utm, fix_time
                 for severty, location, last_fix in [x() for x in self.monitor_functions]:
                     if last_fix and None not in location.values(): fix_age = current_time - last_fix
