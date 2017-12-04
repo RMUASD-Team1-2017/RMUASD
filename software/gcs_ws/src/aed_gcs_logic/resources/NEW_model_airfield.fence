@@ -1,0 +1,63 @@
+{
+    "breachReturn": [
+        55.471998064147328,
+        10.41534268174016
+    ],
+    "fileType": "GeoFence",
+    "groundStation": "QGroundControl",
+    "parameters": [
+        {
+            "compId": 1,
+            "name": "FENCE_ACTION",
+            "value": 0
+        },
+        {
+            "compId": 1,
+            "name": "FENCE_MINALT",
+            "value": 0
+        },
+        {
+            "compId": 1,
+            "name": "FENCE_MAXALT",
+            "value": 0
+        },
+        {
+            "compId": 1,
+            "name": "FENCE_RETALT",
+            "value": 0
+        },
+        {
+            "compId": 1,
+            "name": "FENCE_AUTOENABLE",
+            "value": 0
+        },
+        {
+            "compId": 1,
+            "name": "FENCE_RET_RALLY",
+            "value": 0
+        }
+    ],
+    "polygon": [
+        [
+            55.472192794502689,
+            10.414275775849234
+        ],
+        [
+            55.471523268052877,
+            10.414357845481732
+        ],
+        [
+            55.471626272862231,
+            10.416793554931616
+        ],
+        [
+            55.472428704338938,
+            10.41664993307478
+        ],
+        [
+            55.472334008306667,
+            10.414258189499407
+        ]
+    ],
+    "version": 1
+}

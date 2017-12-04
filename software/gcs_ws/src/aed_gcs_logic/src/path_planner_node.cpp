@@ -13,10 +13,13 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
 {
     std::string inner_geofence_file;
     ros::param::param<std::string>("/inner_geofence_file", inner_geofence_file, ros::package::getPath("aed_gcs_logic") + "/resources/polygon_inner_fence.fence");
+    std::cout << "Inner File: " << inner_geofence_file << std::endl;
     std::string geofence_file;
     ros::param::param<std::string>("/geofence_file", geofence_file, ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence");
+    std::cout << "Geofence File: " << geofence_file << std::endl;
     std::string landing_spots_file;
     ros::param::param<std::string>("/landing_spots_file", landing_spots_file, ros::package::getPath("aed_gcs_logic") + "/resources/testrally.rally");
+    std::cout << "Landing File: " << landing_spots_file << std::endl;
 
     path_planner planner(
         inner_geofence_file,  // shrinken geofence
@@ -66,7 +69,7 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
         std::cout << "\tLongtitude: " << waypoints[i]->coord.geo.longitude << std::endl;
     }
     std::cout << std::endl;
-    
+
     path.path.erase(path.path.begin());
     pub.publish(path);
     return true;
