@@ -49,6 +49,12 @@ def monitor_progress(args, url, drone, goal_precision, goal_height, deadline):
                 bar.update(start_distance - current_distance)
             except ValueError:
                 pass
+            if args.return_when_landed and current_location["altitude"] - start_location["altitude"] < goal_height:
+                if args.print_goal:
+                    print("{},{},{}".format(current_location["latitude"], current_location["longitude"], current_location["altitude"]))
+                logging.info("test {},  {}".format(current_location["altitude"], start_location["altitude"] ))
+                sys.stdout.flush()
+                sys.exit(0)
             if (current_distance < goal_precision and current_location["altitude"] - start_location["altitude"] < goal_height) \
                 or (args.return_percent and current_distance < start_distance *(1 - args.return_percent) - goal_precision):
                 if not bar.value == bar.max_value: bar.finish()
@@ -93,7 +99,7 @@ def __main__():
     parser.add_argument('--loglevel', default="INFO", type=str)
     parser.add_argument('--oes_position', action='store_true') #Use position reported by OES instead of the one from GCS
     parser.add_argument('--zero_start_alt', action='store_true') #If this is set, start altitude will be forced to zero. We need this when grapping location from oes, as it is relative to takeof altitude
-
+    parser.add_argument('--return_when_landed', action='store_true') #This will cause the monitor to return when the drone has landed
     args = parser.parse_args()
 
     if args.goal_pos:

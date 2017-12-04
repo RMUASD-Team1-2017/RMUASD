@@ -12,8 +12,8 @@ goal_pos=$(echo "$coordinates" | cut -f2 -d' ')
 midway_pos=$(echo "$coordinates" | cut -f3 -d' ')
 echo "Drone is 20% of the way. Triggering OES failure by stoping the container"
 docker stop drone
-echo "The  drone should now perform a RTL, starting monitoring"
-end_pos=$(python $DIR/Tools/MissionMonitor.py --id $mission_id --locationurl http://$webui_ip:8000/EmergencyControl/mission_queue_json/True/ --goal_precision 10 --goal_height 3 --max_mission_time 600 --start_pos "$midway_pos" --goal_pos "$start_pos" --print_end)
+echo "The  drone should now perform a landing, starting monitoring. We expects a landing within 30 seconds!"
+end_pos=$(python $DIR/Tools/MissionMonitor.py --id $mission_id --locationurl http://$webui_ip:8000/EmergencyControl/mission_queue_json/True/ --goal_precision 10 --goal_height 3 --max_mission_time 30 --start_pos "$midway_pos" --goal_pos "$start_pos" --print_end --return_when_landed)
 echo "Drone is at $end_pos"
 echo "Simulation log:"
 docker logs simulation
