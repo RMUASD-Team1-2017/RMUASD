@@ -13,11 +13,20 @@ midway_pos=$(echo "$coordinates" | cut -f3 -d' ')
 echo "Start pos : $start_pos"
 echo "Goal pos : $goal_pos"
 echo "midway_pos : $midway_pos"
-echo "Drone is 20% of the way. Triggering GCS failure by stoping the container"
-docker stop gcs
-echo "The  drone should now perform a landing, starting monitoring. We expects a landing within 30 seconds!"
-end_pos=$(python $DIR/Tools/MissionMonitor.py --id $mission_id --locationurl http://$webui_ip:8000/EmergencyControl/mission_queue_json/True/ --goal_precision 10 --goal_height 3 --max_mission_time 30 --start_pos "$midway_pos" --goal_pos "$start_pos" --print_end --oes_position --zero_start_alt --return_when_landed)
-echo "Drone is at $end_pos"
+#Make sure that Motor shutdown performed has not occured in drone logfile yet
+if $(docker logs drone 2>&1 | grep -q "Motor shutdown performed!"); then
+    false
+fi
+echo "Drone is 20% of the way. Triggering TELEM2 failure by killing socat in the drone container"
+docker exec drone killall -9 socat 
+echo "The  drone should now cutting motor power, starting monitoring. We expects a powercut within 10 seconds!"
+sleep 10
+if $(docker logs drone 2>&1 | grep -q "Motor shutdown performed!"); then
+    true
+else
+    false
+fi
+echo "Test finished successfully"
 echo "Simulation log:"
 docker logs simulation
 echo "WebUI log:"
@@ -26,5 +35,5 @@ echo "Drone Onboard SW log:"
 docker logs drone
 echo "GCS log:"
 docker logs gcs
-docker stop simulation webui drone
+docker stop simulation webui drone gcs
 docker rm simulation webui drone gcs

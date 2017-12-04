@@ -45,6 +45,6 @@ class ConnectionMonitor:
                     drone.land()
                 if telem_fligt_control_lost:
                     logging.warning("Cutting power, telemetry 2 is lost.")
-                    drone.powercut()
+                    drone.hardabort()
             except:
                 logging.exception("Exception encountered during connection monitoring.")

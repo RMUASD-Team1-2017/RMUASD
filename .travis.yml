@@ -15,10 +15,11 @@ install:
   - pip install -r tests/Tools/requirements.txt
 
 env:
-#  - test_stage=gcs_failure_test
-#  - test_stage=oes_failure_test
+  - test_stage=gcs_failure_test
+  - test_stage=oes_failure_test
   - test_stage=normal_operation_test
   - test_stage=webapp_unit_test
+  - test_stage=TELEM2_failure_test
 
 script:
   - ./pull_image.sh webapp
