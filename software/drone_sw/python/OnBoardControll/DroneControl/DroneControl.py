@@ -63,6 +63,14 @@ class DroneController:
             with lock:
                 self.drone_controller.home_set = True
 
+        @self.vehicle.on_message('EXTENDED_SYS_STATE')
+        def listener(self, name, message):
+            with lock:
+                if self.mode == VehicleMode("MISSION") and  message.to_dict()["landed_state"] in [mavutil.mavlink.MAV_LANDED_STATE_IN_AIR, mavutil.mavlink.MAV_LANDED_STATE_TAKEOFF, mavutil.mavlink.MAV_LANDED_STATE_LANDING]:
+                    debug_led.siren.on()
+                else:
+                    debug_led.siren.off()
+
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
             got_fix = False
