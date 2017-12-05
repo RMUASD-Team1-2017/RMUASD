@@ -18,7 +18,7 @@ import serbus
 import time
 import threading
 from gpioControl.gpioControl import GPIO
-
+import logging
 DEBUGCOLORS = { "GPS_INTERNAL_FIX" : (OUTER_RING, 'r'),
                 "GPS_EXTERNAL_FIX" : (OUTER_RING, 'g'),
                 "GPS_DISAGREE"     : (OUTER_RING, 'b'),
@@ -35,18 +35,21 @@ class SirenControl:
     def __init__(self, mode = "OFF"):
         self.mode = mode
         self.pin = GPIO(pin = SIRENPIN, direction = "out")
-        self.on()
     def on(self):
-        if self.mode == "ON":
+        if self.mode is "ON":
             self.pin.set(state = True)
     def off(self):
         self.pin.set(state = False)
+    def setmode(self, mode):
+        self.mode = mode
+        if mode is "OFF":
+            self.off()
 
 class LEDControl:
     def __init__(self) :
         self.initialised = False
         self.lock = threading.RLock()
-        self.siren = None
+        self.siren = SirenControl(mode = "OFF")
 
     def initialise(self, ledmode = MODE_BLINK):
         with self.lock:
@@ -59,9 +62,6 @@ class LEDControl:
             if not ledmode in [MODE_OFF, MODE_BLINK, MODE_ROTATE, MODE_DEBUG, "DUMMY"]:
                 raise Exception("An invalid mode was selected for LED_Control")
             self.ledmode = ledmode
-            if ledmode in [MODE_BLINK, MODE_ROTATE]:
-                self.siren = SirenControl(mode = "ON")
-
             if not self.ledmode == "DUMMY":
                 try:
                     self.i2cbus = serbus.I2CDev(I2C_DEV_NUM)
@@ -69,8 +69,14 @@ class LEDControl:
                     self.i2cbus.write(I2C_ADDRESS, [self.ledmode, 0x00, 0x00, 0x00])
                 except IOError:
                     logging.exception("Exception when trying to change LED colors")
-
+            if ledmode in [MODE_BLINK, MODE_ROTATE]:
+                self.siren.setmode("ON")
+            else:
+                self.siren.setmode("OFF")
             self.initialised = True
+    def set_mode(self, mode):
+        #just re-initialize, this should not do any harm
+        self.initialise(ledmode = mode)
 
     def __readColor(self, ring):
         with self.lock:
@@ -115,7 +121,6 @@ class LEDControl:
             intensity = 0
 
         self.setColorComponent(DEBUGCOLORS[debug_type][0], DEBUGCOLORS[debug_type][1], intensity)
-
 
 led = LEDControl()
 
