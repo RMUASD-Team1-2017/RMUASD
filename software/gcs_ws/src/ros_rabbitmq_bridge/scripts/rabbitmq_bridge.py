@@ -55,7 +55,7 @@ if __name__ == '__main__':
     {"ros_topic" : "gcs/heartbeat", "message_type" : Empty, "routing_key" : "gcs.heartbeat.{}".format(DRONE_ID), "exchange" : "drone", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
     {"ros_topic" : "drone/setgeofence", "message_type" : String, "routing_key" : "drone.geofence.{}".format(DRONE_ID), "exchange" : "drone"}, \
     {"ros_service" : "drone/get_readyness" , "routing_key" : "drone.ready_rpc.{}".format(DRONE_ID), "exchange" : "drone", "callback" : readyness_servicehandler.ros_callback, "response_callback" : readyness_servicehandler.service_response_callback, "service_type" : OnboardStatus}, \
-    {"ros_service" : "drone/set_mission" , "routing_key" : "drone.set_mission.{}".format(DRONE_ID), "exchange" : "drone", "callback" : set_mission_servicehandler.ros_callback, "response_callback" : set_mission_servicehandler.service_response_callback, "service_type" : SendMission}, \
+    {"ros_service" : "drone/set_mission" , "routing_key" : "drone.set_mission.{}".format(DRONE_ID), "exchange" : "droneaction", "callback" : set_mission_servicehandler.ros_callback, "response_callback" : set_mission_servicehandler.service_response_callback, "service_type" : SendMission}, \
     ]
 
     rabbit_to_ros_settings = [
