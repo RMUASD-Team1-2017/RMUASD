@@ -20,6 +20,7 @@
 
 #include "aed_gcs_logic/waypoints.h"
 #include "aed_gcs_logic/AbortRequest.h"
+#include "aed_gcs_logic/SendMission.h"
 
 #include <vector>
 
@@ -96,6 +97,7 @@ class drone_handler
         ros::Publisher velocity_pub; // n.subscribe<mavros_msgs::State>("mavros/state", 1, state_cb);
 		ros::ServiceClient pull_client; // = n.serviceClient<mavros::WaypointPull>("/mission/WaypointPull");
 		ros::Subscriber nav_sat_fix_gps; // = n.subscribe<sensor_msgs::NavSatFix>("mavros/global_position/global", 1, &drone_handler::mission_callback, this);
+        ros::ServiceClient send_mission_client; // = n.serviceClient<mavros::WaypointPull>("/mission/WaypointPull");
 
         // Callbacks
         bool abort_callback(aed_gcs_logic::AbortRequest::Request& req, aed_gcs_logic::AbortRequest::Response& res);
@@ -121,7 +123,7 @@ class drone_handler
 		double latitude;
 		double longitude;
 		double altitude;
-        const double missionHeight = 10; // Meters
+        const double missionHeight = 20; // Meters
 
         std::string mode;
         double current_height = 0;
