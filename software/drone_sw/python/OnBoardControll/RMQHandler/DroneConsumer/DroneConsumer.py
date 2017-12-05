@@ -29,6 +29,8 @@ class DroneAbortWorker(ConsumerProducerMixin):
         self.droneFence = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.geofence.{}".format(drone_id), exclusive = True)
         self.is_ready_qeueue = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.ready_rpc.{}".format(drone_id), exclusive = True)
         self.set_ledmode_queue = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.ledmode.{}".format(drone_id), exclusive = True)
+        self.mission_queue = kombu.Queue(exchange = self.droneActionExchange, routing_key = "drone.set_mission.{}".format(drone_id), exclusive = True)
+
 
     def get_consumers(self, Consumer, channel):
         return [
@@ -40,6 +42,7 @@ class DroneAbortWorker(ConsumerProducerMixin):
                 Consumer(queues = [self.droneFence], callbacks = [self.fencecallback], prefetch_count = 1),
                 Consumer(queues = [self.is_ready_qeueue], callbacks = [self.rpc_is_ready], prefetch_count = 1),
                 Consumer(queues = [self.set_ledmode_queue], callbacks = [self.set_ledmode], prefetch_count = 1),
+                Consumer(queues = [self.mission_queue], callbacks = [self.set_mission], prefetch_count = 1),
                 ]
 
     def on_connection_error(self, exc, interval):
@@ -63,6 +66,28 @@ class DroneAbortWorker(ConsumerProducerMixin):
         except:
             logging.exception("Error while setting led mode")
         message.ack()
+
+    def set_mission(self, body, message):
+        drone_id, data, time = self.extract_common_data(body, message)
+        logging.debug("Recieved a mission from the GCS!")
+        waypoints = data["path"]
+        resp = self.drone.set_mission(waypoints)
+        if resp:
+            self.producer.publish(
+                "SUCCESS",
+                exchange ='', routing_key=message.properties['reply_to'],
+                correlation_id=message.properties['correlation_id'],
+                retry=True
+            )
+        else:
+            self.producer.publish(
+                "resp",
+                exchange ='', routing_key=message.properties['reply_to'],
+                correlation_id=message.properties['correlation_id'],
+                retry=True
+            )
+        message.ack()
+
 
     def DroneHardAbortCallback(self, body, message):
         drone_id, data, time = self.extract_common_data(body, message)
