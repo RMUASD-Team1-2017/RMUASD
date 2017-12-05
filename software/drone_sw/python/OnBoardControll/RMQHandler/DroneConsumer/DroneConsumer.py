@@ -5,6 +5,7 @@ import json
 import datetime
 import threading
 from GeoFenceChecker.GeoFenceChecker import fencechecker
+from LEDControl.LEDControl import led as debug_led
 
 MAX_HEARTBEAT_AGE = datetime.timedelta(seconds = 5)
 
@@ -27,6 +28,7 @@ class DroneAbortWorker(ConsumerProducerMixin):
         self.gcsheartbeat =  kombu.Queue(exchange=self.droneExchange, routing_key="gcs.heartbeat.{}".format(drone_id), exclusive = True)
         self.droneFence = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.geofence.{}".format(drone_id), exclusive = True)
         self.is_ready_qeueue = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.ready_rpc.{}".format(drone_id), exclusive = True)
+        self.set_ledmode = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.ledmode.{}".format(drone_id), exclusive = True)
 
     def get_consumers(self, Consumer, channel):
         return [
@@ -37,7 +39,9 @@ class DroneAbortWorker(ConsumerProducerMixin):
                 Consumer(queues = [self.gcsheartbeat], callbacks = [self.GCSHeartbeatCallback], prefetch_count = 1),
                 Consumer(queues = [self.droneFence], callbacks = [self.fencecallback], prefetch_count = 1),
                 Consumer(queues = [self.is_ready_qeueue], callbacks = [self.rpc_is_ready], prefetch_count = 1),
+                Consumer(queues = [self.ledmode], callbacks = [self.set_ledmode], prefetch_count = 1),
                 ]
+
     def on_connection_error(self, exc, interval):
         super(DroneAbortWorker, self).on_connection_error(exc, interval)
         logging.error("Failed to reconnect. Connection interval is {}".format(interval))
@@ -50,6 +54,15 @@ class DroneAbortWorker(ConsumerProducerMixin):
         data = json.loads(body)
         time = datetime.datetime.strptime(data["time"], "%Y/%m/%d_%H:%M:%S")
         return (drone_id, data, time)
+
+    def set_ledmode(self, body, message):
+        try:
+            new_mode = json.loads(body)["data"]
+            logging.debug("Changing led (and siren) mode to {}!".format(new_mode))
+            debug_led.set_mode(new_mode)
+        except:
+            logging.exception("Error while setting led mode")
+        message.ack()
 
     def DroneHardAbortCallback(self, body, message):
         drone_id, data, time = self.extract_common_data(body, message)
