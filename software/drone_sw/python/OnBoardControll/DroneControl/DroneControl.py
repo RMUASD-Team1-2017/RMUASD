@@ -41,12 +41,16 @@ class DroneController:
         self.last_fix = None
         self.last_communication = datetime.datetime.utcnow()
         self.battery = 0
+        self.min_battery = 10000000000
 
         @self.vehicle.on_message('SYS_STATUS')
         def listener(self, name, message):
             voltage = message.to_dict()["voltage_battery"]
-            logging.info("Battery voltage {}".format(voltage))
             self.drone_controller.battery = voltage
+            if self.drone_controller.battery < self.drone_controller.min_battery:
+                self.drone_controller.min_battery = self.drone_controller.battery
+
+            logging.info("Battery voltage {}, min was {}".format(voltage, self.drone_controller.min_battery))
             if voltage < MIN_VOLTAGE:
                 logging.warning("Battery voltage is too low, trying to land immediately!")
                 self.drone_controller.land()
@@ -155,6 +159,12 @@ class DroneController:
 
     def setup_parameters(self):
         self.vehicle.parameters['NAV_DLL_ACT'] = 0
+        self.vehicle.parameters["NAV_ACC_RAD"] = 7.0 #acceptence radius for waypoints
+        self.vehicle.parameters["MPC_LAND_SPEED"] = 2.0 #Max land speed
+        self.vehicle.parameters["MPC_XY_VEL_MAX"] = 15. #Max vertical velocity
+        self.vehicle.parameters["MPC_TKO_SPEED"] = 15. #Max takeoff speed
+        self.vehicle.parameters["MPC_Z_VEL_MAX_UP"] = 10. #Mav up velocity
+        self.vehicle.parameters["MPC_Z_VEL_MAX_DN"] = 5. #Max down velocity
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):
     """
