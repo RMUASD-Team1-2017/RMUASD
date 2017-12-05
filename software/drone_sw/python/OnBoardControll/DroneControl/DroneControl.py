@@ -146,32 +146,30 @@ class DroneController:
 
     def set_mission(self, waypoints):
         try:
-            with self.lock:
-                if self.vehicle.home_location == None:
-                    logging.warning("No home position set yet, can not take off")
-                    return "No home position set yet, can not take off"
-                else:
-                    cmds = self.vehicle.commands
-                    cmds.clear()
-                    self.vehicle.flush()
-                    if len(waypoints) < 2:
-                        logging.warning("Less than two waypoints in mission!, this is useless!")
-                        return "Less than two waypoints in mission!, this is useless!"
-                    #Takeoff to first waypoint!
-                    cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
-                     waypoints[0]["latitude"], waypoints[0]["longitude"],  waypoints[0]["altitude"])
-                    cmds.add(cmd)
-                    #Queue the remaining waypoints
-                    for waypoint in waypoints[1:-1]:
-                        cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, 0, 0, 0,
-                        waypoint["latitude"], waypoint["longitude"],  waypoint["altitude"])
-                        cmds.add(cmd)
-                    #Land
-                    cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 1, 0, 0, 0, 0,
-                    waypoint["latitude"], waypoint["longitude"],  waypoint["altitude"])
-                    cmds.add(cmd)
-                    cmds.upload()
-                    return True
+            if self.vehicle.home_location == None:
+                logging.warning("No home position set yet, can not take off")
+                return "No home position set yet, can not take off"
+            cmds = self.vehicle.commands
+            cmds.clear()
+            self.vehicle.flush()
+            if len(waypoints) < 2:
+                logging.warning("Less than two waypoints in mission!, this is useless!")
+                return "Less than two waypoints in mission!, this is useless!"
+            #Takeoff to first waypoint!
+            cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
+             waypoints[0]["latitude"], waypoints[0]["longitude"],  waypoints[0]["altitude"])
+            cmds.add(cmd)
+            #Queue the remaining waypoints
+            for waypoint in waypoints[1:-1]:
+                cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, 0, 0, 0,
+                waypoint["latitude"], waypoint["longitude"],  waypoint["altitude"])
+                cmds.add(cmd)
+            #Land
+            cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 1, 0, 0, 0, 0,
+            waypoint["latitude"], waypoint["longitude"],  waypoint["altitude"])
+            cmds.add(cmd)
+            cmds.upload()
+            return True
         except:
             return "Unknown error!"
 

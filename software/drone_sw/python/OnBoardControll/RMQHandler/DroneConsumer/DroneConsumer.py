@@ -68,7 +68,9 @@ class DroneAbortWorker(ConsumerProducerMixin):
         message.ack()
 
     def set_mission(self, body, message):
-        drone_id, data, time = self.extract_common_data(body, message)
+        print(body, message)
+        data = json.loads(body)
+
         logging.debug("Recieved a mission from the GCS!")
         waypoints = data["path"]
         resp = self.drone.set_mission(waypoints)
