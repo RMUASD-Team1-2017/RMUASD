@@ -82,7 +82,7 @@ class ServiceHandler:
         channel = args[1]
         connection = args[2]
         try:
-            json_str = json_message_converter.convert_ros_message_to_json(req.request)
+            json_str = json_message_converter.convert_ros_message_to_json(req)
             corr_id = str(uuid.uuid4())
             with self.lock:
                 self.responses[corr_id] = None
