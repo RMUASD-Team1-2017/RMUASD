@@ -32,18 +32,24 @@ SIRENPIN = 46
 
 
 class SirenControl:
-    def __init__(self):
+    def __init__(self, mode = "OFF"):
+        self.mode = mode
         self.pin = GPIO(pin = SIRENPIN, direction = "out")
     def on(self):
-        self.pin.set(state = True)
+        if self.mode is "ON":
+            self.pin.set(state = True)
     def off(self):
         self.pin.set(state = False)
+    def setmode(self, mode):
+        self.mode = mode
+        if mode is "OFF":
+            self.off()
 
 class LEDControl:
     def __init__(self) :
         self.initialised = False
         self.lock = threading.RLock()
-        self.siren = SirenControl(mode = "ON")
+        self.siren = SirenControl(mode = "OFF")
 
     def initialise(self, ledmode = MODE_BLINK):
         with self.lock:
@@ -64,9 +70,9 @@ class LEDControl:
                 except IOError:
                     logging.exception("Exception when trying to change LED colors")
             if ledmode in [MODE_BLINK, MODE_ROTATE]:
-                self.siren.on()
+                self.siren.setmode("ON")
             else:
-                self.sirent.off()
+                self.siren.setmode("OFF")
             self.initialised = True
     def set_mode(self, mode):
         #just re-initialize, this should not do any harm

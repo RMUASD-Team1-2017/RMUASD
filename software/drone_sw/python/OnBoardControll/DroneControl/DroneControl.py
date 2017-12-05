@@ -21,7 +21,7 @@ HIGH_MOTOR_PIN = 49 #pin 15
 from GeoFenceChecker.GeoFenceChecker import fencechecker
 
 class DroneController:
-    def __init__(self, port, baud, connectstring, real_hard_abort = False):
+    def __init__(self, port, baud, connectstring, real_hard_abort = False, blink_in_mission = False):
         print(port, baud)
         if connectstring:
             self.vehicle = connect(connectstring, rate = 1, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
@@ -42,6 +42,7 @@ class DroneController:
         self.last_communication = datetime.datetime.utcnow()
         self.battery = 0
         self.min_battery = 10000000000
+        self.blink_in_mission = blink_in_mission
 
         @self.vehicle.on_message('SYS_STATUS')
         def listener(self, name, message):

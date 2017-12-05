@@ -28,7 +28,7 @@ class DroneAbortWorker(ConsumerProducerMixin):
         self.gcsheartbeat =  kombu.Queue(exchange=self.droneExchange, routing_key="gcs.heartbeat.{}".format(drone_id), exclusive = True)
         self.droneFence = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.geofence.{}".format(drone_id), exclusive = True)
         self.is_ready_qeueue = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.ready_rpc.{}".format(drone_id), exclusive = True)
-        self.set_ledmode = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.ledmode.{}".format(drone_id), exclusive = True)
+        self.set_ledmode_queue = kombu.Queue(exchange = self.droneExchange, routing_key = "drone.ledmode.{}".format(drone_id), exclusive = True)
 
     def get_consumers(self, Consumer, channel):
         return [
@@ -39,7 +39,7 @@ class DroneAbortWorker(ConsumerProducerMixin):
                 Consumer(queues = [self.gcsheartbeat], callbacks = [self.GCSHeartbeatCallback], prefetch_count = 1),
                 Consumer(queues = [self.droneFence], callbacks = [self.fencecallback], prefetch_count = 1),
                 Consumer(queues = [self.is_ready_qeueue], callbacks = [self.rpc_is_ready], prefetch_count = 1),
-                Consumer(queues = [self.ledmode], callbacks = [self.set_ledmode], prefetch_count = 1),
+                Consumer(queues = [self.set_ledmode_queue], callbacks = [self.set_ledmode], prefetch_count = 1),
                 ]
 
     def on_connection_error(self, exc, interval):
