@@ -17,6 +17,7 @@ from rospy_message_converter import json_message_converter
 import threading
 import os
 from aed_gcs_logic.srv import OnboardStatus
+from aed_gcs_logic.srv import SendMission
 
 # test case for json to ros conversion
 #datain = '{"current_time": {"data": {"secs" : 22, "nsecs": 2200}}, "state": "flying", "destination" : {"longitude": 10000, "latitude": 20000, "position_covariance_type" : 1}, "eta" : 100}'

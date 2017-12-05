@@ -28,7 +28,7 @@ drone_handler::drone_handler()
     this->velocity_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 1);
 	this->pull_client = n.serviceClient<mavros_msgs::WaypointPull>("mavros/mission/pull");
 	this->nav_sat_fix_gps = n.subscribe<sensor_msgs::NavSatFix>("mavros/global_position/global", 1, &drone_handler::gps_callback, this);
-    this->send_mission_client = n.serviceClient<aed_gcs_logic::SendMission>("drone/send_mission");
+    this->send_mission_client = n.serviceClient<aed_gcs_logic::SendMission>("drone/set_mission");
 }
 
 drone_handler::~drone_handler(){
