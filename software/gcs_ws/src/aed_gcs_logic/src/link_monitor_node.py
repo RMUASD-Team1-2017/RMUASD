@@ -24,7 +24,7 @@ class link_monitor:
         self.link_monitor_GSM = rospy.Publisher("/link_monitor/timeout_GSM", Bool, queue_size=1)
         rospy.wait_for_service('drone_logic/abort')
         self.abort_callback = rospy.ServiceProxy("drone_logic/abort", AbortRequest)
-        self.gsm_land = rospy.Publisher("drone/softabort", Empty, queue_size=10)
+        self.gsm_land = rospy.Publisher("drone/land", Empty, queue_size=10)
 
         self.lastHeartbeatMavros = rospy.get_rostime().secs
         self.lastHeartbeatGSM = rospy.get_rostime().secs
