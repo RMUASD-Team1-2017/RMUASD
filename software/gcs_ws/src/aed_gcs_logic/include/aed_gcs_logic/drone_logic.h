@@ -121,7 +121,7 @@ class drone_handler
 		double latitude;
 		double longitude;
 		double altitude;
-        const double missionHeight = 10; // Meters
+        const double missionHeight = 20; // Meters
 
         std::string mode;
         double current_height = 0;

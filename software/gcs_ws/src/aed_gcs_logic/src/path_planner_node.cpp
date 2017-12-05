@@ -15,7 +15,7 @@ bool plan_path(aed_gcs_logic::mission_request::Request &req, aed_gcs_logic::miss
     ros::param::param<std::string>("/inner_geofence_file", inner_geofence_file, ros::package::getPath("aed_gcs_logic") + "/resources/polygon_inner_fence.fence");
     std::cout << "Inner File: " << inner_geofence_file << std::endl;
     std::string geofence_file;
-    ros::param::param<std::string>("/geofence_file", geofence_file, ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence");
+    ros::param::param<std::string>("/inner_geofence_file", geofence_file, ros::package::getPath("aed_gcs_logic") + "/resources/polygon_fence.fence");
     std::cout << "Geofence File: " << geofence_file << std::endl;
     std::string landing_spots_file;
     ros::param::param<std::string>("/landing_spots_file", landing_spots_file, ros::package::getPath("aed_gcs_logic") + "/resources/testrally.rally");
