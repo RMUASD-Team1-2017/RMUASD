@@ -166,7 +166,7 @@ class DroneController:
                 cmds.add(cmd)
             #Land
             cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 1, 0, 0, 0, 0,
-            waypoint["latitude"], waypoint["longitude"],  waypoint["altitude"])
+            waypoints[-1]["latitude"], waypoints[-1]["longitude"],  waypoints[-1]["altitude"])
             cmds.add(cmd)
             cmds.upload()
             return True
