@@ -1,21 +1,21 @@
  <launch>
     <!-- Do we want to ignore the opinion of the OES? -->
-    <param name="/ignore_onboard" type="bool" value="true" />
+    <param name="/ignore_onboard" type="bool" value="false" />
     <param name="/ignore_weather_and_GPS" type="bool" value="true" />
 
     <!-- Paths to fence files and landing spots -->
     <!-- Model airfield -->
-    <!-- <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield.fence" />
-    <param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield_inner.fence" />
+    <!-- <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield.fence" /-->
+    <!--param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield_inner.fence" /-->
     <param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/model_airfield.rally" /> -->
     <!-- Golf course -->
-    <!-- <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/polygon_fence.fence" />
+    <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/polygon_fence.fence" />
     <param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/polygon_inner_fence.fence" />
-    <param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/testrally.rally" /> -->
+    <param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/testrally.rally" />
     <!-- NEW Model Airfield -->
-    <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/OLD_model_airfield.fence" />
+    <!-- <param name="/geofence_file" type="string" value="$(find aed_gcs_logic)/resources/OLD_model_airfield.fence" />
     <param name="/inner_geofence_file" type="string" value="$(find aed_gcs_logic)/resources/OLD_model_airfield_inner.fence" />
-    <param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/OLD_model_airfield.rally" />
+    <param name="/landing_spots_file" type="string" value="$(find aed_gcs_logic)/resources/OLD_model_airfield.rally" /> -->
 
 
     <!-- rabbitMQ bridge node -->
