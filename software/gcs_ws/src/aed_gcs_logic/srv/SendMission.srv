@@ -1,0 +1,3 @@
+sensor_msgs/NavSatFix[] path
+---
+std_msgs/String response

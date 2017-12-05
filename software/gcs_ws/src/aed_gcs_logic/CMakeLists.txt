@@ -35,6 +35,7 @@ add_service_files(
   AbortRequest.srv
   OnboardStatus.srv
   HealthCheckService.srv
+  SendMission.srv
 )
 
 ## Generate actions in the 'action' folder

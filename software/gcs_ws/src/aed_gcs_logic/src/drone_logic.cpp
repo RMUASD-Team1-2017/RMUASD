@@ -28,6 +28,7 @@ drone_handler::drone_handler()
     this->velocity_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 1);
 	this->pull_client = n.serviceClient<mavros_msgs::WaypointPull>("mavros/mission/pull");
 	this->nav_sat_fix_gps = n.subscribe<sensor_msgs::NavSatFix>("mavros/global_position/global", 1, &drone_handler::gps_callback, this);
+    this->send_mission_client = n.serviceClient<aed_gcs_logic::SendMission>("drone/send_mission");
 }
 
 drone_handler::~drone_handler(){
@@ -246,8 +247,8 @@ bool drone_handler::run_state_machine()
             /* IDLE STATE */
             std::unique_lock<std::mutex> lock(this->mission_m);
             if(this->received_mission){
-                std::cout << "Clearing mission" << std::endl;
-                this->state = CLEAR_MISSION;
+                std::cout << "Sending mission" << std::endl;
+                this->state = SEND_MISSION;
             }
             break;}
 
@@ -256,50 +257,33 @@ bool drone_handler::run_state_machine()
             this->state = MISSION_DONE;
             break;
 
-        case CLEAR_MISSION:{
-            //Check whether there is any mission on the drone now.
-            mavros_msgs::WaypointPull pull;
-            this->mission_pull_client.call(pull);
-
-            // If no, send the misison.
-            if(pull.response.wp_received == 0){
-                std::cout << "Sending Mission" << std::endl;
-                this->state = SEND_MISSION;
-            }
-            else{
-                // Clear waypoints
-                mavros_msgs::WaypointClear clear;
-                this->mission_clear_client.call(clear);
-            }
-
-            // Check timer
-            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
-                std::cout << "Timeout at Clearing mission" << std::endl;
-                this->state = FAILED;
-            }
-            break;}
-
 		case SEND_MISSION:{
             /* SEND MISSION TO DRONE */
+            aed_gcs_logic::SendMission srv;
 
-            // Check whether mission is there or not.
-            mavros_msgs::WaypointPull pull;
-            this->mission_pull_client.call(pull);
+            for(auto& node : this->mission_srv.request.waypoints){
+                sensor_msgs::NavSatFix navsatfix;
+                navsatfix.latitude = node.x_lat;
+                navsatfix.longitude = node.y_long;
+                navsatfix.altitude = node.z_alt;
 
-            // If no, send the misison.
-            if(pull.response.wp_received == this->mission_srv.request.waypoints.size()){
+                srv.request.path.push_back(navsatfix);
+            }
+
+            send_mission_client.call(srv);
+
+            if(srv.response.response.data == "SUCCESS"){
                 std::cout << "Setting mode to AUTO.MISSION" << std::endl;
                 this->state = AUTO_MISSION;
             }
-            else{
-                std::unique_lock<std::mutex> lock(this->mission_m);
-                this->mission_push_client.call(this->mission_srv);
-            }
-
             // Check timer
-            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
+            else if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
                 std::cout << "Timeout at Sending Mission" << std::endl;
                 this->state = FAILED;
+            }
+            else{
+                std::cout << "Send mission failed with response: ";
+                std::cout << srv.response.response.data << std::endl;
             }
             break;}
 
