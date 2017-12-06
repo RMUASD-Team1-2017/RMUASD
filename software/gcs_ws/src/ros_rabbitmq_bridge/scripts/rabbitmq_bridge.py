@@ -17,6 +17,7 @@ from rospy_message_converter import json_message_converter
 import threading
 import os
 from aed_gcs_logic.srv import OnboardStatus
+from aed_gcs_logic.srv import SendMission
 
 # test case for json to ros conversion
 #datain = '{"current_time": {"data": {"secs" : 22, "nsecs": 2200}}, "state": "flying", "destination" : {"longitude": 10000, "latitude": 20000, "position_covariance_type" : 1}, "eta" : 100}'
@@ -43,6 +44,8 @@ if __name__ == '__main__':
     heartbeat_pulbisher = rospy.Publisher("gcs/heartbeat", Empty, queue_size=10)
     heartbeat_thread(heartbeat_pulbisher, 2.0)
     readyness_servicehandler = ServiceHandler()
+    set_mission_servicehandler = ServiceHandler()
+
 
     ros_to_rabbit_settings = [
     {"ros_topic" : "drone/status", "message_type" : userinfo, "routing_key" : "drone.status", "exchange" : "drone"}, \
@@ -52,6 +55,7 @@ if __name__ == '__main__':
     {"ros_topic" : "gcs/heartbeat", "message_type" : Empty, "routing_key" : "gcs.heartbeat.{}".format(DRONE_ID), "exchange" : "drone", "callback" : ros_to_rabbitmq_bridge.time_callback}, \
     {"ros_topic" : "drone/setgeofence", "message_type" : String, "routing_key" : "drone.geofence.{}".format(DRONE_ID), "exchange" : "drone"}, \
     {"ros_service" : "drone/get_readyness" , "routing_key" : "drone.ready_rpc.{}".format(DRONE_ID), "exchange" : "drone", "callback" : readyness_servicehandler.ros_callback, "response_callback" : readyness_servicehandler.service_response_callback, "service_type" : OnboardStatus}, \
+    {"ros_service" : "drone/set_mission" , "routing_key" : "drone.set_mission.{}".format(DRONE_ID), "exchange" : "droneaction", "callback" : set_mission_servicehandler.ros_callback, "response_callback" : set_mission_servicehandler.service_response_callback, "service_type" : SendMission}, \
     ]
 
     rabbit_to_ros_settings = [

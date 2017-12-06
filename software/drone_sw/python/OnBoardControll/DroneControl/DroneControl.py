@@ -21,7 +21,7 @@ HIGH_MOTOR_PIN = 49 #pin 15
 from GeoFenceChecker.GeoFenceChecker import fencechecker
 
 class DroneController:
-    def __init__(self, port, baud, connectstring, real_hard_abort = False):
+    def __init__(self, port, baud, connectstring, real_hard_abort = False, blink_in_mission = False):
         print(port, baud)
         if connectstring:
             self.vehicle = connect(connectstring, rate = 1, wait_ready = False, heartbeat_timeout = 60 * 60 * 24 * 365 * 10)
@@ -41,12 +41,17 @@ class DroneController:
         self.last_fix = None
         self.last_communication = datetime.datetime.utcnow()
         self.battery = 0
+        self.min_battery = 10000000000
+        self.blink_in_mission = blink_in_mission
 
         @self.vehicle.on_message('SYS_STATUS')
         def listener(self, name, message):
             voltage = message.to_dict()["voltage_battery"]
-            logging.info("Battery voltage {}".format(voltage))
             self.drone_controller.battery = voltage
+            if self.drone_controller.battery < self.drone_controller.min_battery:
+                self.drone_controller.min_battery = self.drone_controller.battery
+
+            logging.info("Battery voltage {}, min was {}".format(voltage, self.drone_controller.min_battery))
             if voltage < MIN_VOLTAGE:
                 logging.warning("Battery voltage is too low, trying to land immediately!")
                 self.drone_controller.land()
@@ -57,6 +62,14 @@ class DroneController:
         def listener(self, name, home_position):
             with lock:
                 self.drone_controller.home_set = True
+
+        @self.vehicle.on_message('EXTENDED_SYS_STATE')
+        def listener(self, name, message):
+            with lock:
+                if self.mode == VehicleMode("MISSION") and  message.to_dict()["landed_state"] in [mavutil.mavlink.MAV_LANDED_STATE_IN_AIR, mavutil.mavlink.MAV_LANDED_STATE_TAKEOFF, mavutil.mavlink.MAV_LANDED_STATE_LANDING]:
+                    debug_led.siren.on()
+                else:
+                    debug_led.siren.off()
 
         @self.vehicle.on_message('GPS_RAW_INT')
         def listener(self, name, message):
@@ -131,6 +144,35 @@ class DroneController:
                 time.sleep(2)
                 self.vehicle.armed = True
 
+    def set_mission(self, waypoints):
+        try:
+            if self.vehicle.home_location == None:
+                logging.warning("No home position set yet, can not take off")
+                return "No home position set yet, can not take off"
+            cmds = self.vehicle.commands
+            cmds.clear()
+            self.vehicle.flush()
+            if len(waypoints) < 2:
+                logging.warning("Less than two waypoints in mission!, this is useless!")
+                return "Less than two waypoints in mission!, this is useless!"
+            #Takeoff to first waypoint!
+            cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, 0, 0, 0, 0,
+             waypoints[0]["latitude"], waypoints[0]["longitude"],  waypoints[0]["altitude"])
+            cmds.add(cmd)
+            #Queue the remaining waypoints
+            for waypoint in waypoints[1:-1]:
+                cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, 0, 0, 0,
+                waypoint["latitude"], waypoint["longitude"],  waypoint["altitude"])
+                cmds.add(cmd)
+            #Land
+            cmd = Command(0,0,0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 1, 0, 0, 0, 0,
+            waypoints[-1]["latitude"], waypoints[-1]["longitude"],  waypoints[-1]["altitude"])
+            cmds.add(cmd)
+            cmds.upload()
+            return True
+        except:
+            return "Unknown error!"
+
     def get_last_fix(self):
         with self.lock:
             return "FAIL", self.location, self.last_fix
@@ -155,6 +197,12 @@ class DroneController:
 
     def setup_parameters(self):
         self.vehicle.parameters['NAV_DLL_ACT'] = 0
+        self.vehicle.parameters["NAV_ACC_RAD"] = 7.0 #acceptence radius for waypoints
+        self.vehicle.parameters["MPC_LAND_SPEED"] = 1.5 #Max land speed
+        self.vehicle.parameters["MPC_XY_VEL_MAX"] = 15. #Max vertical velocity
+        self.vehicle.parameters["MPC_TKO_SPEED"] = 15. #Max takeoff speed
+        self.vehicle.parameters["MPC_Z_VEL_MAX_UP"] = 10. #Mav up velocity
+        self.vehicle.parameters["MPC_Z_VEL_MAX_DN"] = 5. #Max down velocity
 
 def get_location_offset_meters(original_location, dNorth, dEast, alt):
     """

@@ -82,7 +82,7 @@ class ServiceHandler:
         channel = args[1]
         connection = args[2]
         try:
-            json_str = json_message_converter.convert_ros_message_to_json(req.request)
+            json_str = json_message_converter.convert_ros_message_to_json(req)
             corr_id = str(uuid.uuid4())
             with self.lock:
                 self.responses[corr_id] = None
@@ -136,51 +136,64 @@ class rabbitmq_to_ros_bridge(ros_to_rabbitmq_bridge):
             setting["publisher"] = rospy.Publisher(setting["ros_topic"], setting["message_type"], queue_size=10)
 
     def simple_callback(self, *args, **kwargs):
-        if len(args) != 4:
-            return
-        ch = args[0]
-        method = args[1]
-        body = args[3]
-        settings = kwargs["settings"]
-        message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], body)
-        settings["publisher"].publish(message)
-        ch.basic_ack(delivery_tag = method.delivery_tag)
+        try:
+            if len(args) != 4:
+                return
+            ch = args[0]
+            method = args[1]
+            body = args[3]
+            settings = kwargs["settings"]
+            message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], body)
+            settings["publisher"].publish(message)
+            ch.basic_ack(delivery_tag = method.delivery_tag)
+        except:
+            print("Exception in simple_callback. message: {}, settings: {}".format(body, settings))
+            traceback.print_exc()
 
     @classmethod
     def heartbeat_callback(self, *args, **kwargs):
-        if len(args) != 4:
-            return
-        ch = args[0]
-        method = args[1]
-        body = args[3]
-        data = json.loads(body)
-        time = datetime.datetime.strptime(data["time"], "%Y/%m/%d_%H:%M:%S")
-        heartbeat_age = abs(datetime.datetime.utcnow() - time)
-        if heartbeat_age > MAX_HEARTBEAT_AGE:
-            print("Heartbeat from OES was too old. Age was: {}".format(heartbeat_age))
-        else:
+        try:
+            if len(args) != 4:
+                return
+            ch = args[0]
+            method = args[1]
+            body = args[3]
             settings = kwargs["settings"]
-            message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], "{}")
-            settings["publisher"].publish(message)
-        ch.basic_ack(delivery_tag = method.delivery_tag)
+            data = json.loads(body)
+            time = datetime.datetime.strptime(data["time"], "%Y/%m/%d_%H:%M:%S")
+            heartbeat_age = abs(datetime.datetime.utcnow() - time)
+            if heartbeat_age > MAX_HEARTBEAT_AGE:
+                print("Heartbeat from OES was too old. Age was: {}".format(heartbeat_age))
+            else:
+                message = json_message_converter.convert_json_to_ros_message(settings["message_type_str"], "{}")
+                settings["publisher"].publish(message)
+            ch.basic_ack(delivery_tag = method.delivery_tag)
+        except:
+            print("Exception in heartbeat_callback. message: {}, settings: {}".format(body, settings))
+            traceback.print_exc()
+
 
 
     @classmethod
     def navsatfix_callback(self, *args, **kwargs):
-        if len(args) != 4:
-            return
-        ch = args[0]
-        method = args[1]
-        body = args[3]
-        settings = kwargs["settings"]
-        data = json.loads(body)
-        message = settings["message_type"]()
-        message.status.status = message.status.STATUS_NO_FIX if data["info"]["fix_type"] <= 1 else message.status.STATUS_FIX
-        message.status.service = message.status.SERVICE_GPS
+        try:
+            if len(args) != 4:
+                return
+            ch = args[0]
+            method = args[1]
+            body = args[3]
+            settings = kwargs["settings"]
+            data = json.loads(body)
+            message = settings["message_type"]()
+            message.status.status = message.status.STATUS_NO_FIX if data["info"]["fix_type"] <= 1 else message.status.STATUS_FIX
+            message.status.service = message.status.SERVICE_GPS
 
-        message.latitude = data["location"]["lat"]
-        message.longitude = data["location"]["lon"]
-        message.altitude = data["location"]["alt"]
-        if not None in data["location"].values():
-            settings["publisher"].publish(message)
-        ch.basic_ack(delivery_tag = method.delivery_tag)
+            message.latitude = data["location"]["lat"]
+            message.longitude = data["location"]["lon"]
+            message.altitude = data["location"]["alt"]
+            if not None in data["location"].values():
+                settings["publisher"].publish(message)
+            ch.basic_ack(delivery_tag = method.delivery_tag)
+        except:
+            print("Exception in navsatfix_callback. message: {}, settings: {}".format(body, settings))
+            traceback.print_exc()

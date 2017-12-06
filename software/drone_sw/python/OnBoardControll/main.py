@@ -69,6 +69,8 @@ def __main__():
     parser.add_argument('--syslog', nargs='?', default=1, type=int)
     parser.add_argument('--ledmode', nargs='?', default="BLINK", type=str)
     parser.add_argument('--real_hard_abort', action='store_true')
+    parser.add_argument('--blink_in_mission', action='store_true')
+
     args = parser.parse_args()
     debug_led.initialise(args.ledmode)
 
@@ -80,7 +82,7 @@ def __main__():
 
     #Setup mavlink connection
     logging.info("Establishing mavlink connection")
-    drone = DroneController(port = args.mavport, baud = args.mavbaud, connectstring = args.connectstring, real_hard_abort = args.real_hard_abort)
+    drone = DroneController(port = args.mavport, baud = args.mavbaud, connectstring = args.connectstring, real_hard_abort = args.real_hard_abort, blink_in_mission = args.blink_in_mission)
     logging.info("Established mavlink connection")
     if not args.ignoregps:
         gps_handler = GPSHandler(args.gpsport, args.gpsbaud, args.simufile)
