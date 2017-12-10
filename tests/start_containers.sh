@@ -2,7 +2,7 @@ set -e
 
 docker network create --gateway ${networkgateway} --subnet ${networkgateway}/24 ${networkname} || true
 docker run -d --name webui --network ${networkname} --ip ${webui_ip} -e rmq_host=${webui_ip} stefanrvo/rmuasd_webapp:latest
-if [ -z "$PX4_HOME_LAT" ] then
+if [ -z "$PX4_HOME_LAT" ]; then
 	docker run -d --name simulation --network ${networkname} --ip ${simulation_ip} stefanrvo/rmuasd_gazebo:latest $1
 else
 	docker run -d --name simulation --network ${networkname} --ip ${simulation_ip} -e PX4_HOME_LAT=${PX4_HOME_LAT} -e PX4_HOME_LON=${PX4_HOME_LON} -e PX4_HOME_ALT=${PX4_HOME_ALT} stefanrvo/rmuasd_gazebo:latest $1
