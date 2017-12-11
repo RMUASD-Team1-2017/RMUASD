@@ -289,39 +289,29 @@ bool drone_handler::run_state_machine()
 
 
         case ARM:
-            /* ARMED STATE */
-            std::cout << "Trying to Arm" << std::endl;
-            set_arm(true);
-            this->arm_time = ros::Time::now();
-            this->state = WAITING_STATE;
-            break;
-
-		case WAITING_STATE:
-            /* WATING STATE */
-			// wait until the arm is registered
-            // Check timer
-            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
-                std::cout << "Timeout at Arm" << std::endl;
-                this->state = FAILED;
-            }
-
-			if(this->armed){   // if armed go to next state.
-                std::cout << "Mission Started" << std::endl;
+            /* ARM */
+            if(this->armed){
+                this->start_height = this->altitude;
+                this->start_time = ros::Time::now();
                 this->state = START_MISSION;
             }
-			else if(ros::Time::now() - arm_time > ros::Duration(1.0)){
-				this->state = ARM;
+            else{
+                set_arm(true);
+            }
+
+            // Check timer
+            if(ros::Time::now().toSec() - this->timeMissionReceived > ALLOWED_START_TIME){
+                std::cout << "Timeout at Arming mode" << std::endl;
+                this->state = FAILED;
             }
             break;
-
 
         case AUTO_MISSION:
             /* AUTO MISSION */
 
             if(this->mode == "AUTO.MISSION"){
+                std::cout << "Trying to Arm" << std::endl;
                 this->state = ARM;
-                this->start_height = this->altitude;
-                this->start_time = ros::Time::now();
             }
             else{
                 set_mode("AUTO.MISSION");
