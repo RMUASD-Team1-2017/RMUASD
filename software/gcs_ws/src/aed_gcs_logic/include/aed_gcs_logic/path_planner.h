@@ -18,6 +18,10 @@ struct UTM{
 struct GeoCoord{
     double latitude;
     double longitude;
+    bool operator==(const GeoCoord& other)
+    {
+      return (this->latitude == other.latitude and this->longitude == other.longitude);
+    }
 };
 
 struct Coord{
@@ -54,7 +58,7 @@ class path_planner
         void connectNodes();
         std::vector<Node*> aStar(Coord start, Coord goal);
         Coord getNearestLandingSpot(Coord goal);
-
+        bool insideGeoFence(Coord *n);
         static void printNode(Node *node);
         static void printList(std::vector<Node*> &list);
         static void printList(std::vector<Node> &list);
@@ -73,7 +77,7 @@ class path_planner
 
         void generateUTMCoords();
 
-        bool outOfBounds(Node *node1, Node *node2);
+        bool insideGeoFence(Node *node1, Node *node2);
         int getIndex(Coord coord);
 
         void loadLandingSpots(std::string flieName);

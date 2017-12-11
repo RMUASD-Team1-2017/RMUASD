@@ -8,7 +8,6 @@
 #include "aed_gcs_logic/json.hpp"
 #include "aed_gcs_logic/path_planner.h"
 #include <GeographicLib/GeoCoords.hpp>
-
 #ifdef SDL
 #include <2D.hpp>
 #endif
@@ -101,11 +100,13 @@ void path_planner::loadMap(std::string fileName){
       Coord tempCoord(j["polygon"][i][0], j["polygon"][i][1]); //lat, lon
       nodes.push_back(Node(tempCoord, i));
     }
-
     for (int i = 1; i < nodes.size(); i++){
         nodes[i - 1].link.push_back(&nodes[i]);
         nodes[i].link.push_back(&nodes[i - 1]);
     }
+    //Also connect last node with first
+    nodes[0].link.push_back(&nodes.back());
+    nodes.back().link.push_back(&nodes[0]);
 }
 
 void path_planner::loadLandingSpots(std::string fileName){
@@ -127,14 +128,22 @@ void path_planner::loadLandingSpots(std::string fileName){
 }
 
 bool path_planner::intersection(std::pair<Coord, Coord> l1, std::pair<Coord, Coord> l2){
-    double x1 = l1.first.geo.latitude;
-    double y1 = l1.first.geo.longitude;
-    double x2 = l1.second.geo.latitude;
-    double y2 = l1.second.geo.longitude;
-    double x3 = l2.first.geo.latitude;
-    double y3 = l2.first.geo.longitude;
-    double x4 = l2.second.geo.latitude;
-    double y4 = l2.second.geo.longitude;
+
+    //The lines does not intersect if some of the endpoints are equal
+    if (l1.first.geo == l2.first.geo or l1.first.geo == l2.second.geo or
+        l1.second.geo == l2.first.geo or l1.second.geo == l2.second.geo)
+    {
+      return false;
+    }
+    double &x1 = l1.first.geo.latitude;
+    double &y1 = l1.first.geo.longitude;
+    double &x2 = l1.second.geo.latitude;
+    double &y2 = l1.second.geo.longitude;
+    double &x3 = l2.first.geo.latitude;
+    double &y3 = l2.first.geo.longitude;
+    double &x4 = l2.second.geo.latitude;
+    double &y4 = l2.second.geo.longitude;
+
     double ta =
         ((y3 - y4) * (x1 - x3) + (x4 - x3) * (y1 - y3)) /
         ((x4 - x3) * (y1 - y2) - (x1 - x2) * (y4 - y3));
@@ -157,24 +166,36 @@ int path_planner::getIndex(Coord coord){
     return -1;
 }
 
-bool path_planner::outOfBounds(Node *node1, Node *node2){
 
-    int index = getIndex(node1->coord);
-    if (index == -1 || index == 0) return false;
+bool path_planner::insideGeoFence(Coord *c)
+{
+  //Uses https://gis.stackexchange.com/questions/147629/testing-if-a-geodesic-polygon-contains-a-point-c to dermine if a point is inside the fence
+  size_t n = this->geofence.size();
+  bool result = false;
+  for (size_t i = 0; i < n; ++i) {
+    size_t j = (i + 1) % n;
+    if (
+        // Does c->geo.latitude lies in half open y range of edge.
+        // N.B., horizontal edges never contribute
+        ( (this->geofence[j].first.geo.latitude <= c->geo.latitude && c->geo.latitude < this->geofence[i].first.geo.latitude) ||
+          (this->geofence[i].first.geo.latitude <= c->geo.latitude && c->geo.latitude < this->geofence[j].first.geo.latitude) ) &&
+        // is p to the left of edge?
+        ( c->geo.longitude < this->geofence[j].first.geo.longitude + (this->geofence[i].first.geo.longitude - this->geofence[j].first.geo.longitude) * (c->geo.latitude - this->geofence[j].first.geo.latitude) /
+          (this->geofence[i].first.geo.latitude - this->geofence[j].first.geo.latitude) )
+        )
+      result = !result;
+  }
+  return result;
+}
+bool path_planner::insideGeoFence(Node *node1, Node *node2)
+{
+    //Check if the midle point of the line between node1 and node2 is inside the geofence.
+    //If this is true, and the line does not cross any edge of the geofence (checked elsewhere), the line is inside the fence
+    //https://stackoverflow.com/questions/29078411/how-to-detemine-if-a-line-segment-is-inside-of-a-polygon
 
-    double nodeAngle = getAngle(node1->coord, node2->coord);
-    double geoFence0 = getAngle(geofence[index - 1].second, geofence[index - 1].first);
-    double geoFence1 = getAngle(geofence[index].first, geofence[index].second);
-
-    nodeAngle += M_PI * 2 - geoFence0;
-    if (nodeAngle > M_PI * 2) nodeAngle -= M_PI * 2;
-
-    geoFence1 += M_PI * 2 - geoFence0;
-    if (geoFence1 > M_PI * 2) geoFence1 -= M_PI * 2;
-
-    geoFence0 = 0;
-
-    return geoFence1 > nodeAngle;
+    //find middle point
+    Coord n( (node1->coord.geo.latitude + node2->coord.geo.latitude) / 2., (node1->coord.geo.longitude + node2->coord.geo.longitude) / 2.);
+    return this->insideGeoFence(&n); //check if it is inside the fence
 }
 
 void path_planner::addLink(Node *node1, Node *node2){
@@ -186,9 +207,15 @@ void path_planner::connectNodes(){
     for (int i = 0; i < nodes.size(); i++){
         for (int j = 0; j < i; j++){
             if (i == j) continue;
-            if (outOfBounds(&nodes[i], &nodes[j]) || outOfBounds(&nodes[j], &nodes[i])) continue;
+            if (not this->insideGeoFence(&nodes[j], &nodes[i]))
+            {
+                continue;
+            }
             for (int k = 0; k < geofence.size(); k++){
-                if (intersection(std::pair<Coord, Coord>(nodes[i].coord, nodes[j].coord), geofence[k])) break;
+                if (intersection(std::pair<Coord, Coord>(nodes[i].coord, nodes[j].coord), geofence[k]))
+                {
+                  break;
+                }
                 if (k == geofence.size() - 1){
                     addLink(&nodes[i], &nodes[j]);
                 }
@@ -259,7 +286,23 @@ std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
     nodes.push_back(Node(goalCoord, -2));
     Node *goal = &nodes.back();
 
+    //Push all rally points except goal to the graph
+
     connectNodes();
+    //List all goal links
+    std::cout << "Goal links:" << goal->link.size() << std::endl;
+    for (auto &link : goal->link)
+    {
+      std::cout << "(" << link->coord.geo.longitude << ", " << link->coord.geo.latitude << ") -> ("
+      << goal->coord.geo.longitude << ", " << goal->coord.geo.latitude << ")" << std::endl;
+    }
+
+    std::cout << "Start links:" << start->link.size() << std::endl;
+    for (auto &link : start->link)
+    {
+      std::cout << "(" << link->coord.geo.longitude << ", " << link->coord.geo.latitude << ") -> ("
+      << start->coord.geo.longitude << ", " << start->coord.geo.latitude << ")" << std::endl;
+    }
 
     std::vector<Node*> closedSet;
     std::vector<Node*> openSet = {start};
@@ -289,7 +332,7 @@ std::vector<Node*> path_planner::aStar(Coord startCoord, Coord goalCoord){
             current->link[i]->fScore = tantative_gScore + dist(current->link[i], goal);
         }
     }
-
+    std::cout << "Found no path to the goal." << std::endl;
     return std::vector<Node*>();
 }
 
