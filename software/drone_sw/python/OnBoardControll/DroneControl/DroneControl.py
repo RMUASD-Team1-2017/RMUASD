@@ -149,6 +149,16 @@ class DroneController:
             if self.vehicle.home_location == None:
                 logging.warning("No home position set yet, can not take off")
                 return "No home position set yet, can not take off"
+            else:
+                #Set home position to current position
+                current_pos = self.vehicle.location.global_frame
+                self.vehicle.home_location = current_pos
+                #Make sure home was set correctly
+                if not (self.vechicle.home_location.alt == current_pos.alt and \
+                        self.vechicle.home_location.lat == current_pos.lat and \
+                        self.vechicle.home_location.lon == current_pos.lon);
+                    return "Could not correcly set home position"
+
             cmds = self.vehicle.commands
             cmds.clear()
             self.vehicle.flush()
