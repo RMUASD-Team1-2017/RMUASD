@@ -156,7 +156,7 @@ class DroneController:
                 #Make sure home was set correctly
                 if not (self.vechicle.home_location.alt == current_pos.alt and \
                         self.vechicle.home_location.lat == current_pos.lat and \
-                        self.vechicle.home_location.lon == current_pos.lon);
+                        self.vechicle.home_location.lon == current_pos.lon):
                     return "Could not correcly set home position"
 
             cmds = self.vehicle.commands
